@@ -1,16 +1,19 @@
 interface MarketOddsBarProps {
   pool_a: string;
   pool_b: string;
-  pool_draw: string;
+  pool_draw?: string;
   fighter_a: string;
   fighter_b: string;
   size?: 'sm' | 'md' | 'lg';
 }
 
-const EQUAL = 100n / 3n; // 33n
-
-function pct(pool: bigint, total: bigint): bigint {
-  return total === 0n ? EQUAL : (pool * 100n) / total;
+function safeBigInt(val?: string): bigint {
+  if (!val) return 0n;
+  try {
+    return BigInt(val);
+  } catch {
+    return 0n;
+  }
 }
 
 export function MarketOddsBar({
@@ -33,7 +36,7 @@ export function MarketOddsBar({
 
   const segments = [
     { label: fighter_a, pct: pA, color: 'bg-blue-600' },
-    { label: 'Draw',    pct: pD, color: 'bg-yellow-500' },
+    ...(pD > 0n ? [{ label: 'Draw', pct: pD, color: 'bg-yellow-500' }] : []),
     { label: fighter_b, pct: pB, color: 'bg-red-600' },
   ];
 
