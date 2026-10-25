@@ -178,9 +178,46 @@ export class StellarInvocationError extends Error {
   }
 }
 
-// ---------------------------------------------------------------------------
-// invokeContract
-// ---------------------------------------------------------------------------
+const MAX_SUBMISSION_RETRIES = 3;
+const SUBMISSION_RETRY_BASE_DELAY_MS = 1000;
+
+function isRetryableSubmissionError(error: unknown): boolean {
+  let current = error as Record<string, unknown> | null;
+
+  for (let depth = 0; current && depth < 3; depth++) {
+    const response = current.response as Record<string, unknown> | undefined;
+    const status = Number(current.statusCode ?? current.status ?? response?.statusCode ?? response?.status);
+
+    if (status === 429 || status === 504) return true;
+    if (status >= 400 && status < 500) return false;
+
+    const code = String(current.code ?? '').toUpperCase();
+    if (['ECONNRESET', 'ETIMEDOUT', 'ESOCKETTIMEDOUT', 'ECONNABORTED'].includes(code)) return true;
+
+    const message = String(current.message ?? '');
+    if (/socket hang up|timed? out|timeout/i.test(message)) return true;
+
+    current = current.cause as Record<string, unknown> | null;
+  }
+
+  return false;
+}
+
+async function sendTransactionWithRetry<T>(submit: () => Promise<T>): Promise<T> {
+  for (let retry = 0; ; retry++) {
+    try {
+      return await submit();
+    } catch (error) {
+      if (!isRetryableSubmissionError(error) || retry >= MAX_SUBMISSION_RETRIES) {
+        throw error;
+      }
+
+      const exponentialDelay = SUBMISSION_RETRY_BASE_DELAY_MS * (2 ** retry);
+      const delay = Math.round(exponentialDelay * (0.5 + Math.random() * 0.5));
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
 
 /**
  * Builds, simulates, signs, and submits a Soroban contract invocation.
@@ -262,12 +299,9 @@ export async function invokeContract(
     // Step 5: Sign
     transaction.sign(source_keypair);
 
-    // Step 6: Submit — wrapped in withRetry to handle transient network errors.
-    // Non-retryable errors (e.g. tx_insufficient_balance) are re-thrown immediately.
-    const submitResponse = await withRetry(
+    // Step 6: Submit
+    const submitResponse = await sendTransactionWithRetry(
       () => sorobanServer.sendTransaction(transaction),
-      MAX_SUBMIT_RETRIES,
-      `invokeContract(${contract_address}::${method}) fee-bump-attempt=${attempt}`,
     );
 
     if (submitResponse.status !== 'PENDING') {

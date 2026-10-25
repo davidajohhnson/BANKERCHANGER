@@ -12,7 +12,7 @@ const router = Router();
 
 /**
  * @swagger
- * /claims:
+ * /api/claims:
  *   post:
  *     summary: Claim winnings for a resolved market
  *     tags: [Bets]
@@ -22,11 +22,13 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
- *             required: [marketId, bettorAddress]
+ *             required: [market_id, bettor_address, token_address]
  *             properties:
- *               marketId:
+ *               market_id:
  *                 type: string
- *               bettorAddress:
+ *               bettor_address:
+ *                 type: string
+ *               token_address:
  *                 type: string
  *     responses:
  *       200:
@@ -38,7 +40,7 @@ router.post('/', claimWinnings);
 
 /**
  * @swagger
- * /claims/refund:
+ * /api/claims/refund:
  *   post:
  *     summary: Claim a refund for a cancelled market
  *     tags: [Bets]
@@ -48,11 +50,13 @@ router.post('/', claimWinnings);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [marketId, bettorAddress]
+ *             required: [market_id, bettor_address, token_address]
  *             properties:
- *               marketId:
+ *               market_id:
  *                 type: string
- *               bettorAddress:
+ *               bettor_address:
+ *                 type: string
+ *               token_address:
  *                 type: string
  *     responses:
  *       200:
@@ -64,7 +68,7 @@ router.post('/refund', claimRefund);
 
 /**
  * @swagger
- * /bets/{bettor_address}/stats:
+ * /api/bets/{bettor_address}/stats:
  *   get:
  *     summary: Get betting statistics for an address
  *     tags: [Bets]
@@ -82,7 +86,7 @@ router.get('/:bettor_address/stats', getBettorStats);
 
 /**
  * @swagger
- * /bets/{bettor_address}:
+ * /api/bets/{bettor_address}:
  *   get:
  *     summary: Get paginated bets for an address
  *     tags: [Bets]
@@ -107,7 +111,7 @@ router.get('/:bettor_address/stats', getBettorStats);
  *         schema:
  *           type: integer
  *           default: 50
- *           maximum: 200
+ *           maximum: 100
  *     responses:
  *       200:
  *         description: Keyset-paginated bets with a nextCursor, or deprecated page/offset pagination.

@@ -63,7 +63,7 @@ describe('Governance Group 2 API Module Integration Tests', () => {
         .query({ status: 'invalid_status_value' });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
 
     it('rejects invalid proposal type filter in query', async () => {
@@ -72,7 +72,7 @@ describe('Governance Group 2 API Module Integration Tests', () => {
         .query({ type: 'unknown_type' });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
   });
 

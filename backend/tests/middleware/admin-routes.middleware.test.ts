@@ -20,7 +20,7 @@ jest.mock('../../src/config/env', () => ({
 }));
 
 // Import after mocking
-import { requireAdmin } from '../../src/middleware/requireAdminJwt.middleware';
+import { requireAdmin } from '../../src/middleware/admin.middleware';
 
 function makeReqRes(authHeader?: string) {
   const req = {

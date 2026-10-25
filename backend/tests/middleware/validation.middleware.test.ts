@@ -6,6 +6,7 @@ import {
   PlaceBetSchema,
   CreateMarketSchema,
   PaginationSchema,
+  MarketIdSchema,
 } from "../../src/middleware/validation.middleware";
 import { Request, Response, NextFunction } from "express";
 
@@ -46,8 +47,10 @@ describe("Validation Middleware", () => {
       const middleware = validateBody(PlaceBetSchema);
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
-        statusCode: 400,
+      expect(mockRes.status).toHaveBeenCalledWith(422);
+      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+        success: false,
+        error: expect.objectContaining({ code: 'VALIDATION_ERROR', details: expect.any(Array) }),
       }));
     });
 
@@ -84,8 +87,29 @@ describe("Validation Middleware", () => {
       const middleware = validateQuery(PaginationSchema);
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
-        statusCode: 400,
+      expect(mockRes.status).toHaveBeenCalledWith(422);
+      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+        success: false,
+        error: expect.objectContaining({ code: 'VALIDATION_ERROR' }),
+      }));
+    });
+  });
+
+  describe("validateParams", () => {
+    it("parses and validates path parameters", () => {
+      mockReq.params = { market_id: "market1" };
+      validateParams(MarketIdSchema)(mockReq as Request, mockRes as Response, mockNext);
+      expect(mockNext).toHaveBeenCalledWith();
+      expect(mockReq.params.market_id).toBe("market1");
+    });
+
+    it("returns the standard error shape for invalid path parameters", () => {
+      mockReq.params = { market_id: "" };
+      validateParams(MarketIdSchema)(mockReq as Request, mockRes as Response, mockNext);
+      expect(mockRes.status).toHaveBeenCalledWith(422);
+      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+        success: false,
+        error: expect.objectContaining({ code: 'VALIDATION_ERROR', details: expect.any(Array) }),
       }));
     });
   });

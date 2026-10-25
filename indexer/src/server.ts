@@ -1,9 +1,8 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import { Server } from 'http';
-import { getInvoices, getInvoiceById } from './db';
 import { getPollerHealth } from './poller';
 import { isLive, isReady, getReadinessDetails, getHealthResponse } from './health';
+import { getMetricsPrometheusFormat } from './metrics';
 
 const app = express();
 
@@ -157,15 +156,16 @@ app.get('/health', (req: Request, res: Response) => {
     const ready = isReady();
     const healthSummary = getHealthResponse();
     
-    const statusCode = (health.isRunning && ready) ? 200 : 503;
+    const statusCode = healthSummary.status === 'unhealthy' ? 503 : 200;
     
     res.status(statusCode).json({
       success: statusCode === 200,
       status: healthSummary.status,
       ledger_lag: healthSummary.ledger_lag,
+      ledger_lag_seconds: healthSummary.ledger_lag_seconds,
       last_processed_ledger: healthSummary.last_processed_ledger,
       latest_network_ledger: healthSummary.latest_network_ledger,
-      ready,
+      ready: healthSummary.status !== 'unhealthy',
       poller: {
         isRunning: health.isRunning,
         consecutiveFailures: health.consecutiveFailures,
@@ -185,39 +185,6 @@ app.get('/health', (req: Request, res: Response) => {
       status: 'error',
       error: err.message 
     });
-  }
-});
-
-app.get('/invoices', (req: Request, res: Response) => {
-  try {
-    const { status, freelancer, payer, funder } = req.query;
-    const filterPayer = (payer as string) || (funder as string);
-
-    const invoices = getInvoices({
-      status: status as string,
-      freelancer: freelancer as string,
-      payer: filterPayer,
-    });
-
-    res.json({ success: true, data: invoices });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-app.get('/invoice/:id', (req: Request, res: Response): void => {
-  try {
-    const { id } = req.params;
-    const invoice = getInvoiceById(id as string);
-    
-    if (!invoice) {
-      res.status(404).json({ success: false, error: 'Invoice not found' });
-      return;
-    }
-
-    res.json({ success: true, data: invoice });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
   }
 });
 

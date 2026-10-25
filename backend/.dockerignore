@@ -1,9 +1,6 @@
 node_modules
 dist
-src
 tests
-*.ts
-!tsconfig.json
 .env
 .env.*
 .eslintrc.json

@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { StrKey } from '@stellar/stellar-sdk';
 import { AppError } from '../../utils/AppError';
 import { ERROR_CODES } from '../../constants/errorCodes';
-import { validateQuery } from '../middleware/validate';
+import { validateQuery } from '../../middleware/validation.middleware';
 import * as MarketService from '../../services/MarketService';
 import * as OracleService from '../../oracle/OracleService';
 
@@ -374,7 +374,7 @@ const resolveMarketBodySchema = z.object({
 
 /**
  * POST /api/markets/:market_id/resolve
- * Protected by requireAdminJwt middleware.
+ * Protected by requireAdmin middleware.
  *
  * Resolves a market with the given winning_outcome.
  * Returns 409 if market is already resolved.

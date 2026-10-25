@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { validateBody, validateQuery } from '../api/middleware/validate';
-import { requireAdminJwt } from '../middleware/requireAdminJwt.middleware';
+import { requireAdmin } from '../middleware/admin.middleware';
 import { rateLimit } from '../middleware/rate-limit.middleware';
 import { pool } from '../config/db';
 import { AppError } from '../utils/AppError';
@@ -74,7 +74,7 @@ router.get(
 router.post(
   '/withdraw',
   rateLimit({ windowMs: 60_000, max: 10, keyBy: 'ip' }),
-  requireAdminJwt,
+  requireAdmin,
   validateBody(withdrawTreasuryGroup7BodySchema),
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -148,7 +148,7 @@ router.post(
 router.post(
   '/distribute-fees',
   rateLimit({ windowMs: 60_000, max: 10, keyBy: 'ip' }),
-  requireAdminJwt,
+  requireAdmin,
   validateBody(distributeFeesGroup7BodySchema),
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -213,7 +213,7 @@ router.get(
 router.patch(
   '/fee-splits',
   rateLimit({ windowMs: 60_000, max: 10, keyBy: 'ip' }),
-  requireAdminJwt,
+  requireAdmin,
   validateBody(updateFeeSplitsGroup7BodySchema),
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

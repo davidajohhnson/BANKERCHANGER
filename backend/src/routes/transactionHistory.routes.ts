@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { validate } from '../api/middleware/validate';
+import { validate } from '../middleware/validation.middleware';
 import { requireAuth } from '../middleware/auth.middleware';
 import { rateLimit } from '../middleware/rate-limit.middleware';
 import { AppError } from '../utils/AppError';

@@ -43,6 +43,10 @@ jest.mock('../../src/config/env', () => ({
   }),
 }));
 
+jest.mock('../../src/services/auth.service', () => ({
+  isSessionRevoked: jest.fn().mockResolvedValue(false),
+}));
+
 const { pool } = require('../../src/config/db');
 
 describe('API Module Group 5: Oracle Results & Dispute Resolution Endpoints', () => {
@@ -50,7 +54,7 @@ describe('API Module Group 5: Oracle Results & Dispute Resolution Endpoints', ()
   const oracleKeypair = Keypair.random();
   const validStellarAddress = oracleKeypair.publicKey();
   const validPublicKey = oracleKeypair.rawPublicKey().toString('hex');
-  const adminSecret = 'test-admin-secret-key-32-chars-long!';
+  const adminSecret = 'test-secret';
   const validAdminToken = jwt.sign(
     { sub: 'admin-1', role: 'admin', type: 'access' },
     adminSecret,

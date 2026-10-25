@@ -18,7 +18,7 @@ import {
   revokeSessionGroup1ParamsSchema,
   listSessionsGroup1QuerySchema,
 } from '../schemas/authGroup1.schemas';
-import { validateBody, validateParams, validateQuery } from '../api/middleware/validate';
+import { validateBody, validateParams, validateQuery } from '../middleware/validation.middleware';
 import { requireAuth } from '../middleware/auth.middleware';
 import { rateLimit } from '../middleware/rate-limit.middleware';
 import { AppError } from '../utils/AppError';

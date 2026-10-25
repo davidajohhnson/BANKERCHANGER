@@ -252,11 +252,6 @@ router.get('/:address/history/export', exportRateLimiter, usersController.export
  *         description: Public user profile
  *       404:
  *         description: User not found
- *     responses:
- *       200:
- *         description: Public user profile
- *       404:
- *         description: User not found
  */
 router.get('/:id', usersController.getProfile.bind(usersController));
 

@@ -52,9 +52,9 @@ target/
 *.optimized.wasm
 
 # ─── SQLite (indexer) ────────────────────────────────────────
-indexer/data/*.db
-indexer/data/*.db-shm
-indexer/data/*.db-wal
+indexer/data/
+*.db
+cursor.json
 *.sqlite
 *.sqlite3
 
@@ -123,3 +123,9 @@ Desktop.ini
 .cache/
 tmp/
 .tmp/
+
+# ─── Temporary commit notes and scratch files ─────────────────
+commit_msg*.txt
+task*.md
+*scratch*
+

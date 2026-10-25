@@ -1,280 +1,209 @@
-name: Deploy to Staging
+name: Deploy Staging Contracts
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - 'indexer/**'
-      - 'docker-compose.staging.yml'
-      - '.github/workflows/deploy-staging.yml'
   workflow_dispatch:
+    inputs:
+      network:
+        description: Stellar network to deploy to
+        required: true
+        type: choice
+        default: testnet
+        options:
+          - testnet
+          - futurenet
+      admin_secret_key:
+        description: Optional admin secret key override. Falls back to the ADMIN_SECRET_KEY repository secret.
+        required: false
+        type: string
+
+permissions:
+  contents: read
 
 concurrency:
-  group: deploy-staging
+  group: staging-deploy-${{ github.ref }}
   cancel-in-progress: false
 
-env:
-  REGISTRY: ghcr.io
-  BACKEND_IMAGE: ghcr.io/${{ github.repository }}/backend-staging
-  FRONTEND_IMAGE: ghcr.io/${{ github.repository }}/frontend-staging
-  INDEXER_IMAGE: ghcr.io/${{ github.repository }}/indexer-staging
-
 jobs:
-  build-and-test:
-    name: Build & Test Services
+  validate:
+    name: Contract validation
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    strategy:
-      matrix:
-        service: [backend, frontend, indexer]
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          fetch-depth: 0
+          targets: wasm32-unknown-unknown
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build ${{ matrix.service }} image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./${{ matrix.service }}
-          push: false
-          tags: |
-            ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.service }}-staging:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.service }}-staging:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  e2e-tests:
-    name: Run E2E Tests on Staging Config
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: bankerchanger_staging
-          POSTGRES_PASSWORD: staging_secure_password
-          POSTGRES_DB: bankerchanger_staging
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Cache node_modules
+      - name: Cache Cargo dependencies
         uses: actions/cache@v4
-        id: cache-node-modules
         with:
-          path: backend/node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('backend/package-lock.json') }}
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            contracts/target
+          key: ${{ runner.os }}-cargo-staging-${{ hashFiles('contracts/Cargo.lock') }}
 
-      - name: Install backend dependencies
-        working-directory: backend
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        run: npm ci
+      - name: Run Rust tests
+        working-directory: contracts
+        run: cargo test --workspace --all-features --locked
 
-      - name: Run E2E tests against staging config
-        working-directory: backend
-        run: npm run test:e2e
-        env:
-          DATABASE_URL: postgresql://bankerchanger_staging:staging_secure_password@localhost:5432/bankerchanger_staging
-          REDIS_URL: redis://localhost:6379
-          NODE_ENV: staging
+      - name: Install cargo-audit
+        working-directory: contracts
+        run: cargo install cargo-audit --locked
 
-      - name: Upload E2E test results
-        if: always()
+      - name: Run dependency audit
+        working-directory: contracts
+        run: cargo audit --locked --deny warnings
+
+  build-and-verify:
+    name: Build and verify WASM artifacts
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            contracts/target
+          key: ${{ runner.os }}-cargo-staging-${{ hashFiles('contracts/Cargo.lock') }}
+
+      - name: Build Soroban contracts
+        working-directory: contracts
+        run: cargo build --release --target wasm32-unknown-unknown
+
+      - name: Compute and summarize WASM hashes
+        id: wasm_hashes
+        working-directory: contracts
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/wasm-artifacts"
+          : > "$RUNNER_TEMP/wasm-artifacts/wasm-hashes.txt"
+
+          for wasm in target/wasm32-unknown-unknown/release/*.wasm; do
+            artifact_name="$(basename "$wasm")"
+            digest="$(sha256sum "$wasm" | awk '{print $1}')"
+            printf '%s %s\n' "$artifact_name" "$digest" >> "$RUNNER_TEMP/wasm-artifacts/wasm-hashes.txt"
+            echo "Artifact: $artifact_name => $digest"
+          done
+
+          market_digest="$(sha256sum target/wasm32-unknown-unknown/release/boxmeout_market.wasm | awk '{print $1}')"
+          echo "market_digest=$market_digest" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Staging WASM verification"
+            echo
+            echo "| Artifact | SHA-256 |"
+            echo "| --- | --- |"
+            while IFS=' ' read -r artifact digest; do
+              echo "| $artifact | $digest |"
+            done < "$RUNNER_TEMP/wasm-artifacts/wasm-hashes.txt"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload WASM hash summary
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-test-results
-          path: backend/test-results/
+          name: staging-wasm-hashes
+          path: ${{ runner.temp }}/wasm-artifacts/wasm-hashes.txt
           retention-days: 30
 
-  lint-and-security:
-    name: Lint & Security Scan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Scan for secrets
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Install dependencies
-        working-directory: backend
-        run: npm ci
-
-      - name: Lint backend
-        working-directory: backend
-        run: npm run lint
-
-      - name: Check TypeScript types
-        working-directory: backend
-        run: npm run type-check
-
   deploy:
-    name: Deploy to Staging Environment
+    name: Deploy to staging network
+    needs: build-and-verify
     runs-on: ubuntu-latest
-    needs: [build-and-test, e2e-tests, lint-and-security]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment:
-      name: staging
-      url: https://staging.bankerchanger.app
-    permissions:
-      contents: read
-      packages: write
-      deployments: write
+    environment: staging
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          targets: wasm32-unknown-unknown
 
-      - name: Build and push backend image
-        uses: docker/build-push-action@v5
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
         with:
-          context: ./backend
-          push: true
-          tags: |
-            ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
-            ${{ env.BACKEND_IMAGE }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            GIT_SHA=${{ github.sha }}
-            GIT_REF=${{ github.ref }}
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            contracts/target
+          key: ${{ runner.os }}-cargo-staging-${{ hashFiles('contracts/Cargo.lock') }}
 
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          push: true
-          tags: |
-            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
-            ${{ env.FRONTEND_IMAGE }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            GIT_SHA=${{ github.sha }}
-            GIT_REF=${{ github.ref }}
+      - name: Install Stellar CLI
+        run: cargo install --locked stellar-cli --features opt
 
-      - name: Build and push indexer image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./indexer
-          push: true
-          tags: |
-            ${{ env.INDEXER_IMAGE }}:${{ github.sha }}
-            ${{ env.INDEXER_IMAGE }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            GIT_SHA=${{ github.sha }}
-            GIT_REF=${{ github.ref }}
+      - name: Build staging artifact
+        working-directory: contracts
+        run: cargo build --release --target wasm32-unknown-unknown
 
-      - name: Create deployment
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const deployment = await github.rest.repos.createDeployment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: context.ref,
-              environment: 'staging',
-              description: 'Deploying to staging environment',
-              required_contexts: [],
-              auto_merge: false
-            });
-            core.setOutput('deployment_id', deployment.data.id);
+      - name: Deploy contracts to staging
+        working-directory: contracts
+        env:
+          ADMIN_SECRET_KEY: ${{ inputs.admin_secret_key || secrets.ADMIN_SECRET_KEY }}
+          NETWORK: ${{ inputs.network }}
+          SOROBAN_RPC_URL: ${{ vars.SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org' }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${ADMIN_SECRET_KEY:-}" ]]; then
+            echo "ADMIN_SECRET_KEY is required to deploy staging contracts." >&2
+            exit 1
+          fi
+          ./scripts/deploy.sh "$NETWORK"
 
-      - name: Trigger staging deployment
-        uses: actions/github-script@v7
-        with:
-          script: |
-            console.log('Staging deployment images built and pushed successfully');
-            console.log('Backend Image: ${{ env.BACKEND_IMAGE }}:${{ github.sha }}');
-            console.log('Frontend Image: ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}');
-            console.log('Indexer Image: ${{ env.INDEXER_IMAGE }}:${{ github.sha }}');
-            console.log('\nNext steps:');
-            console.log('1. Staging environment should pull and deploy these images');
-            console.log('2. Run E2E tests on deployed staging environment');
-            console.log('3. Verify database migrations completed successfully');
-            console.log('4. Monitor application logs and health checks');
+      - name: Verify deployed WASM matches build hash
+        working-directory: contracts
+        env:
+          ADMIN_SECRET_KEY: ${{ inputs.admin_secret_key || secrets.ADMIN_SECRET_KEY }}
+          NETWORK: ${{ inputs.network }}
+          SOROBAN_RPC_URL: ${{ vars.SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org' }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${ADMIN_SECRET_KEY:-}" ]]; then
+            echo "ADMIN_SECRET_KEY is required for WASM verification." >&2
+            exit 1
+          fi
 
-      - name: Update deployment status
-        if: always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            if ('${{ job.status }}' === 'success') {
-              console.log('✅ Staging deployment completed successfully');
-              console.log('Application available at: https://staging.bankerchanger.app');
-            } else {
-              console.log('❌ Staging deployment failed');
-            }
+          expected_hash="$(sha256sum target/wasm32-unknown-unknown/release/boxmeout_market.wasm | awk '{print $1}')"
+          deployed_hash="$(SOROBAN_RPC_URL="$SOROBAN_RPC_URL" stellar contract install \
+            --wasm target/wasm32-unknown-unknown/release/boxmeout_market.wasm \
+            --source "$ADMIN_SECRET_KEY" \
+            --network "$NETWORK" 2>&1 | grep -oE '[a-f0-9]{64}' | head -n 1)"
 
-  notify:
-    name: Notify on Deployment
-    runs-on: ubuntu-latest
-    needs: deploy
-    if: always()
-    steps:
-      - name: Send deployment notification
-        uses: actions/github-script@v7
+          if [[ -z "$deployed_hash" ]]; then
+            echo "Unable to determine deployed bytecode hash from the Stellar network." >&2
+            exit 1
+          fi
+
+          echo "Expected market WASM SHA-256: $expected_hash"
+          echo "On-chain market WASM SHA-256: $deployed_hash"
+
+          if [[ "$deployed_hash" != "$expected_hash" ]]; then
+            echo "WASM mismatch: built artifact does not match the deployed bytecode on $NETWORK." >&2
+            exit 1
+          fi
+
+          {
+            echo "## Deployment verification"
+            echo
+            echo "Market WASM SHA-256: $deployed_hash"
+            echo "Network: $NETWORK"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload deployment summary artifact
+        uses: actions/upload-artifact@v4
         with:
-          script: |
-            const status = '${{ needs.deploy.result }}';
-            const emoji = status === 'success' ? '✅' : '❌';
-            console.log(`${emoji} Staging deployment ${status}`);
-            console.log(`Commit: ${{ github.sha }}`);
-            console.log(`Branch: ${{ github.ref }}`);
-            console.log(`Author: ${{ github.actor }}`);
+          name: staging-deployment-summary
+          path: contracts/deployments.json
+          retention-days: 30

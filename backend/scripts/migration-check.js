@@ -15,6 +15,23 @@ const MIGRATION_FILES = fs.readdirSync(MIGRATIONS_DIR)
   .filter(f => f.endsWith('.js'))
   .sort();
 
+const timestamps = new Map();
+for (const file of MIGRATION_FILES) {
+  const match = /^(\d+)_/.exec(file);
+  if (!match) {
+    console.error(`❌ Migration filename must start with a numeric timestamp: ${file}`);
+    process.exitCode = 1;
+    continue;
+  }
+  const previousFile = timestamps.get(match[1]);
+  if (previousFile) {
+    console.error(`❌ Duplicate migration timestamp ${match[1]}: ${previousFile}, ${file}`);
+    process.exitCode = 1;
+  } else {
+    timestamps.set(match[1], file);
+  }
+}
+
 console.log('🔍 Checking migrations for destructive operations...');
 
 const destructiveMigrations = [];

@@ -31,7 +31,6 @@ describe('BetService.recordBet - ON CONFLICT DO NOTHING idempotency', () => {
     // Should check result.rows.length and SELECT if empty
     expect(source).toContain('if (result.rows.length > 0)');
     expect(source).toContain('SELECT * FROM bets WHERE tx_hash = $1');
-    expect(source).toContain('let bet: any;');
   });
 
   it('only invalidates cache on new insert', async () => {

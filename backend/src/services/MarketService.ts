@@ -11,7 +11,21 @@ import * as cache from './cache.service';
 import * as StellarService from './StellarService';
 import { AppError } from '../utils/AppError';
 import { ERROR_CODES } from '../constants/errorCodes';
+import { requestContext } from '../utils/requestContext';
 import { logger } from '../utils/logger';
+
+// All production adapter queries share the same safe error boundary.
+async function marketQuery(sql: string, values?: unknown[]) {
+  try {
+    return await pool.query(sql, values);
+  } catch (err) {
+    logger.error({ err, requestId: requestContext.getStore()?.requestId }, 'Market database query failed');
+    const code = (err as { code?: string } | null)?.code;
+    if (code === '23505') throw AppError.conflict('Market record already exists', 'DATABASE_UNIQUE_CONFLICT');
+    if (code === '23503' || code === '23P01') throw AppError.conflict('Market operation conflicts with existing records', 'DATABASE_CONSTRAINT_CONFLICT');
+    throw AppError.internalError('Unable to process market query', ERROR_CODES.DATABASE_ERROR);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // DB adapter — thin abstraction so tests can inject a mock
@@ -83,7 +97,7 @@ export const defaultDbAdapter: DbAdapter = {
       filters?.sort === 'pool_desc' ? 'ORDER BY total_pool DESC' :
       'ORDER BY scheduled_at DESC';
 
-    const { rows } = await pool.query(
+    const { rows } = await marketQuery(
       `SELECT m.*, COALESCE(b.bet_count, 0) AS bet_count
        FROM markets m
        LEFT JOIN (
@@ -106,7 +120,7 @@ export const defaultDbAdapter: DbAdapter = {
   },
 
   async findMarketById(market_id: string): Promise<Market | null> {
-    const { rows } = await pool.query(
+    const { rows } = await marketQuery(
       `SELECT m.*, COALESCE(b.bet_count, 0) AS bet_count
        FROM markets m
        LEFT JOIN (
@@ -130,7 +144,7 @@ export const defaultDbAdapter: DbAdapter = {
   },
 
   async findBetsByAddress(bettor_address: string): Promise<Bet[]> {
-    const { rows } = await pool.query(
+    const { rows } = await marketQuery(
       'SELECT * FROM bets WHERE bettor_address = $1 ORDER BY placed_at DESC',
       [bettor_address],
     );
@@ -152,7 +166,7 @@ export const defaultDbAdapter: DbAdapter = {
 
     sql += ' ORDER BY placed_at DESC';
 
-    const { rows } = await pool.query(sql, values);
+    const { rows } = await marketQuery(sql, values);
     return rows.map((row) => ({
       ...row,
       placed_at: new Date(row.placed_at),
@@ -161,7 +175,7 @@ export const defaultDbAdapter: DbAdapter = {
   },
 
   async updateMarketStatus(market_id: string, status: string): Promise<void> {
-    await pool.query(
+    await marketQuery(
       'UPDATE markets SET status = $1, updated_at = NOW() WHERE market_id = $2',
       [status, market_id],
     );
@@ -351,7 +365,7 @@ export async function getMarkets(
     const offset = (page - 1) * limit;
 
     try {
-      const rows = await pool.query(
+      const rows = await marketQuery(
         `SELECT m.*, COALESCE(b.bet_count, 0) AS bet_count
          FROM markets m
          LEFT JOIN (
@@ -363,7 +377,7 @@ export async function getMarkets(
         [...values, limit, offset],
       );
 
-      const countRows = await pool.query(
+      const countRows = await marketQuery(
         `SELECT COUNT(*) AS total FROM markets ${whereSql}`,
         values,
       );
@@ -467,8 +481,6 @@ export async function getMarketOdds(market_id: string): Promise<MarketOdds> {
     return { odds_a: EQUAL_PROBABILITY_BPS, odds_b: EQUAL_PROBABILITY_BPS, odds_draw: EQUAL_PROBABILITY_BPS };
   }
 
-  const fee = (total_pool * BigInt(market.fee_bps)) / 10000n;
-  const net_pool = total_pool - fee;
 
   return {
     odds_a: pool_a === 0n ? 0 : Number((pool_a * 10000n) / total_pool),
@@ -597,7 +609,7 @@ export async function getBetsByAddress(bettor_address: string): Promise<Bet[]> {
   }
 
   try {
-    const { rows } = await pool.query(
+    const { rows } = await marketQuery(
       'SELECT * FROM bets WHERE bettor_address = $1 ORDER BY placed_at DESC',
       [bettor_address],
     );
@@ -674,7 +686,7 @@ export async function getBetsByMarket(
   sql += ' ORDER BY placed_at DESC';
 
   try {
-    const { rows } = await pool.query(sql, values);
+    const { rows } = await marketQuery(sql, values);
     return rows.map((row) => ({
       ...row,
       placed_at: new Date(row.placed_at),
@@ -854,14 +866,16 @@ export async function getPlatformStats(): Promise<PlatformStats> {
     return stats;
   }
 
-  const marketsResult = await pool.query(
+  const marketsResult = await marketQuery(
     "SELECT COUNT(*) as total, SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) as active, SUM(total_pool) as volume FROM markets"
   ).catch((err) => {
+    if (err instanceof AppError) throw err;
     logger.error({ err }, 'MarketService.getPlatformStats: markets query failed');
     throw AppError.internalError('Failed to retrieve platform statistics', ERROR_CODES.DATABASE_ERROR);
   });
 
-  const betsResult = await pool.query('SELECT COUNT(*) as total FROM bets').catch((err) => {
+  const betsResult = await marketQuery('SELECT COUNT(*) as total FROM bets').catch((err) => {
+    if (err instanceof AppError) throw err;
     logger.error({ err }, 'MarketService.getPlatformStats: bets query failed');
     throw AppError.internalError('Failed to retrieve platform statistics', ERROR_CODES.DATABASE_ERROR);
   });
@@ -904,7 +918,7 @@ export async function bulkPauseMarkets(marketIds: string[]): Promise<BulkResult>
         continue;
       }
       validateStatusTransition(market.status, 'locked');
-      const { rows } = await pool.query(
+      const { rows } = await marketQuery(
         `UPDATE markets SET status = 'locked', updated_at = NOW()
          WHERE market_id = $1 AND status = 'open'
          RETURNING market_id`,
@@ -936,13 +950,13 @@ export async function bulkPauseMarkets(marketIds: string[]): Promise<BulkResult>
  */
 export async function bulkCancelMarkets(
   marketIds: string[],
-  reason: string,
+  _reason: string,
 ): Promise<BulkResult> {
   const result: BulkResult = { succeeded: [], failed: [] };
 
   for (const id of marketIds) {
     try {
-      const { rows } = await pool.query(
+      const { rows } = await marketQuery(
         `UPDATE markets SET status = 'cancelled', updated_at = NOW()
          WHERE market_id = $1 AND status IN ('open', 'locked')
          RETURNING market_id`,
@@ -956,7 +970,7 @@ export async function bulkCancelMarkets(
       await invalidateMarketCache(id);
 
       // Enqueue notifications for all position holders
-      const bettors = await pool.query(
+      const bettors = await marketQuery(
         `SELECT DISTINCT bettor_address FROM bets WHERE market_id = $1`,
         [id],
       );
@@ -965,7 +979,7 @@ export async function bulkCancelMarkets(
           .map((_: unknown, i: number) => `($${i * 4 + 1}, $${i * 4 + 2}, 'market_cancelled', 'pending', NOW())`)
           .join(', ');
         const params = bettors.rows.flatMap((r: { bettor_address: string }) => [r.bettor_address, id]);
-        await pool.query(
+        await marketQuery(
           `INSERT INTO notification_jobs (bettor_address, market_id, job_type, status, created_at) VALUES ${values}`,
           params,
         );

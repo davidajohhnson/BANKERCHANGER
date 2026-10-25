@@ -44,7 +44,7 @@ const { pool } = require('../../src/config/db');
 
 describe('API Module Group 15: Leaderboards & Tournaments Endpoints', () => {
   const userSecret = 'test-user-secret-key-32-chars-long!';
-  const adminSecret = 'test-admin-secret-key-32-chars-long!';
+  const adminSecret = 'test-user-secret-key-32-chars-long!';
 
   const validUserToken = jwt.sign(
     { sub: 'usr_123', type: 'access', sv: 1 },
@@ -95,7 +95,7 @@ describe('API Module Group 15: Leaderboards & Tournaments Endpoints', () => {
       const res = await request(app).get('/api/v2/leaderboards/global?period=invalid_period');
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
 
     it('rejects invalid limit exceeding 100 with 422', async () => {

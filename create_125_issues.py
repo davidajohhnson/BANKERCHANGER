@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Script to create labels and push 125 comprehensive issues to doradenise-jpg/BANKERCHANGER GitHub repository.
-Covers all repository components: Smart Contracts, Backend API, Database, Indexer, Frontend, and DevOps/CI.
-Note: 'Stellar Wave' label is intentionally omitted to avoid automated Drips Wave point assignment.
+Script to create labels and push 125 comprehensive, high-quality issues to
+doradenise-jpg/BANKERCHANGER GitHub repository.
+Supports execution via `gh` CLI or directly using a GitHub Personal Access Token (GH_TOKEN).
+Also exports issues to ISSUES_125.md and issues_125.json.
 """
 
 import os
@@ -15,1328 +16,1307 @@ REPO = "doradenise-jpg/BANKERCHANGER"
 
 # Comprehensive labels required for the 125 issues
 LABELS = [
-    {"name": "bug", "color": "ee0701", "description": "Bug fix"},
-    {"name": "enhancement", "color": "a2eeef", "description": "New feature or request"},
-    {"name": "security", "color": "ee0701", "description": "Security-critical"},
-    {"name": "testing", "color": "0075ca", "description": "Test coverage"},
-    {"name": "devops", "color": "fbca04", "description": "Docker, CI/CD, and deployment"},
-    {"name": "contracts", "color": "0e8a16", "description": "Soroban smart contracts layer"},
-    {"name": "backend", "color": "0075ca", "description": "Backend / API work"},
-    {"name": "frontend", "color": "1d76db", "description": "Frontend Next.js application"},
-    {"name": "indexer", "color": "5319e7", "description": "Blockchain event indexer"},
-    {"name": "database", "color": "bfd4f2", "description": "Database schema and migrations"},
-    {"name": "oracle", "color": "5319e7", "description": "Oracle integration"},
-    {"name": "markets", "color": "e4e669", "description": "Market discovery and lifecycle"},
-    {"name": "trading", "color": "f9d0c4", "description": "Trading, betting, and AMM pools"},
-    {"name": "wallet", "color": "006b75", "description": "Wallet & balance management"},
-    {"name": "treasury", "color": "0e8a16", "description": "Treasury operations"},
-    {"name": "auth", "color": "ee0701", "description": "Authentication & authorization"},
-    {"name": "disputes", "color": "b60205", "description": "Dispute resolution"},
-    {"name": "notifications", "color": "fbca04", "description": "Notification system"},
-    {"name": "leaderboard", "color": "1d76db", "description": "Leaderboard & rankings"},
-    {"name": "users", "color": "bfd4f2", "description": "User profile & management"},
-    {"name": "referrals", "color": "d93f0b", "description": "Referral system"},
-    {"name": "achievements", "color": "0075ca", "description": "Achievement & reward system"},
-    {"name": "websocket", "color": "5319e7", "description": "Real-time WebSocket layer"},
-    {"name": "middleware", "color": "e4e669", "description": "Express middleware"},
-    {"name": "blockchain", "color": "0e8a16", "description": "Stellar / Soroban blockchain layer"},
-    {"name": "cron", "color": "fbca04", "description": "Scheduled / background jobs"},
-    {"name": "repository", "color": "bfd4f2", "description": "Data access layer"},
-    {"name": "performance", "color": "d4c5f9", "description": "Performance and optimization"},
-    {"name": "observability", "color": "0052cc", "description": "Logging and metrics"},
-    {"name": "reliability", "color": "c2e0c6", "description": "Fault tolerance and resilience"},
-    {"name": "refactor", "color": "d4c5f9", "description": "Code cleanup and refactoring"},
-    {"name": "critical", "color": "b60205", "description": "Critical blocker"},
-    {"name": "ux", "color": "fef2c0", "description": "User experience"},
-    {"name": "accessibility", "color": "0075ca", "description": "A11y improvements"},
-    {"name": "seo", "color": "bfdadc", "description": "Search engine optimization"},
-    {"name": "ci-cd", "color": "fbca04", "description": "Continuous integration & deployment"},
-    {"name": "tech-debt", "color": "e99695", "description": "Technical debt resolution"},
-    {"name": "devex", "color": "7057ff", "description": "Developer experience"},
-    {"name": "docs", "color": "0075ca", "description": "Documentation"},
-    {"name": "portfolio", "color": "006b75", "description": "User portfolio management"},
-    {"name": "hooks", "color": "1d76db", "description": "React custom hooks"},
-    {"name": "architecture", "color": "5319e7", "description": "System architecture"}
+    {
+        "name": "backend",
+        "color": "0075ca",
+        "description": "Backend / API work"
+    },
+    {
+        "name": "auth",
+        "color": "ee0701",
+        "description": "Authentication & authorisation"
+    },
+    {
+        "name": "markets",
+        "color": "e4e669",
+        "description": "Market management"
+    },
+    {
+        "name": "trading",
+        "color": "f9d0c4",
+        "description": "Trading & share operations"
+    },
+    {
+        "name": "predictions",
+        "color": "a2eeef",
+        "description": "Prediction placement & settlement"
+    },
+    {
+        "name": "disputes",
+        "color": "b60205",
+        "description": "Dispute resolution"
+    },
+    {
+        "name": "oracle",
+        "color": "5319e7",
+        "description": "Oracle integration"
+    },
+    {
+        "name": "wallet",
+        "color": "006b75",
+        "description": "Wallet & balance management"
+    },
+    {
+        "name": "treasury",
+        "color": "0e8a16",
+        "description": "Treasury operations"
+    },
+    {
+        "name": "notifications",
+        "color": "fbca04",
+        "description": "Notification system"
+    },
+    {
+        "name": "leaderboard",
+        "color": "1d76db",
+        "description": "Leaderboard & rankings"
+    },
+    {
+        "name": "users",
+        "color": "bfd4f2",
+        "description": "User profile & management"
+    },
+    {
+        "name": "referrals",
+        "color": "d93f0b",
+        "description": "Referral system"
+    },
+    {
+        "name": "achievements",
+        "color": "0075ca",
+        "description": "Achievement & reward system"
+    },
+    {
+        "name": "websocket",
+        "color": "5319e7",
+        "description": "Real-time WebSocket layer"
+    },
+    {
+        "name": "middleware",
+        "color": "e4e669",
+        "description": "Express middleware"
+    },
+    {
+        "name": "blockchain",
+        "color": "0e8a16",
+        "description": "Stellar / Soroban blockchain layer"
+    },
+    {
+        "name": "cron",
+        "color": "fbca04",
+        "description": "Scheduled / background jobs"
+    },
+    {
+        "name": "repository",
+        "color": "bfd4f2",
+        "description": "Data access layer"
+    },
+    {
+        "name": "feature",
+        "color": "a2eeef",
+        "description": "New functionality"
+    },
+    {
+        "name": "bug",
+        "color": "ee0701",
+        "description": "Bug fix"
+    },
+    {
+        "name": "security",
+        "color": "ee0701",
+        "description": "Security-critical"
+    },
+    {
+        "name": "testing",
+        "color": "0075ca",
+        "description": "Test coverage"
+    },
+    {
+        "name": "good first issue",
+        "color": "7057ff",
+        "description": "Suitable for newcomers"
+    }
 ]
 
 ISSUES = [
     {
-        "num": 1,
-        "title": "#1 \u2014 contracts/Cargo.toml Includes shared/fuzz in Default Workspace Causing Build Failures",
-        "body": "**Labels:** `bug` `contracts` `devops`\n\n## Description\n`contracts/Cargo.toml` lists `shared/fuzz` inside `[workspace] members`. Because `shared/fuzz` depends on `libfuzzer-sys`, running standard cargo workspace commands like `cargo test --all` or `cargo check --workspace` fails on systems without cargo-fuzz installed or without a nightly sanitizer toolchain. The fuzz crate should either be excluded from the default members or placed behind a dedicated workspace profile.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Exclude `shared/fuzz` from the default `members` list in `contracts/Cargo.toml` or configure `default-members`\n- [ ] Ensure `cargo check --workspace` and `cargo test --workspace` pass out of the box on stable Rust\n- [ ] Update `.github/workflows/contracts-ci.yml` fuzz job to explicitly pass `--manifest-path shared/fuzz/Cargo.toml`\n- [ ] Document fuzz testing invocation instructions in `contracts/README.md`",
+        "title": "[Contracts] Fix #[contracterror] macro LengthExceedsMax panic in shared/src/errors.rs",
+        "body": "### Context & Problem\nSoroban SDK's `#[contracterror]` macro panics with `called Result::unwrap() on an Err value: LengthExceedsMax` in `contracts/shared/src/errors.rs`. This completely breaks compilation of `boxmeout-shared` and dependent contracts.\n\n### Proposed Solution\n1. Inspect variant identifiers and string lengths in `contracts/shared/src/errors.rs`.\n2. Consolidate error variants or group error domains (auth, market, treasury, math) to satisfy Soroban SDK macro constraints.\n3. Ensure no discriminant exceeds `u32` limits and variant names are concise.\n\n### Acceptance Criteria\n- `cargo check --manifest-path contracts/Cargo.toml` compiles successfully without macro panics.\n- Error codes remain uniquely mapped and documented.",
         "labels": [
-            "bug",
-            "contracts",
-            "devops"
-        ]
-    },
-    {
-        "num": 2,
-        "title": "#2 \u2014 Market Contract Integration Tests Lack TreasuryClient Dependency Feature Flag",
-        "body": "**Labels:** `bug` `contracts` `testing`\n\n## Description\nIn `contracts/market/Cargo.toml`, `boxmeout-treasury = { path = \"../treasury\" }` is declared under `[dev-dependencies]` without `features = [\"testutils\"]`. During integration tests in `contracts/market/tests/integration_tests.rs`, attempting to instantiate or interact with `TreasuryClient` fails to compile because client code generation requires the `testutils` feature.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Add `features = [\"testutils\"]` to `boxmeout-treasury` dev-dependency in `contracts/market/Cargo.toml`\n- [ ] Verify `cargo test -p boxmeout-market --test integration_tests` compiles and runs successfully\n- [ ] Add a cross-contract test verifying market fee deposits into treasury contract mock\n- [ ] Ensure no circular feature dependency warnings between market and treasury crates",
-        "labels": [
-            "bug",
-            "contracts",
-            "testing"
-        ]
-    },
-    {
-        "num": 3,
-        "title": "#3 \u2014 Market Factory Does Not Clean Up Storage Upon Emergency Market Cancellation",
-        "body": "**Labels:** `enhancement` `contracts` `markets`\n\n## Description\nWhen an admin or emergency guardian cancels a market in `contracts/market_factory/src/lib.rs`, the factory contract marks the market status as cancelled but leaves its address in `OPEN_MARKETS` set and persistent storage without state pruning. As a result, indexers and frontend discovery endpoints continue to query the cancelled market contract as if active.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Implement `remove_open_market` helper in `MarketFactory` to remove cancelled market from active storage set\n- [ ] Emit `MarketCancelled(market_id, reason)` contract event with cancellation timestamp\n- [ ] Add test case in `contracts/market_factory` verifying cancelled market is excluded from active markets query\n- [ ] Verify storage rent overhead is minimized after cancellation",
-        "labels": [
-            "enhancement",
-            "contracts",
-            "markets"
-        ]
-    },
-    {
-        "num": 4,
-        "title": "#4 \u2014 Market Contract State Rent Extension Not Invoked During Claim Window",
-        "body": "**Labels:** `bug` `contracts` `blockchain`\n\n## Description\nIn `contracts/market/src/lib.rs`, the constant `CLAIM_WINDOW_LEDGERS = 2_000_000` is defined for extending state rent for winning position holders, but the `claim_winnings` execution path fails to call `env.storage().persistent().extend_ttl()` on the bettor's balance entry before verifying claims. On long-running markets, persistent storage records risk archival before late claimants redeem their payouts.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Invoke `extend_ttl` on persistent storage keys for `BET_PREFIX` and `STATE` in `claim_winnings` and `place_bet`\n- [ ] Ensure TTL is extended to at least `CLAIM_WINDOW_LEDGERS` when a market resolves\n- [ ] Add integration test simulating ledger threshold progression to verify TTL extension behavior\n- [ ] Audit all persistent storage keys in `market/src/lib.rs` for proper TTL extension coverage",
-        "labels": [
-            "bug",
-            "contracts",
-            "blockchain"
-        ]
-    },
-    {
-        "num": 5,
-        "title": "#5 \u2014 Shared AMM Integer Division Truncation in calculate_buy_amount Under Asymmetric Pools",
-        "body": "**Labels:** `bug` `contracts` `trading`\n\n## Description\nIn `contracts/shared/src/amm.rs`, `calculate_buy_amount` calculates returned shares using integer division. When liquidity pools are heavily unbalanced (e.g. 100:1 ratio between fighter A and fighter B), small bet amounts truncate down to zero shares due to intermediate division before scale multiplication. Users lose their deposited stroops without receiving any pool shares.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Reorder arithmetic operations to multiply by precision factor (10^7) before division in `calculate_buy_amount`\n- [ ] Add guard returning `Err(ContractError::ZeroSharesAllocated)` if calculated share count is zero\n- [ ] Add property-based test with `proptest` testing asymmetric pool ratios from 1:1 up to 1000:1\n- [ ] Verify all existing AMM unit tests continue to pass with zero precision regression",
-        "labels": [
-            "bug",
-            "contracts",
-            "trading"
-        ]
-    },
-    {
-        "num": 6,
-        "title": "#6 \u2014 Market Factory Allows Non-Admin Caller to Trigger WASM Hash Replacement Under Race Condition",
-        "body": "**Labels:** `security` `contracts` `blockchain`\n\n## Description\nIn `contracts/market_factory/src/lib.rs`, the function updating `MARKET_WASM_HASH` checks `require_admin`, but the check occurs after reading existing hash from storage rather than as the immediate first statement. In addition, missing reentrancy protection on administrative calls creates potential upgrade vulnerabilities under concurrent execution.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Enforce `caller.require_auth()` and `require_admin` at the very beginning of `set_market_wasm_hash`\n- [ ] Validate that the provided `new_wasm_hash` is 32 bytes and non-zero\n- [ ] Emit `MarketWasmHashUpdated(old_hash, new_hash, admin)` audit event\n- [ ] Add test verifying non-admin address gets `ContractError::NotAdmin` and state remains unchanged",
-        "labels": [
-            "security",
-            "contracts",
-            "blockchain"
-        ]
-    },
-    {
-        "num": 7,
-        "title": "#7 \u2014 Treasury Daily Withdrawal Counter Does Not Prune Obsolete Daily Buckets",
-        "body": "**Labels:** `bug` `contracts` `treasury`\n\n## Description\nIn `contracts/treasury/src/lib.rs`, `record_token_withdrawal` collects expired day bucket keys into a `stale: Vec<u64>` vector (lines 117-120), but the vector is never iterated over to actually delete the stale keys from the persistent map `daily`. Over months of operation, obsolete ledger days accumulate indefinitely in contract storage.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Iterate through `stale` keys and call `daily.remove(k)` to delete expired day buckets from persistent storage\n- [ ] Cap the maximum stale keys pruned per transaction to avoid hitting CPU instruction limits\n- [ ] Write a unit test simulating 10 consecutive daily withdrawals and verify only active buckets are retained\n- [ ] Verify gas consumption remains constant over time",
-        "labels": [
-            "bug",
-            "contracts",
-            "treasury"
-        ]
-    },
-    {
-        "num": 8,
-        "title": "#8 \u2014 Market Contract Dispute Cooldown Ledger Calculation Uses Inconsistent Block Time Assumption",
-        "body": "**Labels:** `bug` `contracts` `disputes`\n\n## Description\nIn `contracts/market/src/lib.rs`, `DEFAULT_DISPUTE_COOLDOWN_LEDGERS` is hardcoded to 720 ledgers based on an assumption of exactly 5 seconds per ledger (1 hour). On Stellar network fluctuations where ledger close times range between 3.5s and 6s, the dispute window can expire prematurely or remain open too long. The cooldown should use timestamp-based comparison or allow factory configuration.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Support configuring dispute cooldown in seconds alongside ledger counts in `MarketConfig`\n- [ ] Verify cooldown expiration against `env.ledger().timestamp()` in addition to ledger sequence\n- [ ] Add test verifying dispute window remains locked until both time and ledger requirements are met\n- [ ] Document dispute timing rules in `docs/architecture.md`",
-        "labels": [
-            "bug",
-            "contracts",
-            "disputes"
-        ]
-    },
-    {
-        "num": 9,
-        "title": "#9 \u2014 Market Contract Claim Winnings Lacks Idempotency Check When Shares Equal Zero",
-        "body": "**Labels:** `enhancement` `contracts` `trading`\n\n## Description\nIn `contracts/market/src/lib.rs`, calling `claim_winnings` for an account that already claimed or never held winning shares iterates through position records and invokes token transfer with an amount of 0 stroops. This emits empty transfer events and wastes transaction fees.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Check total calculated payout before token transfer; return `Err(ContractError::NoWinningsToClaim)` if zero\n- [ ] Ensure bets are marked as claimed in storage before external token transfer (CEI pattern)\n- [ ] Emit `WinningsClaimed(bettor, market_id, payout)` event only on positive payout\n- [ ] Add unit test verifying zero-balance claim reverts cleanly",
-        "labels": [
-            "enhancement",
-            "contracts",
-            "trading"
-        ]
-    },
-    {
-        "num": 10,
-        "title": "#10 \u2014 Shared Event Parser Fails on Missing Optional Outcome in Oracle Consensus Event",
-        "body": "**Labels:** `bug` `contracts` `oracle`\n\n## Description\nIn `contracts/shared/src/event_parser.rs`, parsing `MarketResolved` events unwrap the `winning_outcome` directly without handling `OptionalOutcome::None`. In scenarios where a match is declared a No-Contest or Cancelled without a winner, the parser panics, preventing downstream indexers and contracts from processing resolution data.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Handle `OptionalOutcome::None` and `Outcome::NoContest` cleanly in `event_parser.rs`\n- [ ] Return a structured `ParsedResolution` enum representing all valid terminal match states\n- [ ] Add test vectors covering FighterA, FighterB, Draw, NoContest, and Void states\n- [ ] Ensure zero unwrap panics across the event parser module",
-        "labels": [
-            "bug",
-            "contracts",
-            "oracle"
-        ]
-    },
-    {
-        "num": 11,
-        "title": "#11 \u2014 Treasury Fee Lock Does Not Revert When Cross-Contract Transfer Panics",
-        "body": "**Labels:** `security` `contracts` `treasury`\n\n## Description\nIn `contracts/treasury/src/lib.rs`, `acquire_fee_lock` sets `FEE_LOCK = true` in storage. If the token contract transfer reverts or runs out of gas mid-execution, the persistent lock flag might not be cleared if trapped, causing subsequent legitimate treasury withdrawals to fail with `ContractError::ReentrancyGuard`.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Utilize Soroban's transient storage or ensure state rollback on cross-contract call failure\n- [ ] Add an emergency admin unlock function `force_release_fee_lock` protected by timelock and admin auth\n- [ ] Write a test triggering a simulated token contract failure and verify reentrancy lock state\n- [ ] Add audit logging in `AUDIT_LOG` whenever fee lock state is forcibly cleared",
-        "labels": [
-            "security",
-            "contracts",
-            "treasury"
-        ]
-    },
-    {
-        "num": 12,
-        "title": "#12 \u2014 Market Factory get_markets Pagination Does Not Cap Upper Limit Resulting in Gas Exhaustion",
-        "body": "**Labels:** `bug` `contracts` `performance`\n\n## Description\nIn `contracts/market_factory/src/lib.rs`, the `list_markets` query function accepts `offset` and `limit` parameters but does not enforce a maximum ceiling on `limit`. Calling with `limit = 1000` causes cross-contract calls to each market contract within the loop, exceeding Soroban's CPU instruction and memory budget.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Enforce `MAX_PAGE_LIMIT = 50` on `limit` argument in `list_markets`\n- [ ] Default `limit` to 20 if zero or negative is provided\n- [ ] Return pagination metadata `{ total, offset, limit }` alongside market vector\n- [ ] Add test verifying `limit > 50` is automatically clamped to 50 without error",
-        "labels": [
-            "bug",
-            "contracts",
-            "performance"
-        ]
-    },
-    {
-        "num": 13,
-        "title": "#13 \u2014 Market Contract Disallow Draw Outcome Edge Case When Bets Placed on Draw",
-        "body": "**Labels:** `bug` `contracts` `markets`\n\n## Description\nIn `contracts/market/src/lib.rs`, the `ALLOW_DRAW` storage setting determines whether a draw outcome can be selected. If an admin initializes a market with draw enabled and bettors deposit funds into the draw pool, but an administrative update toggles `ALLOW_DRAW` to false, draw pool funds become permanently locked upon resolution.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Disallow modifying `ALLOW_DRAW` once any bets have been placed in the market\n- [ ] In resolution logic, if draw was disabled but outcome is draw, automatically trigger market refund\n- [ ] Add test case verifying `toggle_allow_draw` fails with `ContractError::BetsAlreadyPlaced` if pool > 0\n- [ ] Verify all pool balances can be claimed or refunded under draw resolution",
-        "labels": [
-            "bug",
-            "contracts",
-            "markets"
-        ]
-    },
-    {
-        "num": 14,
-        "title": "#14 \u2014 Market Factory Duplicate Fighter Name Validation Allows Leading/Trailing Whitespace Bypass",
-        "body": "**Labels:** `bug` `contracts` `markets`\n\n## Description\nIn `contracts/market_factory/src/lib.rs`, the validation preventing identical fighter names (`fighter_a == fighter_b`) does not normalize or trim whitespace. A creator can pass `\"Canelo \"` and `\"Canelo\"`, bypassing validation and creating a broken market where both sides represent the same fighter.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Trim and normalize whitespace on fighter names before comparison\n- [ ] Reject names with length less than 2 characters after trimming\n- [ ] Add test verifying creation fails when names differ only by leading/trailing whitespace\n- [ ] Return `ContractError::InvalidFighterNames` on duplicate names",
-        "labels": [
-            "bug",
-            "contracts",
-            "markets"
-        ]
-    },
-    {
-        "num": 15,
-        "title": "#15 \u2014 Treasury Fee Distribution Splits Do Not Validate Sum Equals 10000 BPS",
-        "body": "**Labels:** `bug` `contracts` `treasury`\n\n## Description\nIn `contracts/treasury/src/lib.rs`, `set_fee_tiers` receives a list of `FeeTier` records with basis points allocation. The contract does not validate that the sum of split basis points equals exactly 10,000 (100%). If configured with >10,000 bps, fee distribution over-distributes funds, draining treasury reserves.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Add validation in `set_fee_tiers` ensuring sum of `bps` equals exactly 10,000\n- [ ] Reject configurations with duplicate recipient addresses in the same tier list\n- [ ] Add test verifying configuration with 10,001 bps reverts with `ContractError::InvalidFeeSplit`\n- [ ] Add test verifying valid 10,000 bps configuration applies cleanly",
-        "labels": [
-            "bug",
-            "contracts",
-            "treasury"
-        ]
-    },
-    {
-        "num": 16,
-        "title": "#16 \u2014 Shared Types Lack Serialization Attributes for Contract Client Integration Tests",
-        "body": "**Labels:** `bug` `contracts` `testing`\n\n## Description\nIn `contracts/shared/src/types.rs`, several structs and enums like `FightDetails` and `MarketConfig` are missing `#[derive(serde::Serialize, serde::Deserialize)]` or `#[cfg_attr(test, derive(Debug, PartialEq))]`. When writing external Rust integration tests with `soroban-sdk::Env`, asserting equality on these types requires manual field-by-field matching.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Add `#[derive(Clone, Debug, Eq, PartialEq)]` to all shared structs and enums in `types.rs`\n- [ ] Ensure no std dependencies are introduced into no_std release wasm builds\n- [ ] Verify all test files can use `assert_eq!` directly on shared types\n- [ ] Ensure wasm binary sizes remain unchanged after adding test derivations",
-        "labels": [
-            "bug",
-            "contracts",
-            "testing"
-        ]
-    },
-    {
-        "num": 17,
-        "title": "#17 \u2014 Market Contract Expiry Grace Period Calculation Allows Premature Refund Requests",
-        "body": "**Labels:** `bug` `contracts` `markets`\n\n## Description\nIn `contracts/market/src/lib.rs`, `refund_expired` compares `env.ledger().timestamp()` against `fight.scheduled_at + EXPIRY_GRACE_PERIOD`. However, if the fight was locked by admin but not yet resolved, the function does not check whether oracle resolution is actively pending in cooldown, enabling users to cancel an in-flight fight result.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Check that market status is not `ResolutionPending` before executing `refund_expired`\n- [ ] Ensure `refund_expired` only triggers if status is `Open` or `Locked` past the grace period\n- [ ] Emit `MarketExpiredRefunded(market_id, total_refunded)` event upon successful execution\n- [ ] Add test verifying refund is blocked when oracle consensus report is under dispute cooldown",
-        "labels": [
-            "bug",
-            "contracts",
-            "markets"
-        ]
-    },
-    {
-        "num": 18,
-        "title": "#18 \u2014 Market Contract Seed Liquidity Deposit Does Not Check Caller Token Balance Before Reserve Transfer",
-        "body": "**Labels:** `bug` `contracts` `trading`\n\n## Description\nIn `contracts/market/src/lib.rs`, when `initialize` or `deposit_seed_liquidity` is called, the contract initiates a token transfer from caller to market contract without verifying that caller balance is at least `MIN_SEED_LIQUIDITY` (10 XLM in stroops). If balance is insufficient, the transaction fails with opaque token error rather than informative `ContractError`.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Query token client balance of creator before initiating seed transfer\n- [ ] Return `ContractError::InsufficientSeedLiquidity` if balance is below required minimum\n- [ ] Add test case testing market creation with zero token balance\n- [ ] Verify clear error message is returned in test environment",
-        "labels": [
-            "bug",
-            "contracts",
-            "trading"
-        ]
-    },
-    {
-        "num": 19,
-        "title": "#19 \u2014 Market Factory Missing Event Emission on Admin Timelock Update",
-        "body": "**Labels:** `enhancement` `contracts` `observability`\n\n## Description\nIn `contracts/market_factory/src/lib.rs`, functions `set_admin_timelock` and `propose_admin` update sensitive governance parameters in persistent storage without emitting structured Soroban contract events. Indexers and audit systems cannot detect administrative parameter updates without polling full storage.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Emit `AdminTimelockUpdated(old_timelock, new_timelock)` event in `set_admin_timelock`\n- [ ] Emit `AdminTransferProposed(current_admin, pending_admin, unlock_time)` event in `propose_admin`\n- [ ] Emit `AdminTransferAccepted(old_admin, new_admin)` event in `accept_admin`\n- [ ] Add tests verifying event topics and payloads match indexer expectations",
-        "labels": [
-            "enhancement",
-            "contracts",
-            "observability"
-        ]
-    },
-    {
-        "num": 20,
-        "title": "#20 \u2014 Treasury Contract Minimum Reserve Check Allows Partial Drain Under High Concurrency",
-        "body": "**Labels:** `security` `contracts` `treasury`\n\n## Description\nIn `contracts/treasury/src/lib.rs`, the minimum reserve enforcement (`DEFAULT_MINIMUM_RESERVE = 100 XLM`) calculates available balance as `token_balance - amount`. In concurrent transactions, balance reading before state update can allow two parallel withdrawals to both pass validation, leaving treasury balance below the reserve floor.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Enforce atomic check-and-subtract on reserved treasury balances\n- [ ] Strictly check `current_balance - amount >= MINIMUM_RESERVE` with reentrancy fee lock held\n- [ ] Return `ContractError::ReserveFloorBreached` if post-withdrawal balance drops below floor\n- [ ] Add concurrent simulation test verifying reserve floor is never breached",
-        "labels": [
-            "security",
-            "contracts",
-            "treasury"
-        ]
-    },
-    {
-        "num": 21,
-        "title": "#21 \u2014 Shared Math Safe Multiply-Divide Overflow Check Skips 256-bit Intermediate Precision",
-        "body": "**Labels:** `bug` `contracts` `trading`\n\n## Description\nIn `contracts/shared/src/math.rs`, `mul_div` computes `(a * b) / c` using standard 128-bit integers. When total betting volume exceeds 18 million XLM (in stroops: 1.8e14), `a * b` exceeds `i128::MAX` (1.7e38) during fee exponentiation, causing contract panic. Using 256-bit intermediate integers prevents unexpected integer overflows.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Implement safe 256-bit intermediate multiplication using `U256` or double-word arithmetic in `mul_div`\n- [ ] Return `ContractError::MathOverflow` instead of panicking on values exceeding max bounds\n- [ ] Add unit tests with inputs near `i128::MAX` to verify overflow safety\n- [ ] Benchmark gas cost impact to verify zero performance degradation",
-        "labels": [
-            "bug",
-            "contracts",
-            "trading"
-        ]
-    },
-    {
-        "num": 22,
-        "title": "#22 \u2014 Market Contract Oracle Report TTL Expiration Does Not Clean Up Stale Pending Reports",
-        "body": "**Labels:** `enhancement` `contracts` `oracle`\n\n## Description\nIn `contracts/market/src/lib.rs`, `PENDING_REPORTS` stores oracle submissions under `REPORT_TTL = 172_800` (48 hours). If oracles submit divergent reports that never reach the 2-of-3 consensus threshold, stale reports remain indefinitely in the map, accumulating storage rent fees.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Implement `prune_stale_reports(env)` to purge reports older than `REPORT_TTL`\n- [ ] Call pruning during subsequent `submit_oracle_report` invocations\n- [ ] Add test verifying report submitted 49 hours ago is ignored and removed\n- [ ] Verify clean consensus detection when fresh reports are submitted after expiry",
-        "labels": [
-            "enhancement",
-            "contracts",
-            "oracle"
-        ]
-    },
-    {
-        "num": 23,
-        "title": "#23 \u2014 Market Factory Admin Transfer Allows Indefinite Pending State Without Expiration Enforcement",
-        "body": "**Labels:** `bug` `contracts` `security`\n\n## Description\nIn `contracts/market_factory/src/lib.rs`, constant `PENDING_ADMIN_TTL_SECS = 604_800` (7 days) is declared, but `accept_admin` checks only `PENDING_ADMIN_UNLOCK` without asserting that `env.ledger().timestamp() <= PENDING_ADMIN_EXPIRY`. A proposed admin can accept ownership months after proposal without renewal.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Assert `env.ledger().timestamp() <= pending_expiry` in `accept_admin`\n- [ ] Return `ContractError::AdminTransferExpired` if 7-day acceptance window has lapsed\n- [ ] Allow current admin to cancel pending transfer via `cancel_admin_proposal`\n- [ ] Add tests covering expired acceptance, valid acceptance, and admin cancellation",
-        "labels": [
-            "bug",
-            "contracts",
-            "security"
-        ]
-    },
-    {
-        "num": 24,
-        "title": "#24 \u2014 Deploy Script deploy.sh References Deprecated Soroban CLI Commands and Syntax",
-        "body": "**Labels:** `devops` `contracts` `ci-cd`\n\n## Description\n`contracts/scripts/deploy.sh` uses old `soroban` CLI binary syntax (e.g. `soroban contract deploy`) rather than the standardized `stellar` CLI syntax (e.g. `stellar contract deploy`). Developers following local setup instructions encounter command not found errors on up-to-date toolchains.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Update `deploy.sh` to use `stellar contract deploy` and `stellar contract invoke`\n- [ ] Add fallback detection for environments with `soroban` alias\n- [ ] Add `--network testnet` flag support with configurable RPC URL and secret key arguments\n- [ ] Add automated test script `contracts/scripts/test-deploy.sh` to validate CLI script syntax",
-        "labels": [
-            "devops",
-            "contracts",
-            "ci-cd"
-        ]
-    },
-    {
-        "num": 25,
-        "title": "#25 \u2014 Contracts CI Workflow Disables Integration Test Suite Execution",
-        "body": "**Labels:** `bug` `contracts` `ci-cd` `testing`\n\n## Description\nIn `.github/workflows/contracts-ci.yml`, lines 49-53 comment out `# cargo test --all --all-features` with note `# Tests disabled - test structure refactoring in progress`. Pull requests modifying smart contract code are merged without any automated Rust unit or integration test validation.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Uncomment and restore `cargo test --all --all-features` in `.github/workflows/contracts-ci.yml`\n- [ ] Fix all failing tests or feature flags preventing workspace test execution\n- [ ] Ensure contract tests run on pull requests touching `contracts/**`\n- [ ] Verify CI test run completes in under 5 minutes",
-        "labels": [
-            "bug",
-            "contracts",
-            "ci-cd",
-            "testing"
-        ]
-    },
-    {
-        "num": 26,
-        "title": "#26 \u2014 backend/src/index.ts Uses Unimported requireAdminJwt Middleware Causing Runtime Crash",
-        "body": "**Labels:** `bug` `backend` `auth` `critical`\n\n## Description\nIn `backend/src/index.ts`, route `app.get(\"/health/detailed\", requireAdminJwt, ...)` references `requireAdminJwt` on line 96 without importing it from `backend/src/middleware/requireAdminJwt.middleware.ts`. When starting the backend with `npm run build` or `npm run dev`, TypeScript compilation crashes with `Cannot find name 'requireAdminJwt'`. This is a critical blocker preventing server initialization.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Import `requireAdminJwt` from `./middleware/requireAdminJwt.middleware` in `backend/src/index.ts`\n- [ ] Verify `npm run build` succeeds without compilation errors\n- [ ] Add integration test verifying GET `/health/detailed` returns 401 without valid admin JWT\n- [ ] Add integration test verifying GET `/health/detailed` returns 200 with valid admin JWT",
-        "labels": [
-            "bug",
-            "backend",
-            "auth",
-            "critical"
-        ]
-    },
-    {
-        "num": 27,
-        "title": "#27 \u2014 Backend Routes Group 1 through 18 Defined But Not Mounted in Main Express App",
-        "body": "**Labels:** `bug` `backend` `refactor`\n\n## Description\nIn `backend/src/routes/`, over 20 route modules exist including `disputes.routes.ts`, `oracle.routes.ts`, `wallets.routes.ts`, `notifications.routes.ts`, `marketAnalytics.routes.ts`, and `*Group*.routes.ts` (Group 1 through 18). However, `backend/src/index.ts` only mounts 7 routes (`auth`, `markets`, `governance`, `engagement`, `claims`, `bets`, `users`, `admin`). Endpoints for disputes, oracles, wallets, and notifications return 404.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Mount `disputesRouter` on `/api/disputes` in `backend/src/index.ts`\n- [ ] Mount `oracleRouter` on `/api/oracle` in `backend/src/index.ts`\n- [ ] Mount `walletsRouter` on `/api/wallets` in `backend/src/index.ts`\n- [ ] Mount `notificationsRouter` on `/api/notifications` in `backend/src/index.ts`\n- [ ] Harmonize and consolidate redundant `*Group*.routes.ts` endpoints into canonical route modules",
-        "labels": [
-            "bug",
-            "backend",
-            "refactor"
-        ]
-    },
-    {
-        "num": 28,
-        "title": "#28 \u2014 Duplicate PostgreSQL Connection Pools in db.service.ts and config/db.ts",
-        "body": "**Labels:** `bug` `backend` `database`\n\n## Description\n`backend/src/config/db.ts` creates and exports a `pool = new Pool(...)` instance with connection pool parameters, ssl settings, and event listeners. Concurrently, `backend/src/services/db.service.ts` creates a second independent `pool = new Pool({ connectionString: DATABASE_URL })`. Having two separate pools exhausts PostgreSQL connection limits and leads to transaction isolation issues.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Consolidate `backend/src/services/db.service.ts` to re-export `pool` from `../config/db`\n- [ ] Update all services and repositories to import `pool` exclusively from `../config/db`\n- [ ] Add pool connection limit metrics to Prometheus `/metrics` endpoint\n- [ ] Verify graceful shutdown properly drains the single unified pool",
-        "labels": [
-            "bug",
-            "backend",
-            "database"
-        ]
-    },
-    {
-        "num": 29,
-        "title": "#29 \u2014 Duplicate Validation Middleware Implementations in validate.ts and validation.middleware.ts",
-        "body": "**Labels:** `bug` `backend` `middleware` `refactor`\n\n## Description\nThe backend contains two divergent validation middlewares: `backend/src/api/middleware/validate.ts` (which provides `validate`, `validateBody`, `validateQuery`, `validateParams`) and `backend/src/middleware/validation.middleware.ts` (which provides `validate(schema)`). They return different error shapes (`{ error: string }` vs `{ status: 'error', errors: [...] }`), breaking API consistency.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Unify validation middlewares into a single canonical module in `backend/src/middleware/validation.middleware.ts`\n- [ ] Standardize API validation error response format to `{ success: false, error: { message, code: 'VALIDATION_ERROR', details } }`\n- [ ] Update all routes in `backend/src/routes/` to import the unified validation middleware\n- [ ] Add unit tests verifying request validation for body, query, and path parameters",
-        "labels": [
-            "bug",
-            "backend",
-            "middleware",
-            "refactor"
-        ]
-    },
-    {
-        "num": 30,
-        "title": "#30 \u2014 Unimplemented OracleController.getOracleReports Endpoint Returns Empty Response",
-        "body": "**Labels:** `bug` `backend` `oracle`\n\n## Description\nIn `backend/src/api/controllers/OracleController.ts`, lines 97-103 define `getOracleReports` with a single comment `// TODO: implement`. Calling GET `/api/oracle/reports/:match_id` never sends an HTTP response, causing client requests to hang indefinitely until browser or gateway timeout.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Implement `getOracleReports` to query `oracle_reports` table for the specified `match_id`\n- [ ] Return 200 with `{ match_id, reports: [...] }` containing timestamp, oracle address, outcome, and signature\n- [ ] Return 404 if no reports exist for the specified match ID\n- [ ] Add controller unit tests covering successful lookup and not-found scenarios",
-        "labels": [
-            "bug",
-            "backend",
-            "oracle"
-        ]
-    },
-    {
-        "num": 31,
-        "title": "#31 \u2014 In-Memory Notification Settings Map in notifications.routes.ts Loses State on Restart",
-        "body": "**Labels:** `bug` `backend` `notifications` `database`\n\n## Description\nIn `backend/src/routes/notifications.routes.ts`, user notification settings are stored in an in-memory Map: `const notificationSettings = new Map<string, Record<string, unknown>>()`. Whenever the server restarts, crashes, or scales across multiple containers, all user notification preferences are wiped.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Create database migration for `user_notification_settings` table (user_id, email_enabled, push_enabled, created_at, updated_at)\n- [ ] Update `notifications.routes.ts` to persist and fetch settings from PostgreSQL `pool`\n- [ ] Cache settings in Redis with 1-hour TTL and invalidate on update\n- [ ] Add unit and integration tests for notification settings persistence",
-        "labels": [
-            "bug",
-            "backend",
-            "notifications",
-            "database"
-        ]
-    },
-    {
-        "num": 32,
-        "title": "#32 \u2014 Backend package.json Declares Non-Existent and Invalid Dependency Versions",
-        "body": "**Labels:** `bug` `backend` `devops` `critical`\n\n## Description\nIn `backend/package.json`, several dependencies declare non-existent versions that break package managers during fresh installation: `\"node-cron\": \"^4.6.0\"` (latest stable is 3.x), `\"pg\": \"^8.22.0\"` (latest is 8.12.x/8.13.x), `\"zod\": \"^4.4.3\"` (Zod v4 is not released), `\"ws\": \"^8.21.2\"`, and `\"@sentry/node\": \"10.68.0\"`. In addition, both `pino` and `winston` are included redundantly.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Update `backend/package.json` dependencies to valid, stable npm versions (e.g., zod ^3.23.8, pg ^8.11.5, node-cron ^3.0.3, ws ^8.18.0)\n- [ ] Remove redundant `winston` logging library and standardize on `pino`\n- [ ] Generate clean `backend/package-lock.json` and ensure `npm ci` completes with 0 errors\n- [ ] Run `npm test` to verify all backend tests pass with corrected package versions",
-        "labels": [
-            "bug",
-            "backend",
-            "devops",
-            "critical"
-        ]
-    },
-    {
-        "num": 33,
-        "title": "#33 \u2014 @stellar/stellar-sdk Placed in devDependencies Causing Production Docker Runtime Failure",
-        "body": "**Labels:** `bug` `backend` `devops` `security`\n\n## Description\nIn `backend/package.json`, `@stellar/stellar-sdk` is listed under `devDependencies`. When building the production Docker image via `backend/Dockerfile`, stage 2 executes `npm ci --omit=dev`. Consequently, `@stellar/stellar-sdk` is missing from the container, and `StellarService.ts` / `StellarIndexer.ts` crash with `Cannot find module '@stellar/stellar-sdk'`.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Move `@stellar/stellar-sdk` from `devDependencies` to `dependencies` in `backend/package.json`\n- [ ] Test Docker container build: `docker build -t bankerchanger-backend ./backend`\n- [ ] Verify container starts and passes `/health` check without module not found error\n- [ ] Add CI verification step checking production dependency completeness",
-        "labels": [
-            "bug",
-            "backend",
-            "devops",
-            "security"
-        ]
-    },
-    {
-        "num": 34,
-        "title": "#34 \u2014 Duplicate Admin Middleware Implementations in admin.middleware.ts and requireAdminJwt.middleware.ts",
-        "body": "**Labels:** `security` `backend` `auth` `refactor`\n\n## Description\nThe backend contains two competing admin authentication middlewares: `backend/src/middleware/admin.middleware.ts` (checks `req.user.role === 'admin'`) and `backend/src/middleware/requireAdminJwt.middleware.ts` (directly parses Bearer token and checks `ADMIN_SECRET`). Routes in `admin.routes.ts` and `index.ts` mix and match both, leading to disparate authentication mechanisms.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Consolidate admin authentication into a single robust middleware in `backend/src/middleware/admin.middleware.ts`\n- [ ] Verify standard JWT claims (`role === 'admin'`) and ensure token has not been revoked in Redis blacklist\n- [ ] Export `requireAdmin` and deprecate `requireAdminJwt` with backward-compatible alias\n- [ ] Add comprehensive test suite verifying valid tokens, expired tokens, tampered tokens, and non-admin tokens",
-        "labels": [
-            "security",
-            "backend",
-            "auth",
-            "refactor"
-        ]
-    },
-    {
-        "num": 35,
-        "title": "#35 \u2014 Duplicate Migration Timestamps in backend/migrations Cause Out-of-Order Execution",
-        "body": "**Labels:** `bug` `backend` `database`\n\n## Description\nIn `backend/migrations/`, multiple migration files share duplicate timestamps: `1723000000000_add-indexer-ledger-ranges.js` and `1723000000000_add-engagement-features.js`, as well as `1753000000000_register-oracle-public-keys.js` and `1753000000000_add-bet-odds-snapshot.js`. Depending on filesystem ordering, migrations execute non-deterministically across development, staging, and CI environments.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Renumber duplicate migration timestamps sequentially to establish an unambiguous migration order\n- [ ] Update migration verification script `backend/scripts/migration-check.js` to assert timestamp uniqueness\n- [ ] Verify `npm run migrate` runs smoothly on an empty PostgreSQL database\n- [ ] Verify `npm run migrate:down` rolls back cleanly",
-        "labels": [
-            "bug",
-            "backend",
-            "database"
-        ]
-    },
-    {
-        "num": 36,
-        "title": "#36 \u2014 Migration Scripts Mix Drizzle ORM and node-pg-migrate Without Unified Config",
-        "body": "**Labels:** `bug` `backend` `database` `devops`\n\n## Description\nIn `backend/package.json`, scripts mix Drizzle ORM and node-pg-migrate without a cohesive configuration. `\"migrate\": \"drizzle-kit migrate\"` fails because `drizzle.config.ts` is missing, while `\"migrate:down\": \"node-pg-migrate down\"` and `\"migrate:create\": \"node-pg-migrate create\"` use `node-pg-migrate`. All existing files in `backend/migrations/` are `node-pg-migrate` format.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Align `backend/package.json` scripts to use `node-pg-migrate` uniformly for migrations\n- [ ] Update `\"migrate\": \"node-pg-migrate up\"` and provide corresponding rollback scripts\n- [ ] Provide `drizzle.config.ts` if Drizzle Studio introspection is desired alongside migrations\n- [ ] Test migration cycle in CI workflow to ensure seamless execution on fresh databases",
-        "labels": [
-            "bug",
-            "backend",
-            "database",
-            "devops"
-        ]
-    },
-    {
-        "num": 37,
-        "title": "#37 \u2014 Missing OpenAPI YAML Specification Referenced by CI Validation Script",
-        "body": "**Labels:** `bug` `backend` `ci-cd` `docs`\n\n## Description\nIn `.github/workflows/backend-ci.yml`, the job `Validate OpenAPI spec` executes `node -e \"const S = require('@apidevtools/swagger-parser'); S.validate('openapi.yaml')\"`. However, `openapi.yaml` is not present in the backend directory, causing the CI pipeline step to fail when triggered.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Generate or commit the canonical `openapi.yaml` in `backend/` using swagger-jsdoc extraction\n- [ ] Add script `npm run openapi:generate` in `backend/package.json`\n- [ ] Ensure `npm run openapi:validate` executes successfully locally and in CI\n- [ ] Verify all endpoints in `backend/src/routes/` have accurate OpenAPI tags and schemas",
-        "labels": [
-            "bug",
-            "backend",
-            "ci-cd",
-            "docs"
-        ]
-    },
-    {
-        "num": 38,
-        "title": "#38 \u2014 Test and Production Root Route Handlers Statically Stubbed in backend/src/index.ts",
-        "body": "**Labels:** `bug` `backend` `security` `refactor`\n\n## Description\nIn `backend/src/index.ts`, lines 142-166 register mock test routes in production: `app.post(\"/trading/bet\", (_req, res) => res.json({ ok: true }))`, `app.post(\"/wallet/withdraw\", ...)`, `app.get(\"/test-error\", ...)`, `app.get(\"/test-unhandled\", ...)`, and duplicate `app.post(\"/api/users\", ...)`. These dummy endpoints bypass business validation and conflict with real service implementations.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Remove mock test routes from production `backend/src/index.ts`\n- [ ] Relocate test fixtures to a dedicated `tests/routes/test-helpers.routes.ts` enabled only when `NODE_ENV === 'test'`\n- [ ] Route `/trading/bet` to real `BetController.placeBet` handler\n- [ ] Route `/wallet/withdraw` to real `WalletsController.withdraw` handler",
-        "labels": [
-            "bug",
-            "backend",
-            "security",
-            "refactor"
-        ]
-    },
-    {
-        "num": 39,
-        "title": "#39 \u2014 MarketService Database Error Handler Leaks Raw SQL Column Names to Clients",
-        "body": "**Labels:** `security` `backend` `database`\n\n## Description\nIn `backend/src/services/MarketService.ts`, catch blocks for database query failures format the raw PostgreSQL driver error message into the response: `throw AppError.badRequest(\"Database error: \" + err.message)`. This exposes internal database table structures, column names, and constraint names to unauthenticated users.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Sanitize database error responses to return generic error messages (e.g. 'Unable to process market query')\n- [ ] Log the full database error and stack trace internally via Pino logger with request ID context\n- [ ] Map PostgreSQL constraint violation codes (e.g. 23505 unique violation) to specific HTTP 409 Conflict codes\n- [ ] Add unit tests asserting internal SQL details are not present in error response bodies",
-        "labels": [
-            "security",
-            "backend",
-            "database"
-        ]
-    },
-    {
-        "num": 40,
-        "title": "#40 \u2014 BetService Concurrent Bet Placement Race Condition Under Transaction Rollback",
-        "body": "**Labels:** `security` `backend` `trading` `database`\n\n## Description\nIn `backend/src/services/BetService.ts`, when concurrent bets are submitted for the same market, the service queries current pool balances with `SELECT ... FROM markets WHERE id = $1` without acquiring a row lock (`FOR UPDATE`). Simultaneous transactions calculate odds against outdated pool balances, causing discrepancies between database states and blockchain states.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Use `SELECT ... FROM markets WHERE id = $1 FOR UPDATE` within a PostgreSQL transaction block\n- [ ] Verify pool share calculations occur with acquired row lock\n- [ ] Add optimistic concurrency version column or serializable transaction isolation\n- [ ] Write a concurrent betting load test simulating 50 simultaneous bets on a single market",
-        "labels": [
-            "security",
-            "backend",
-            "trading",
-            "database"
-        ]
-    },
-    {
-        "num": 41,
-        "title": "#41 \u2014 TOTP Service Backup Code Verification Does Not Invalidate Used Codes Atomically",
-        "body": "**Labels:** `security` `backend` `auth`\n\n## Description\nIn `backend/src/services/totp.service.ts`, backup code verification reads the code from `totp_backup_codes` and marks it used in two separate queries without an encompassing transaction. Under high-concurrency race conditions, the same single-use backup code can be submitted simultaneously to authenticate two sessions.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Execute backup code validation and invalidation in an atomic `UPDATE ... SET used = true WHERE code_hash = $1 AND used = false RETURNING id` query\n- [ ] Ensure duplicate submissions return 401 Unauthorized immediately\n- [ ] Emit `SecurityEvent(type: 'BACKUP_CODE_USED', userId, ip)` audit log\n- [ ] Add integration test verifying simultaneous backup code requests fail",
-        "labels": [
-            "security",
-            "backend",
-            "auth"
-        ]
-    },
-    {
-        "num": 42,
-        "title": "#42 \u2014 Export Service CSV Stream Lacks Header Sanitization Against Formula Injection (CSV Injection)",
-        "body": "**Labels:** `security` `backend`\n\n## Description\nIn `backend/src/services/export.service.ts`, exporting transaction histories and bet records directly interpolates user input (e.g. display names, transaction memos, notes) into CSV cells. If a user enters a memo starting with `=`, `+`, `-`, or `@`, spreadsheet applications like Microsoft Excel execute external formulas when opened.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Prepend a single quote `'` to any string cell value starting with `=`, `+`, `-`, or `@`\n- [ ] Escape internal double quotes `\"` according to RFC 4180 CSV specifications\n- [ ] Add unit tests testing malicious formula payloads in export data\n- [ ] Verify exported CSVs render safely without execution warnings",
-        "labels": [
-            "security",
-            "backend"
-        ]
-    },
-    {
-        "num": 43,
-        "title": "#43 \u2014 Engagement Service XP Calculation Accumulates Double Points on Retried Events",
-        "body": "**Labels:** `bug` `backend` `achievements`\n\n## Description\nIn `backend/src/services/engagement.service.ts`, `awardXp` inserts records into `user_xp_history` without enforcing idempotency keys. If the blockchain indexer re-polls an earlier ledger or replays a transaction event after transient failure, users are credited with duplicate XP and erroneous achievement badge unlocks.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Add unique constraint on `(user_id, source_event_id)` in `user_xp_history` table\n- [ ] Make `awardXp` idempotent using `ON CONFLICT (user_id, source_event_id) DO NOTHING`\n- [ ] Recalculate user level dynamically based on verified XP total\n- [ ] Add test verifying replaying identical event ID does not increment XP or badges",
-        "labels": [
-            "bug",
-            "backend",
-            "achievements"
-        ]
-    },
-    {
-        "num": 44,
-        "title": "#44 \u2014 Cache Service Redis Disconnection Throws Unhandled Promise Rejections",
-        "body": "**Labels:** `bug` `backend` `reliability`\n\n## Description\nIn `backend/src/services/cache.service.ts`, methods `get`, `set`, and `del` directly await Redis calls without local error handling. If Redis restarts or drops connection, unhandled rejections bubble up and crash API requests instead of falling back to direct database queries.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Wrap all Redis operations in safe try/catch blocks that degrade gracefully to database lookups\n- [ ] Log Redis connection anomalies with rate-limited warnings\n- [ ] Emit cache hit/miss/failure metrics to Prometheus\n- [ ] Add test simulating Redis offline state and verify API returns fresh database data",
-        "labels": [
-            "bug",
-            "backend",
-            "reliability"
-        ]
-    },
-    {
-        "num": 45,
-        "title": "#45 \u2014 User Activity Feed Fails to Sanitize Sensitive Account Details Before Broadcasting",
-        "body": "**Labels:** `security` `backend` `websocket` `users`\n\n## Description\nIn `backend/src/websocket/realtime.ts`, the activity feed broadcaster passes raw database user objects into WebSocket messages. Sensitive user properties including hashed passwords, TOTP secret flags, email addresses, and internal user UUIDs are broadcast to all connected WebSocket clients in the global activity room.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Create a strict `sanitizeActivityEvent` transformer that strips all private user fields\n- [ ] Broadcast only public information: public wallet address (truncated), market title, bet outcome, and amount\n- [ ] Add automated test asserting no private fields exist in WebSocket broadcast payload\n- [ ] Review all WebSocket room message serialization paths",
-        "labels": [
-            "security",
-            "backend",
-            "websocket",
-            "users"
-        ]
-    },
-    {
-        "num": 46,
-        "title": "#46 \u2014 Disputes Controller Missing Stellar Address Format Validation on Challenger Key",
-        "body": "**Labels:** `bug` `backend` `disputes` `security`\n\n## Description\nIn `backend/src/api/controllers/disputes.controller.ts`, submitting a dispute accepts the challenger's address as an arbitrary string. Non-Stellar strings or SQL strings cause downstream blockchain verification queries to fail with unhandled 500 exceptions.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Validate challenger address with `@stellar/stellar-sdk` `StrKey.isValidEd25519PublicKey`\n- [ ] Return 400 Bad Request with descriptive message if address format is invalid\n- [ ] Add unit tests testing invalid addresses, truncated keys, and valid Ed25519 public keys\n- [ ] Ensure validation occurs in route schema validator before controller execution",
-        "labels": [
-            "bug",
-            "backend",
-            "disputes",
-            "security"
-        ]
-    },
-    {
-        "num": 47,
-        "title": "#47 \u2014 StellarService Transaction Submission Lacks Jittered Exponential Backoff Retry",
-        "body": "**Labels:** `enhancement` `backend` `blockchain` `reliability`\n\n## Description\nIn `backend/src/services/StellarService.ts`, `submitTransaction` submits transactions to Stellar Horizon / Soroban RPC without retry logic on network timeouts or HTTP 504 Gateway Timeout responses. Under normal Stellar testnet congestion, transactions fail needlessly and leave bets unconfirmed.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Implement retry loop with jittered exponential backoff (e.g. 1s, 2s, 4s up to 3 attempts)\n- [ ] Inspect Horizon error codes; retry on 504 Gateway Timeout, 429 Too Many Requests, and socket hangup\n- [ ] Do NOT retry on non-retryable 400 transaction bad errors (e.g. op_underfunded, bad_auth)\n- [ ] Add unit tests using mocked Horizon responses to verify retry behavior",
-        "labels": [
-            "enhancement",
-            "backend",
             "blockchain",
-            "reliability"
-        ]
-    },
-    {
-        "num": 48,
-        "title": "#48 \u2014 Auto-Resolution Cron Auto-Locks Markets Without Verifying Ledger Timestamps",
-        "body": "**Labels:** `bug` `backend` `cron` `markets`\n\n## Description\nIn `backend/src/cron/autoResolution.cron.ts`, `startAutoLockCron` compares market `scheduled_at` against server system time (`Date.now()`). If the backend server clock drifts or differs from Stellar ledger close time, markets are locked prematurely while on-chain contracts still accept bets.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Query latest ledger close time from `StellarIndexer` or Horizon RPC rather than host machine clock\n- [ ] Allow a 60-second grace buffer to prevent race conditions around fight start times\n- [ ] Log audit trail when auto-lock triggers on a market\n- [ ] Add integration test verifying auto-lock respects ledger timestamps",
-        "labels": [
             "bug",
-            "backend",
-            "cron",
-            "markets"
+            "security"
         ]
     },
     {
-        "num": 49,
-        "title": "#49 \u2014 Backend Request Logging Middleware Logs Unredacted Authorization Headers",
-        "body": "**Labels:** `security` `backend` `middleware`\n\n## Description\nIn `backend/src/middleware/request-logging.middleware.ts`, incoming request headers are logged using Pino logger without masking `authorization` or `cookie` headers. Bearer JWT tokens and session secrets are stored in plaintext server log files and log aggregation tools.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Configure Pino `redact` options for `req.headers.authorization`, `req.headers.cookie`, and `req.body.password`\n- [ ] Mask sensitive token strings with `[REDACTED]`\n- [ ] Add test verifying authorization header is sanitized in log output\n- [ ] Audit all middleware logging calls for confidential credential leakage",
+        "title": "[Contracts] Fix reentrancy and Checks-Effects-Interactions violations in share redemption",
+        "body": "### Context & Problem\nIn `contracts/market/src/lib.rs`, token transfer to the winning bettor occurs before deducting the user's winning outcome shares balance from contract storage, violating the Checks-Effects-Interactions (CEI) pattern.\n\n### Proposed Solution\n1. Update user state and pool reserves before executing `token::Client::transfer`.\n2. Add reentrancy guard or ensure strict CEI ordering across `claim_winnings` and `redeem_shares`.\n\n### Acceptance Criteria\n- Storage mutations are finalized prior to external token transfers.\n- Unit tests verify reentrancy revert behavior.",
         "labels": [
+            "blockchain",
             "security",
-            "backend",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Contracts] Fix integer rounding down to zero in CPMM outcome token pricing",
+        "body": "### Context & Problem\nDuring share pricing calculations in low-liquidity markets, integer division in `contracts/shared/src/math.rs` truncates remainders, resulting in 0 price output and allowing zero-cost share acquisition.\n\n### Proposed Solution\n1. Implement fixed-point scaling factor (e.g. 10^7 or 10^9 precision) before performing division in AMM price formula.\n2. Ensure minimum price boundary is enforced (minimum 1 unit).\n\n### Acceptance Criteria\n- Price calculations return strictly positive values for any valid pool reserves.\n- Property test verifies monotonicity of price with respect to supply.",
+        "labels": [
+            "blockchain",
+            "trading",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Contracts] Fix missing storage TTL extensions across persistent market instances",
+        "body": "### Context & Problem\nSoroban persistent storage entries for markets and user balance mappings expire if their TTL is not bumped, causing market state to become inaccessible on testnet and mainnet.\n\n### Proposed Solution\n1. Invoke `env.storage().persistent().extend_ttl(...)` on all state reads and writes.\n2. Set threshold and extension ledger parameters based on network recommendations.\n\n### Acceptance Criteria\n- All state accessors bump TTL appropriately.\n- Long-running simulation tests verify state remains valid past default TTL.",
+        "labels": [
+            "blockchain",
+            "markets",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Contracts] Fix missing admin timelock enforcement during emergency market cancellation",
+        "body": "### Context & Problem\nAn admin key compromise allows instant emergency market cancellation without notice, potentially rugging active liquidity providers.\n\n### Proposed Solution\n1. Introduce a configurable timelock delay for emergency cancellations.\n2. Require a two-phase commit: `schedule_emergency_cancellation` followed by `execute_emergency_cancellation` after delay.\n\n### Acceptance Criteria\n- Instant cancellation reverts with `AdminTimelockActive`.\n- Executing cancellation is only permitted once timelock elapsed.",
+        "labels": [
+            "blockchain",
+            "security",
+            "treasury"
+        ]
+    },
+    {
+        "title": "[Contracts] Fix unverified oracle report signatures in multi-oracle consensus resolution",
+        "body": "### Context & Problem\nWhen resolving markets using off-chain oracle reports, signature verification is bypassed if quorum threshold is met, allowing forged reports.\n\n### Proposed Solution\n1. Verify ed25519 signature of each participating oracle address against the registered oracle public key before counting its vote.\n2. Reject duplicate signatures from the same oracle.\n\n### Acceptance Criteria\n- Invalid or mismatched signatures cause immediate transaction rejection.\n- Test verifies consensus requires valid cryptographic signatures from quorum.",
+        "labels": [
+            "blockchain",
+            "oracle",
+            "security"
+        ]
+    },
+    {
+        "title": "[Contracts] Fix zero-shares liquidity trap when initial LP deposits minimal tokens",
+        "body": "### Context & Problem\nIf an initial liquidity provider deposits dust amounts, initial LP share minting can round down to 0 while tokens remain locked in the contract forever.\n\n### Proposed Solution\n1. Enforce `MINIMUM_INITIAL_LIQUIDITY` (e.g., 1,000,000 stroops / units) locked permanently (dead shares).\n2. Validate both outcome reserves meet minimum balance threshold.\n\n### Acceptance Criteria\n- Liquidity initialization below threshold reverts.\n- First LP receives valid non-zero share tokens.",
+        "labels": [
+            "blockchain",
+            "trading",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Contracts] Fix dispute bond refund logic failing when dispute is upheld by governance",
+        "body": "### Context & Problem\nWhen a community dispute is voted valid, the bond refund function reverts due to an incorrect balance check against treasury reserves instead of the escrowed dispute balance.\n\n### Proposed Solution\n1. Track dispute bonds in a separate escrow mapping per dispute ID.\n2. Release the escrowed bond plus reward back to the disputer upon resolution.\n\n### Acceptance Criteria\n- Disputer successfully receives initial bond + bonus when dispute passes.\n- Escrow accounting balances exactly.",
+        "labels": [
+            "blockchain",
+            "disputes",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Contracts] Fix overflow in accumulated protocol fee calculations in treasury contract",
+        "body": "### Context & Problem\nIn `contracts/treasury/src/lib.rs`, high-volume markets accumulating protocol fees in `i128` can overflow if fees are compounded without periodic settlement.\n\n### Proposed Solution\n1. Use checked arithmetic (`checked_add`, `checked_mul`) for all fee accumulations.\n2. Emit an error `FeeOverflow` if limits are exceeded, and cap maximum fee per swap.\n\n### Acceptance Criteria\n- Checked math prevents panics in fee accumulation.\n- Unit test covers extreme volume edge cases.",
+        "labels": [
+            "blockchain",
+            "treasury",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Contracts] Fix unauthorized market registration in market_factory",
+        "body": "### Context & Problem\n`create_market` in `market_factory` lacks an authorization check validating caller permissions against the factory registry whitelist.\n\n### Proposed Solution\n1. Add `caller.require_auth()` and ensure caller is an approved deployer or admin.\n2. Prevent deploying duplicate market instances with identical parameters.\n\n### Acceptance Criteria\n- Non-authorized calls revert with `Unauthorized`.\n- Successfully deployed markets are registered in factory list.",
+        "labels": [
+            "blockchain",
+            "markets",
+            "security"
+        ]
+    },
+    {
+        "title": "[Contracts] Add storage bump for temporary authentication nonces in market factory",
+        "body": "### Context & Problem\nTemporary storage entries used for replay protection nonces in factory deployment do not bump TTL, leading to potential premature eviction.\n\n### Proposed Solution\n1. Use `env.storage().temporary().extend_ttl()` on all nonce checks.\n2. Standardize nonce validation across contract entry points.\n\n### Acceptance Criteria\n- Nonces remain available throughout active transaction life cycle.",
+        "labels": [
+            "blockchain",
+            "security",
             "middleware"
         ]
     },
     {
-        "num": 50,
-        "title": "#50 \u2014 System Health Detailed Endpoint Exposes Internal Connection Pool Metrics Publicly",
-        "body": "**Labels:** `security` `backend` `observability`\n\n## Description\nIn `backend/src/index.ts`, the `/health/detailed` route exposes detailed database connection pool stats (idleCount, totalCount, waitingCount), Redis status, and internal version numbers. If accessible without authentication, attackers can gather reconnaissance on database capacity and connection pool exhaustion.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Enforce `requireAdmin` authentication strictly on `/health/detailed`\n- [ ] Ensure public `/health` endpoint only exposes `{ status: 'healthy', timestamp }`\n- [ ] Add test verifying unauthenticated GET `/health/detailed` returns 401 Unauthorized\n- [ ] Document health check monitoring recommendations in `docs/runbook.md`",
+        "title": "[Contracts] Implement strict slippage bounds check on swap_shares to prevent sandwich attacks",
+        "body": "### Context & Problem\nTraders placing large market share swaps have no `min_shares_out` parameter, exposing them to MEV / frontrunning sandwich attacks.\n\n### Proposed Solution\n1. Add `min_shares_out: i128` parameter to `swap_shares`.\n2. Revert with `SlippageExceeded` if received shares fall below the minimum.\n\n### Acceptance Criteria\n- Swaps revert if calculated output < `min_shares_out`.\n- Integration tests simulate price movement causing expected revert.",
         "labels": [
-            "security",
-            "backend",
-            "observability"
-        ]
-    },
-    {
-        "num": 51,
-        "title": "#51 \u2014 Webhook Delivery Lacks Retry Queue and Exponential Backoff for Failed Deliveries",
-        "body": "**Labels:** `enhancement` `backend` `reliability`\n\n## Description\nIn `backend/src/routes/webhooksGroup9.routes.ts`, outgoing webhook notifications to third-party endpoints fail permanently on a single network timeout. There is no dead-letter queue, retry mechanism, or failure log to guarantee delivery of critical market resolution events.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Implement a durable webhook delivery queue backed by PostgreSQL or Redis\n- [ ] Retry failed deliveries up to 5 times with exponential backoff (1m, 5m, 15m, 1h, 6h)\n- [ ] Store delivery status and last error response code in `webhook_deliveries` table\n- [ ] Add manual retry admin endpoint `POST /api/admin/webhooks/:id/retry`",
-        "labels": [
-            "enhancement",
-            "backend",
-            "reliability"
-        ]
-    },
-    {
-        "num": 52,
-        "title": "#52 \u2014 Auth Service Password Reset Token Generation Uses Insecure Math.random Instead of Crypto",
-        "body": "**Labels:** `security` `backend` `auth`\n\n## Description\nIn `backend/src/services/auth.service.ts`, password reset tokens are generated using `Math.random().toString(36)`. V8's pseudo-random number generator is cryptographically insecure and predictable, allowing attackers to guess password reset tokens and hijack user accounts.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Replace `Math.random` with `crypto.randomBytes(32).toString('hex')` for reset token generation\n- [ ] Store only the SHA-256 hash of the reset token in the database\n- [ ] Enforce 15-minute expiration on all generated password reset tokens\n- [ ] Add test verifying entropy and uniqueness of generated reset tokens",
-        "labels": [
-            "security",
-            "backend",
-            "auth"
-        ]
-    },
-    {
-        "num": 53,
-        "title": "#53 \u2014 Market Management Route Missing Category ID Foreign Key Validation",
-        "body": "**Labels:** `bug` `backend` `markets` `database`\n\n## Description\nIn `backend/src/routes/marketManagement.routes.ts`, creating a market accepts a `category_id` parameter without verifying that the referenced category exists in the `categories` table. Submitting an invalid category ID triggers an unhandled foreign key constraint error resulting in a 500 error instead of a 400 Bad Request.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Validate that `category_id` exists in `categories` before attempting market insertion\n- [ ] Return 400 Bad Request with message `'Invalid category_id: category does not exist'`\n- [ ] Add foreign key constraint test case in `tests/routes/marketManagement.test.ts`\n- [ ] Cache active categories list in Redis to minimize database lookups",
-        "labels": [
-            "bug",
-            "backend",
-            "markets",
-            "database"
-        ]
-    },
-    {
-        "num": 54,
-        "title": "#54 \u2014 Transaction History Route Cursor Pagination Calculates HasNextPage Incorrectly",
-        "body": "**Labels:** `bug` `backend` `repository`\n\n## Description\nIn `backend/src/routes/transactionHistory.routes.ts`, cursor pagination fetches exactly `limit` rows and calculates `hasNextPage` based on total count query. This causes off-by-one errors and unnecessary full table count queries on large transaction history datasets.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Query `limit + 1` rows using cursor index to determine `hasNextPage` without full count query\n- [ ] Slice returned results to `limit` and set `nextCursor` to the ID of the last item if `hasNextPage` is true\n- [ ] Add unit tests for first page, middle page, and last page cursor boundaries\n- [ ] Verify cursor pagination performance on tables with >100,000 transaction records",
-        "labels": [
-            "bug",
-            "backend",
-            "repository"
-        ]
-    },
-    {
-        "num": 55,
-        "title": "#55 \u2014 Affiliate Commission Calculation Off-By-One at Tier Threshold Boundaries",
-        "body": "**Labels:** `bug` `backend` `referrals`\n\n## Description\nIn `backend/src/constants/affiliateTiers.ts` and `backend/src/routes/affiliateGroup18.routes.ts`, tier qualification compares `referralCount < tier.threshold` instead of `<=`. Users reaching the exact milestone threshold (e.g., exactly 25 referrals for Silver or 100 for Gold) remain stuck in the lower commission tier.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Fix comparison logic to correctly qualify users reaching exact tier threshold\n- [ ] Add automated test verifying referral counts at threshold - 1, threshold, and threshold + 1\n- [ ] Verify affiliate payout calculation uses updated tier commission rate\n- [ ] Document affiliate tier qualifications in `docs/architecture.md`",
-        "labels": [
-            "bug",
-            "backend",
-            "referrals"
-        ]
-    },
-    {
-        "num": 56,
-        "title": "#56 \u2014 Duplicate Indexer Implementations in /indexer and /backend/src/indexer Cause Split Architecture",
-        "body": "**Labels:** `bug` `indexer` `backend` `refactor`\n\n## Description\nThe repository contains two separate indexers: one in `indexer/src/` (standalone microservice) and one in `backend/src/indexer/` (`StellarIndexer.ts`, `EventProcessor.ts`, `ledgerTracker.ts`). Both poll Horizon and Soroban RPC, but write to different database tables using different schema definitions, leading to race conditions and duplicate polling overhead.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Establish a clear architectural boundary by designating `indexer/` as the single authoritative indexer microservice\n- [ ] Deprecate duplicate background polling inside `backend/src/indexer/StellarIndexer.ts` in favor of reading shared event store\n- [ ] Update `docker-compose.yml` to run the standalone indexer container cleanly\n- [ ] Document indexer deployment and service boundaries in `docs/architecture.md`",
-        "labels": [
-            "bug",
-            "indexer",
-            "backend",
-            "refactor"
-        ]
-    },
-    {
-        "num": 57,
-        "title": "#57 \u2014 Indexer Default Port 3001 Collides with Backend Default Port",
-        "body": "**Labels:** `bug` `indexer` `devops`\n\n## Description\nIn `indexer/src/index.ts`, line 5 sets `const PORT = process.env.PORT || 3001`. In `backend/src/index.ts`, the backend also defaults to port 3001. When running both locally without custom `.env` overrides, the second service fails to start with `Error: listen EADDRINUSE: address already in use :::3001`.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Change default port in `indexer/src/index.ts` to 3002 (matching Dockerfile and docker-compose port mappings)\n- [ ] Update `indexer/.env.example` to declare `PORT=3002`\n- [ ] Verify local startup of backend (3001) and indexer (3002) concurrently without port collision\n- [ ] Update health check command in `indexer/Dockerfile` to use port 3002",
-        "labels": [
-            "bug",
-            "indexer",
-            "devops"
-        ]
-    },
-    {
-        "num": 58,
-        "title": "#58 \u2014 Indexer Poller Imports Foreign and Unused upsertInvoice Function from SQLite DB Module",
-        "body": "**Labels:** `bug` `indexer` `refactor`\n\n## Description\nIn `indexer/src/poller.ts`, line 2 imports `upsertInvoice` from `./db`. This function is leftover boilerplate from an unrelated lightning/invoice payment template and has no relevance to Stellar boxing prediction markets. Leaving dead foreign code confuses contributors and causes lint errors.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Remove `upsertInvoice` import from `indexer/src/poller.ts`\n- [ ] Remove unused invoice table and invoice handling methods from `indexer/src/db.ts`\n- [ ] Verify TypeScript compiles with `npm run build` in `indexer/` without unused variable warnings\n- [ ] Add clean test verifying poller imports only Soroban market event handlers",
-        "labels": [
-            "bug",
-            "indexer",
-            "refactor"
-        ]
-    },
-    {
-        "num": 59,
-        "title": "#59 \u2014 Indexer Uses SQLite While Backend Uses PostgreSQL Causing Inconsistent Event Storage",
-        "body": "**Labels:** `bug` `indexer` `database`\n\n## Description\nIn `indexer/src/db.ts`, the database adapter initializes a SQLite database using `better-sqlite3` and writes to `cursor.json`. Meanwhile, the backend queries PostgreSQL `blockchain_events` table. Events captured by the indexer are trapped in local SQLite storage and not accessible by the backend API.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Refactor `indexer/src/db.ts` to persist indexed events into shared PostgreSQL database (`blockchain_events`)\n- [ ] Store indexer cursor checkpoints in PostgreSQL table `indexer_checkpoints`\n- [ ] Provide connection pooling using `pg.Pool` with reconnection resilience\n- [ ] Add migration verifying PostgreSQL indexer schema compatibility",
-        "labels": [
-            "bug",
-            "indexer",
-            "database"
-        ]
-    },
-    {
-        "num": 60,
-        "title": "#60 \u2014 Indexer package.json Has Conflicting TypeScript and Jest Peer Dependencies",
-        "body": "**Labels:** `bug` `indexer` `devops`\n\n## Description\nIn `indexer/package.json`, dependencies declare `\"typescript\": \"^6.0.3\"` (TypeScript 6 does not exist) and `\"jest\": \"^30.4.2\"` paired with `\"ts-jest\": \"^29.4.9\"` (ts-jest 29 requires Jest 29). Running `npm install` fails with unresolved peer dependency conflicts (`ERESOLVE unable to resolve dependency tree`).\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Pin `typescript` to `^5.4.5` in `indexer/package.json`\n- [ ] Align `jest` to `^29.7.0` and `ts-jest` to `^29.1.5`\n- [ ] Update `@types/jest` to `^29.5.12`\n- [ ] Verify `npm install` and `npm test` execute cleanly in `indexer/`",
-        "labels": [
-            "bug",
-            "indexer",
-            "devops"
-        ]
-    },
-    {
-        "num": 61,
-        "title": "#61 \u2014 Indexer Cursor File Storage cursor.json Suffers from Non-Atomic File Writes on Crash",
-        "body": "**Labels:** `bug` `indexer` `reliability`\n\n## Description\nIn `indexer/src/db.ts`, `saveCursor` writes the latest ledger sequence to `cursor.json` using non-atomic filesystem operations. If the indexer container is terminated (SIGKILL/OOM) while writing, `cursor.json` is left partially written or corrupted with zero bytes, causing the indexer to fail on restart.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Implement atomic file writes by writing to `cursor.json.tmp` and renaming atomically via `fs.rename`\n- [ ] Validate JSON integrity before replacing the active cursor file\n- [ ] Persist cursor to database checkpoint table as primary source of truth with file as secondary cache\n- [ ] Add test verifying recovery from simulated truncated cursor file",
-        "labels": [
-            "bug",
-            "indexer",
-            "reliability"
-        ]
-    },
-    {
-        "num": 62,
-        "title": "#62 \u2014 Fault Tolerant Poller Fails to Reconnect to Horizon After Network Timeout",
-        "body": "**Labels:** `bug` `indexer` `reliability`\n\n## Description\nIn `indexer/src/faultTolerantPoller.ts`, when a network timeout occurs while connecting to Soroban RPC or Horizon, the poller catches the error but fails to reset the underlying HTTP agent or re-initialize the client. Subsequent poll attempts reuse a broken connection socket, causing infinite consecutive timeout errors.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Re-instantiate the Soroban RPC Server client instance upon 3 consecutive network failures\n- [ ] Implement connection socket reset and DNS re-resolution\n- [ ] Add jittered exponential backoff with a maximum delay cap of 30 seconds\n- [ ] Write a test simulating network disconnect and verify automatic poller recovery",
-        "labels": [
-            "bug",
-            "indexer",
-            "reliability"
-        ]
-    },
-    {
-        "num": 63,
-        "title": "#63 \u2014 Event Pipeline Missing Transactional Dead Letter Queue for Malformed Soroban Events",
-        "body": "**Labels:** `enhancement` `indexer` `reliability`\n\n## Description\nIn `indexer/src/eventPipeline.ts`, if a contract emits an event with unexpected data structure or corrupted XDR, the event processing pipeline throws an exception that halts the entire polling batch. The indexer cannot advance past the faulty ledger, resulting in an indefinite sync stall.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Catch event deserialization errors individually without failing the entire ledger batch\n- [ ] Route malformed events to a `failed_events` dead-letter queue table with error stack and raw XDR\n- [ ] Emit Prometheus counter `indexer_malformed_events_total`\n- [ ] Allow the indexer cursor to advance while alerting operators of quarantined events",
-        "labels": [
-            "enhancement",
-            "indexer",
-            "reliability"
-        ]
-    },
-    {
-        "num": 64,
-        "title": "#64 \u2014 Event Schema Validation Fails to Parse Negative Int128 Values in Bet Amount",
-        "body": "**Labels:** `security` `indexer` `blockchain`\n\n## Description\nIn `indexer/src/eventSchemas.ts`, the Zod schema for contract event validation accepts string representations of integers but does not validate that `amount` or `shares` are strictly positive integers. A malicious or mock contract emitting negative values would corrupt pool accounting in the indexer database.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Enforce positive non-zero bigint validation in `eventSchemas.ts` for all bet amounts and payouts\n- [ ] Reject events containing negative numbers or invalid decimal formats\n- [ ] Add unit tests with malicious and boundary numeric payloads\n- [ ] Ensure schema parsing errors are logged with detailed contract address context",
-        "labels": [
-            "security",
-            "indexer",
-            "blockchain"
-        ]
-    },
-    {
-        "num": 65,
-        "title": "#65 \u2014 Indexer Distributed Lock Does Not Release On Uncaught Process Signal SIGTERM",
-        "body": "**Labels:** `bug` `indexer` `reliability`\n\n## Description\nIn `indexer/src/distributedLock.ts`, the Redis-based distributed lock (`acquireDistributedLock`) does not register `process.on('SIGTERM')` or `process.on('SIGINT')` signal handlers. When Kubernetes or Docker restarts the indexer pod, the lock remains held in Redis until TTL expiration (15 minutes), preventing the new instance from indexing.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Register graceful shutdown hooks that release the Redis lock token before process exit\n- [ ] Set lock TTL to a reasonable 30 seconds with automatic heartbeat renewal\n- [ ] Add release verification test during container shutdown simulation\n- [ ] Log lock acquisition, renewal, and release events with instance ID",
-        "labels": [
-            "bug",
-            "indexer",
-            "reliability"
-        ]
-    },
-    {
-        "num": 66,
-        "title": "#66 \u2014 Ledger Continuity Resync Skips Ledger Sequences When RPC Batch Size Exceeds 100",
-        "body": "**Labels:** `bug` `indexer` `blockchain`\n\n## Description\nIn `indexer/src/ledgerContinuity.ts`, `computeResyncStartLedger` detects gaps between current ledger and last known ledger. When the gap is large (>100 ledgers) and batch querying is used, pagination cursor calculations off-by-one by starting from `lastLedger + 1` instead of `lastLedger`, skipping the first ledger of the gap.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Fix gap boundary logic so resync spans `[lastProcessedLedger + 1, currentLedger]` inclusive\n- [ ] Add safety assertions that no intermediate ledgers are omitted during resync batches\n- [ ] Add test case with synthetic 500-ledger gap and verify every single ledger is processed in sequence\n- [ ] Emit `indexer_resync_gap_size` metric",
-        "labels": [
-            "bug",
-            "indexer",
-            "blockchain"
-        ]
-    },
-    {
-        "num": 67,
-        "title": "#67 \u2014 WebSocket Server ws.ts Drops Connections on High Event Volume Without Backpressure",
-        "body": "**Labels:** `bug` `indexer` `websocket` `performance`\n\n## Description\nIn `indexer/src/ws.ts`, `broadcast` iterates over all connected client sockets and calls `client.send(data)` immediately. When multiple ledger events are processed rapidly, slow clients accumulate unbounded buffered data in memory (`ws.bufferedAmount`), resulting in high memory usage and socket disconnects.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Check `ws.bufferedAmount` before sending; drop or throttle non-critical market updates for slow clients\n- [ ] Terminate unresponsive client sockets whose buffer exceeds `MAX_BUFFER_SIZE` (1MB)\n- [ ] Implement ping/pong heartbeat with 30s interval to prune dead connections\n- [ ] Add test simulating slow client receiving high-frequency broadcast stream",
-        "labels": [
-            "bug",
-            "indexer",
-            "websocket",
-            "performance"
-        ]
-    },
-    {
-        "num": 68,
-        "title": "#68 \u2014 Indexer Health Check Fails to Compare Current System Time with Latest Ledger Close Time",
-        "body": "**Labels:** `bug` `indexer` `observability`\n\n## Description\nIn `indexer/src/health.ts`, the `/health` endpoint returns `{ status: 'healthy' }` as long as the HTTP server is running, even if the background poller crashed or hasn't processed a ledger in hours. Operators and container orchestrators receive false positive health signals.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Compare current UTC time with `lastProcessedLedgerTimestamp` in `/health` check\n- [ ] Mark health status as `degraded` if lag is > 2 minutes and `unhealthy` (HTTP 503) if lag > 10 minutes\n- [ ] Include `ledger_lag_seconds` and `last_processed_ledger` in health response JSON\n- [ ] Add unit tests testing healthy, degraded, and unhealthy threshold states",
-        "labels": [
-            "bug",
-            "indexer",
-            "observability"
-        ]
-    },
-    {
-        "num": 69,
-        "title": "#69 \u2014 Backoff Calculation Allows Jitter to Exceed Configured Maximum Retry Interval",
-        "body": "**Labels:** `bug` `indexer` `reliability`\n\n## Description\nIn `indexer/src/backoff.ts`, `calculateBackoff` computes exponential delay `base * 2^attempt` and subsequently adds random jitter `Math.random() * jitterFactor`. When delay is near `maxInterval`, adding jitter causes the total backoff time to exceed the configured maximum interval ceiling.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Clamp the final computed backoff duration so `totalDelay <= maxInterval` at all times\n- [ ] Ensure jitter is applied symmetrically or subtracted within bounds\n- [ ] Add unit test with high retry attempt count asserting result is strictly <= `maxInterval`\n- [ ] Add property tests verifying deterministic bounds on backoff generator",
-        "labels": [
-            "bug",
-            "indexer",
-            "reliability"
-        ]
-    },
-    {
-        "num": 70,
-        "title": "#70 \u2014 Indexer Metrics Service Lacks Prometheus Counters for Re-Org Ledgers Encountered",
-        "body": "**Labels:** `enhancement` `indexer` `observability`\n\n## Description\nIn `indexer/src/metrics.ts`, Prometheus metrics track processed events and poll duration, but omit counters for ledger rollbacks, re-orgs, and RPC rate-limit events. Monitoring systems cannot trigger alerts when the network experiences ledger sequence anomalies.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Add `indexer_reorg_detected_total` Counter metric\n- [ ] Add `indexer_rpc_rate_limit_total` Counter metric\n- [ ] Increment counters in `poller.ts` and `ledgerContinuity.ts` upon anomaly detection\n- [ ] Verify all new metrics appear on `/metrics` endpoint with proper labels",
-        "labels": [
-            "enhancement",
-            "indexer",
-            "observability"
-        ]
-    },
-    {
-        "num": 71,
-        "title": "#71 \u2014 Poller Memory Leak in Event Deduplication Cache When Running for Extended Periods",
-        "body": "**Labels:** `bug` `indexer` `performance`\n\n## Description\nIn `indexer/src/poller.ts`, an in-memory `Set` or `Map` is used to deduplicate received event IDs across poll cycles. Because old event IDs are never evicted from the set, memory usage grows continuously over days of operation, ultimately causing Node.js out-of-memory crashes.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Replace unbounded in-memory collection with an LRU cache capped at 50,000 entries or TTL-based eviction\n- [ ] Rely on PostgreSQL primary key unique constraints for persistent deduplication\n- [ ] Add test verifying cache size stays bounded after processing 100,000 synthetic event IDs\n- [ ] Monitor process heap memory usage in Prometheus metrics",
-        "labels": [
-            "bug",
-            "indexer",
-            "performance"
-        ]
-    },
-    {
-        "num": 72,
-        "title": "#72 \u2014 Stellar SDK RPC Method Call Does Not Handle Rate Limiting (HTTP 429) Gracefully",
-        "body": "**Labels:** `bug` `indexer` `blockchain` `reliability`\n\n## Description\nIn `indexer/src/poller.ts`, calls to `rpc.getEvents()` throw an uncaught exception when the public Soroban RPC node rate-limits requests with HTTP 429. The poller logs an error and retries immediately without honoring the `Retry-After` HTTP header.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Extract `Retry-After` header value from RPC 429 response when available\n- [ ] Sleep for the specified retry interval (or default 5s if header is absent) before next poll request\n- [ ] Log rate-limiting event at WARN level rather than ERROR\n- [ ] Add unit test with mocked 429 response verifying backoff delay",
-        "labels": [
-            "bug",
-            "indexer",
             "blockchain",
-            "reliability"
-        ]
-    },
-    {
-        "num": 73,
-        "title": "#73 \u2014 WebSocket Client Reconnection Floods Indexer with Unchecked Subscriptions",
-        "body": "**Labels:** `security` `indexer` `websocket`\n\n## Description\nIn `indexer/src/ws.ts`, connected clients can send unlimited `subscribe` messages for market channels. A single client can subscribe to thousands of non-existent market IDs, consuming server memory and degrading broadcast performance for all users.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Limit maximum active market subscriptions per client connection to 50\n- [ ] Validate that subscribed `market_id` matches numeric or UUID format\n- [ ] Rate-limit incoming WebSocket messages to max 20 messages per second per IP\n- [ ] Add test verifying subscription limit rejection",
-        "labels": [
-            "security",
-            "indexer",
-            "websocket"
-        ]
-    },
-    {
-        "num": 74,
-        "title": "#74 \u2014 Indexer Database Migration Lacks Unique Index on Event Transaction Hash and Index",
-        "body": "**Labels:** `bug` `indexer` `database`\n\n## Description\nIn `indexer/src/db.ts` and `backend/migrations/`, the `blockchain_events` table does not enforce a unique constraint on `(transaction_hash, event_index)`. When the indexer restarts after a mid-batch failure, re-processing the same ledger inserts duplicate rows, duplicating user activity and bet counts.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Add migration creating a `UNIQUE INDEX idx_blockchain_events_tx_idx ON blockchain_events (transaction_hash, event_index)`\n- [ ] Use `ON CONFLICT (transaction_hash, event_index) DO NOTHING` in event insertion queries\n- [ ] Add test verifying inserting identical event twice results in single database row\n- [ ] Verify query performance on event lookups by transaction hash",
-        "labels": [
-            "bug",
-            "indexer",
-            "database"
-        ]
-    },
-    {
-        "num": 75,
-        "title": "#75 \u2014 Indexer Graceful Shutdown Does Not Drain In-Flight Event Batches Before Process Exit",
-        "body": "**Labels:** `bug` `indexer` `reliability`\n\n## Description\nIn `indexer/src/server.ts`, the process termination handler calls `process.exit(0)` immediately upon receiving `SIGTERM`. Any event batch currently being written to the database or broadcast to WebSocket clients is cut off mid-transaction, leading to partial ledger persistence.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Implement graceful shutdown coordinator that stops accepting new poll tasks on `SIGTERM`\n- [ ] Wait for current in-flight ledger batch to finish processing and commit transaction\n- [ ] Close WebSocket server and database connection pool with 10-second timeout\n- [ ] Log clean shutdown message before calling `process.exit(0)`",
-        "labels": [
-            "bug",
-            "indexer",
-            "reliability"
-        ]
-    },
-    {
-        "num": 76,
-        "title": "#76 \u2014 frontend/package.json Has Conflicting React 19 and React-DOM 18 Dependencies",
-        "body": "**Labels:** `bug` `frontend` `devops` `critical`\n\n## Description\nIn `frontend/package.json`, dependencies declare `\"react\": \"^19.2.7\"` paired with `\"react-dom\": \"^18.3.1\"` alongside `\"next\": \"14.2.3\"`, `\"eslint-config-next\": \"16.2.9\"`, and `\"@next/bundle-analyzer\": \"16.2.9\"`. Mismatching major versions across React, React-DOM, and Next.js causes severe peer dependency failures during `npm install` and runtime hydration crashes in Next.js 14 App Router.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Align React and React-DOM versions to `^18.3.1` in `frontend/package.json`\n- [ ] Align `@types/react` and `@types/react-dom` to `^18.3.0`\n- [ ] Align `eslint-config-next` and `@next/bundle-analyzer` to `14.2.3`\n- [ ] Generate a clean `frontend/package-lock.json` and ensure `npm run build` succeeds",
-        "labels": [
-            "bug",
-            "frontend",
-            "devops",
-            "critical"
-        ]
-    },
-    {
-        "num": 77,
-        "title": "#77 \u2014 Frontend Missing type-check and generate:types Scripts Required by CI Workflow",
-        "body": "**Labels:** `bug` `frontend` `ci-cd`\n\n## Description\nIn `.github/workflows/frontend-ci.yml`, steps execute `npm run type-check` (line 50) and `npm run generate:types` (line 55). Neither script is defined in `frontend/package.json`, causing the frontend CI workflow to fail immediately with `npm ERR! missing script: type-check`.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Add `\"type-check\": \"tsc --noEmit\"` to `frontend/package.json` scripts\n- [ ] Add `\"generate:types\": \"openapi-typescript ../backend/openapi.yaml -o src/types/api.ts\"` script\n- [ ] Verify `npm run type-check` passes without TypeScript errors\n- [ ] Ensure the frontend CI workflow executes both steps successfully",
-        "labels": [
-            "bug",
-            "frontend",
-            "ci-cd"
-        ]
-    },
-    {
-        "num": 78,
-        "title": "#78 \u2014 Duplicate API Client Implementations in frontend/lib/api.ts and frontend/src/services/api.ts",
-        "body": "**Labels:** `bug` `frontend` `refactor`\n\n## Description\nTwo divergent API client implementations exist in `frontend/`: `frontend/lib/api.ts` (throwing `APIError` and using basic fetch) and `frontend/src/services/api.ts` (throwing `NotFoundError`, `NetworkError`, with retry logic). Components and hooks import from both locations inconsistently, causing divergent error handling and retry behaviors.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Standardize on `frontend/src/services/api.ts` as the canonical API client\n- [ ] Re-export or deprecate `frontend/lib/api.ts` with backward compatibility warnings\n- [ ] Update all hooks in `frontend/src/hooks/` to import from `src/services/api`\n- [ ] Verify uniform error throwing (`APIError`, `NotFoundError`, `NetworkError`) across all API calls",
-        "labels": [
-            "bug",
-            "frontend",
-            "refactor"
-        ]
-    },
-    {
-        "num": 79,
-        "title": "#79 \u2014 Duplicate Stellar Wallet Utilities in frontend/lib/stellar.ts and frontend/src/services/wallet.ts",
-        "body": "**Labels:** `bug` `frontend` `wallet` `refactor`\n\n## Description\nWallet and Soroban interaction utilities are split across `frontend/lib/stellar.ts`, `frontend/lib/freighter.ts`, and `frontend/src/services/wallet.ts`. They maintain duplicate network passphrase constants and conflicting transaction simulation helpers, leading to intermittent transaction simulation failures.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Consolidate Soroban transaction building, simulation, and signing into `frontend/src/services/wallet.ts`\n- [ ] Use centralized network configuration from `NEXT_PUBLIC_STELLAR_NETWORK`\n- [ ] Add comprehensive unit tests for transaction building and error parsing\n- [ ] Remove dead and redundant helper functions in `frontend/lib/`",
-        "labels": [
-            "bug",
-            "frontend",
-            "wallet",
-            "refactor"
-        ]
-    },
-    {
-        "num": 80,
-        "title": "#80 \u2014 Duplicate UI Components for Market Odds and Pool Bars Across Components Directory",
-        "body": "**Labels:** `enhancement` `frontend` `ux` `refactor`\n\n## Description\nIn `frontend/src/components/market/`, three separate components implement horizontal odds/pool bars: `MarketOddsBar.tsx`, `PoolBar.tsx`, and `PoolProportionBar.tsx`. Each component has slightly different styling, prop names, and color codes, creating a fragmented visual appearance across market cards and detail pages.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Consolidate into a single canonical `MarketOddsBar.tsx` component supporting responsive size variants ('sm', 'md', 'lg')\n- [ ] Ensure proper handling of 0 pool volume (renders equal proportions without NaN)\n- [ ] Update `MarketCard.tsx` and `MarketDetailContent.tsx` to use the unified component\n- [ ] Remove redundant `PoolBar.tsx` and `PoolProportionBar.tsx` files",
-        "labels": [
-            "enhancement",
-            "frontend",
-            "ux",
-            "refactor"
-        ]
-    },
-    {
-        "num": 81,
-        "title": "#81 \u2014 Duplicate Wallet Button Components in frontend/src/components/layout",
-        "body": "**Labels:** `enhancement` `frontend` `wallet` `refactor`\n\n## Description\nIn `frontend/src/components/layout/`, both `WalletButton.tsx` (224 lines, feature-rich) and `WalletConnectButton.tsx` (10 lines, stub) exist. `Header.tsx` imports `WalletButton`, while other sections attempt to import `WalletConnectButton`, causing duplicate code and confusion.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Remove the redundant stub `WalletConnectButton.tsx`\n- [ ] Ensure `WalletButton.tsx` handles connecting, connected (with address truncation and balance display), and disconnected states\n- [ ] Add unit tests verifying clipboard copy, explorer link navigation, and disconnect trigger\n- [ ] Ensure accessibility with `aria-haspopup` and keyboard dropdown support",
-        "labels": [
-            "enhancement",
-            "frontend",
-            "wallet",
-            "refactor"
-        ]
-    },
-    {
-        "num": 82,
-        "title": "#82 \u2014 Missing frontend/Dockerfile Referenced in Root docker-compose.yml",
-        "body": "**Labels:** `bug` `frontend` `devops`\n\n## Description\nIn `docker-compose.yml`, service `frontend` declares `build: ./frontend`. However, `frontend/Dockerfile` does not exist in the repository. Running `docker compose up --build` fails immediately with `unable to prepare context: path \"./frontend/Dockerfile\" not found`.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Create production multi-stage `frontend/Dockerfile` using Node.js 20 Alpine and Next.js standalone output\n- [ ] Configure non-root user `nextjs` for container security\n- [ ] Include `HEALTHCHECK` verifying `http://localhost:3000/` or `/api/time`\n- [ ] Verify `docker compose up --build frontend` runs and serves the Next.js app successfully",
-        "labels": [
-            "bug",
-            "frontend",
-            "devops"
-        ]
-    },
-    {
-        "num": 83,
-        "title": "#83 \u2014 Next.js Config Lacks Content Security Policy (CSP) Headers for Production",
-        "body": "**Labels:** `security` `frontend`\n\n## Description\nIn `frontend/next.config.js`, HTTP security headers are configured but omit a `Content-Security-Policy` header. Web3 applications interacting with browser extension wallets require strict CSP directives (`connect-src`, `script-src`) to prevent malicious script injection and wallet credential exfiltration.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Add strict Content-Security-Policy header in `frontend/next.config.js`\n- [ ] Allow required connections: Soroban RPC endpoints, Horizon, backend API URL, and WebSocket hosts\n- [ ] Disallow `unsafe-eval` in production builds\n- [ ] Add Playwright security test asserting CSP header presence and directives",
-        "labels": [
-            "security",
-            "frontend"
-        ]
-    },
-    {
-        "num": 84,
-        "title": "#84 \u2014 Market Detail Page Missing Dynamic Metadata and OpenGraph Image Generation for Social Sharing",
-        "body": "**Labels:** `enhancement` `frontend` `seo`\n\n## Description\nIn `frontend/src/app/markets/[market_id]/page.tsx`, the page does not export a `generateMetadata` function. When market URLs are shared on Twitter/X, Discord, or Telegram, social cards show generic site metadata instead of the fighter names, scheduled fight date, and betting volume.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Export dynamic `generateMetadata` function fetching market details in `page.tsx`\n- [ ] Set dynamic `title`: `{fighter_a} vs {fighter_b} \u2014 Boxing Prediction Market`\n- [ ] Wire `frontend/src/app/api/og/route.tsx` to dynamically render custom OpenGraph cards with odds and logos\n- [ ] Add unit test verifying metadata generation for valid and non-existent market IDs",
-        "labels": [
-            "enhancement",
-            "frontend",
-            "seo"
-        ]
-    },
-    {
-        "num": 85,
-        "title": "#85 \u2014 Market Filters URL Search Parameters Reset Selected Tab on Page Refresh",
-        "body": "**Labels:** `bug` `frontend` `ux`\n\n## Description\nIn `frontend/src/components/market/MarketFilters.tsx`, filter buttons for market status (Open, Locked, Resolved) update URL search parameters, but during component initialization the active filter state defaults to 'All' rather than reading the existing URL parameter. Users refreshing the page lose their selected filter context.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Initialize state in `MarketFilters.tsx` from `useSearchParams().get('status')`\n- [ ] Sync weight class and category dropdowns with corresponding URL parameters\n- [ ] Ensure back and forward browser buttons update active filter pills reactively\n- [ ] Add component test verifying filter persistence across re-renders",
-        "labels": [
-            "bug",
-            "frontend",
-            "ux"
-        ]
-    },
-    {
-        "num": 86,
-        "title": "#86 \u2014 Bet Confirm Modal Allows Double-Submission on Slow Mobile Networks",
-        "body": "**Labels:** `bug` `frontend` `trading` `ux`\n\n## Description\nIn `frontend/src/components/bet/BetConfirmModal.tsx`, the confirm button does not disable immediately upon click. On slow mobile networks, users who tap the button multiple times trigger duplicate transaction signing prompts in Freighter, causing subsequent attempts to fail with sequence errors.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Immediately disable the confirm button and show loading spinner upon first click\n- [ ] Prevent modal dismissal via backdrop click or Escape key while transaction is in flight\n- [ ] Display clear status progression: 'Awaiting wallet signature' -> 'Submitting to Stellar' -> 'Confirmed'\n- [ ] Add test verifying confirm handler is called exactly once despite rapid multiple clicks",
-        "labels": [
-            "bug",
-            "frontend",
             "trading",
-            "ux"
+            "feature"
         ]
     },
     {
-        "num": 87,
-        "title": "#87 \u2014 useWallet Hook Fails to Detect Freighter Wallet Disconnection or Account Switching",
-        "body": "**Labels:** `bug` `frontend` `wallet`\n\n## Description\nIn `frontend/src/hooks/useWallet.ts`, the hook queries the wallet address upon initial mount and caches it in `localStorage`. If the user switches accounts or disconnects inside the Freighter browser extension, the frontend remains connected to the old address, leading to authorization errors when placing bets.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Listen for Freighter account change events or poll account state periodically\n- [ ] Update `useWallet` state automatically when active public key changes in extension\n- [ ] Clear cached session and reset queries when wallet disconnects\n- [ ] Add test case verifying account switch triggers state update",
+        "title": "[Contracts] Implement minimum bet amount validation to prevent dust attack state bloat",
+        "body": "### Context & Problem\nUsers can place 1-stroop bets repeatedly, bloating contract state and consuming storage without contributing liquidity.\n\n### Proposed Solution\n1. Define a global constant `MIN_BET_AMOUNT` in `shared/src/lib.rs`.\n2. Validate bet amount >= `MIN_BET_AMOUNT` before processing.\n\n### Acceptance Criteria\n- Bets below threshold revert with `AmountTooLow`.\n- Legitimate bets proceed without issues.",
         "labels": [
-            "bug",
-            "frontend",
-            "wallet"
+            "blockchain",
+            "predictions",
+            "feature"
         ]
     },
     {
-        "num": 88,
-        "title": "#88 \u2014 usePlaceBet Hook Does Not Invalidate Portfolio and Market Queries on Error Rollback",
-        "body": "**Labels:** `bug` `frontend` `hooks` `trading`\n\n## Description\nIn `frontend/src/hooks/usePlaceBet.ts`, optimistic updates are applied to the market odds cache when a user submits a bet. If transaction submission fails or is rejected by the user, the hook reverts local state but does not invalidate React Query caches, leaving stale odds displayed on screen.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Call `queryClient.invalidateQueries(['market', marketId])` in `onError` handler\n- [ ] Call `queryClient.invalidateQueries(['portfolio', userAddress])` on error rollback\n- [ ] Display an informative error toast explaining why the transaction failed\n- [ ] Add hook unit test verifying optimistic update rollback on transaction rejection",
+        "title": "[Contracts] Implement emergency pause circuit breaker across all market interactions",
+        "body": "### Context & Problem\nIn the event of an exploit or oracle failure, administrators need an instant circuit breaker to pause swaps, bets, and dispute resolutions.\n\n### Proposed Solution\n1. Add `paused: bool` in market contract storage.\n2. Add `set_paused(admin, bool)` with admin authentication.\n3. Guard all mutation functions with `require(!paused)`.\n\n### Acceptance Criteria\n- When paused, all bets, swaps, and withdrawals revert with `ContractPaused`.\n- Only admin can pause/unpause.",
         "labels": [
-            "bug",
-            "frontend",
-            "hooks",
-            "trading"
-        ]
-    },
-    {
-        "num": 89,
-        "title": "#89 \u2014 useClaimWinnings Hook Does Not Check Transaction Hash Confirmation Before Updating UI",
-        "body": "**Labels:** `bug` `frontend` `hooks`\n\n## Description\nIn `frontend/src/hooks/useClaimWinnings.ts`, the UI immediately marks the user's winning position as 'Claimed' as soon as the wallet submits the transaction hash. If the transaction fails on-chain due to out-of-gas or contract error, the user is left with a false 'Claimed' state and cannot re-attempt.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Wait for Horizon transaction status confirmation before marking position as claimed\n- [ ] Show 'Claiming...' pending indicator while transaction is being included in ledger\n- [ ] Revert to 'Claim Winnings' button if transaction execution status is failed\n- [ ] Add unit tests testing confirmed vs failed claim transaction responses",
-        "labels": [
-            "bug",
-            "frontend",
-            "hooks"
-        ]
-    },
-    {
-        "num": 90,
-        "title": "#90 \u2014 CountdownTimer Component Causes SSR Hydration Mismatch Due to Date.now() Call",
-        "body": "**Labels:** `bug` `frontend` `ux`\n\n## Description\nIn `frontend/src/components/ui/CountdownTimer.tsx`, the component calls `Date.now()` during initial render. Because the server rendering time differs from client hydration time, Next.js logs hydration mismatch warnings in the browser console: `Warning: Text content did not match. Server: ... Client: ...`.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Use a `mounted` state flag with `useEffect` to render static placeholder on server and start live timer on client mount\n- [ ] Ensure server and initial client render outputs match exactly\n- [ ] Clean up `setInterval` timer on component unmount\n- [ ] Verify zero hydration mismatch warnings in Next.js development console",
-        "labels": [
-            "bug",
-            "frontend",
-            "ux"
-        ]
-    },
-    {
-        "num": 91,
-        "title": "#91 \u2014 MarketCard Odds Bar Renders NaN When Total Pool Volume is Zero",
-        "body": "**Labels:** `bug` `frontend` `ux`\n\n## Description\nIn `frontend/src/components/market/MarketCard.tsx`, odds calculation computes `(poolA / totalPool) * 100`. For newly created markets with zero bets where `totalPool === 0`, the calculation evaluates to `0 / 0 = NaN`, displaying 'NaN%' on the fighter card progress bar.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Check `totalPool === 0` and display neutral 50/50 split (or 33/33/33 if draw enabled)\n- [ ] Display 'No bets yet' or 'Even odds' badge when pool is empty\n- [ ] Add test verifying `MarketCard` renders cleanly with 0 pool volume\n- [ ] Ensure BigInt division does not throw divide-by-zero errors",
-        "labels": [
-            "bug",
-            "frontend",
-            "ux"
-        ]
-    },
-    {
-        "num": 92,
-        "title": "#92 \u2014 Portfolio Page Pagination Query Lacks Offset Validation for Out of Range Pages",
-        "body": "**Labels:** `bug` `frontend` `portfolio`\n\n## Description\nIn `frontend/src/app/portfolio/page.tsx`, requesting a page number greater than `totalPages` (e.g. `?page=99`) causes the page to render broken pagination controls and an empty list without guidance. If total items shrink, users can become trapped on an empty page.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Redirect to `page=1` or maximum available page if requested page exceeds `totalPages`\n- [ ] Display an empty state message with a 'Back to first page' button\n- [ ] Disable the 'Next' pagination button when `page >= totalPages`\n- [ ] Add unit tests testing pagination boundary conditions in `portfolio/__tests__/pagination.test.tsx`",
-        "labels": [
-            "bug",
-            "frontend",
-            "portfolio"
-        ]
-    },
-    {
-        "num": 93,
-        "title": "#93 \u2014 Governance Proposal Voting UI Does Not Update Optimistically on Successful Vote",
-        "body": "**Labels:** `enhancement` `frontend` `ux`\n\n## Description\nIn `frontend/src/app/governance/[id]/page.tsx`, casting a governance vote submits the transaction successfully, but the vote count bars and percentages do not update until the user manually hard-refreshes the page. Users frequently double-vote thinking their vote was not recorded.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Apply optimistic vote increment to active proposal state upon wallet transaction confirmation\n- [ ] Invalidate governance query cache using `queryClient.invalidateQueries(['proposal', id])`\n- [ ] Show 'Vote recorded' success banner with transaction explorer link\n- [ ] Disable voting action buttons for addresses that have already cast a vote",
-        "labels": [
-            "enhancement",
-            "frontend",
-            "ux"
-        ]
-    },
-    {
-        "num": 94,
-        "title": "#94 \u2014 Create Market Form Lacks Client-Side Validation for Minimum Betting Window Duration",
-        "body": "**Labels:** `bug` `frontend` `markets`\n\n## Description\nIn `frontend/src/app/create/page.tsx` and `frontend/src/schemas/createMarket.schema.ts`, the form allows selecting a fight start time in the past or less than 1 hour in the future. Users fill out the entire form and pay transaction fees only for the Soroban smart contract to reject the transaction with `MIN_MARKET_DURATION` error.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Enforce in Zod schema that `scheduled_at` must be at least 1 hour (3600 seconds) in the future\n- [ ] Set HTML datetime-local `min` attribute to current time + 1 hour\n- [ ] Display inline validation warning if selected time is too soon\n- [ ] Add test verifying form submission is blocked with invalid scheduled dates",
-        "labels": [
-            "bug",
-            "frontend",
-            "markets"
-        ]
-    },
-    {
-        "num": 95,
-        "title": "#95 \u2014 Leaderboard Page Fails to Highlight Current Connected User Position",
-        "body": "**Labels:** `enhancement` `frontend` `leaderboard` `ux`\n\n## Description\nIn `frontend/src/app/leaderboard/page.tsx`, the leaderboard ranks top bettors by XP and profit. When a user connects their wallet, their row is not visually highlighted, and if they are ranked outside the top 10, they cannot see their ranking without paging through all pages.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Highlight the connected user's row with distinctive border and badge in the table\n- [ ] Render a sticky `YourRankCard` at the top or bottom displaying current user rank, XP, and win rate\n- [ ] Fetch user rank from `/api/engagement/leaderboard/rank` when wallet is connected\n- [ ] Add test verifying `YourRankCard` renders correctly with connected wallet",
-        "labels": [
-            "enhancement",
-            "frontend",
-            "leaderboard",
-            "ux"
-        ]
-    },
-    {
-        "num": 96,
-        "title": "#96 \u2014 Payer Page Lacks Input Sanitization on Stellar Public Key Input Field",
-        "body": "**Labels:** `security` `frontend` `wallet`\n\n## Description\nIn `frontend/src/app/payer/page.tsx`, the recipient address field allows entering arbitrary text without validating Stellar public key formatting. Submitting an invalid address triggers an unhandled SDK error that crashes the payment flow.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Validate recipient address format using `StrKey.isValidEd25519PublicKey` on input blur\n- [ ] Display inline error 'Please enter a valid Stellar address starting with G' if invalid\n- [ ] Disable submit button until both address and amount pass validation\n- [ ] Add unit tests covering valid, invalid, and empty recipient addresses",
-        "labels": [
+            "blockchain",
             "security",
-            "frontend",
-            "wallet"
+            "feature"
         ]
     },
     {
-        "num": 97,
-        "title": "#97 \u2014 Toast Notification Provider Does Not Dismiss Automatically on Route Change",
-        "body": "**Labels:** `bug` `frontend` `ux`\n\n## Description\nIn `frontend/src/components/ui/ToastProvider.tsx`, active toasts linger across page navigations. For example, a bet failure toast triggered on a market detail page remains stuck in the corner when navigating to the portfolio page.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Listen to Next.js route change events and dismiss transient route-specific error toasts\n- [ ] Retain persistent transaction progress toasts across route transitions\n- [ ] Add auto-dismiss countdown timer (default 5 seconds) to all success/info toasts\n- [ ] Add dismiss 'X' button to all toast variants for manual dismissal",
+        "title": "[Contracts] Implement dispute resolution appeal cooldown window before final payout",
+        "body": "### Context & Problem\nImmediately after an initial dispute ruling, funds are distributed without allowing an appeal window, preventing community governance intervention.\n\n### Proposed Solution\n1. Introduce an `appeal_window_end` timestamp.\n2. Require payout execution to happen only after `env.ledger().timestamp() >= appeal_window_end`.\n\n### Acceptance Criteria\n- Payout claims during appeal window revert.\n- Payout claims after appeal window succeed.",
         "labels": [
-            "bug",
-            "frontend",
-            "ux"
+            "blockchain",
+            "disputes",
+            "feature"
         ]
     },
     {
-        "num": 98,
-        "title": "#98 \u2014 Dark Mode Theme Toggle Fails to Synchronize with System Color Scheme Preference",
-        "body": "**Labels:** `enhancement` `frontend` `ux`\n\n## Description\nIn `frontend/src/components/layout/ThemeToggle.tsx`, theme preference is stored in `localStorage` under `theme`, but the app does not listen for system OS color scheme changes (`prefers-color-scheme`). Users whose operating system switches themes at sunset do not see the app update dynamically.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Add `prefers-color-scheme` media query listener in theme provider\n- [ ] Support three modes: 'Light', 'Dark', and 'System Default'\n- [ ] Prevent initial page flash by setting class on `<html>` before hydration\n- [ ] Add unit test verifying system theme preference detection",
+        "title": "[Contracts] Implement dynamic fee split configuration in treasury with basis point bounds",
+        "body": "### Context & Problem\nTreasury contract has hardcoded fee distribution percentages, preventing governance from adjusting splits between treasury, LP rewards, and burns.\n\n### Proposed Solution\n1. Add `set_fee_split(admin, treasury_bps, lp_bps, burn_bps)` verifying sum equals 10,000 bps (100%).\n2. Apply configured split on all fee allocations.\n\n### Acceptance Criteria\n- Invalid splits (sum != 10000) revert.\n- Treasury correctly routes tokens per configured percentages.",
         "labels": [
-            "enhancement",
-            "frontend",
-            "ux"
+            "blockchain",
+            "treasury",
+            "feature"
         ]
     },
     {
-        "num": 99,
-        "title": "#99 \u2014 useMarketOdds Hook Does Not Re-Subscribe to WebSocket Room After Network Reconnect",
-        "body": "**Labels:** `bug` `frontend` `hooks` `websocket`\n\n## Description\nIn `frontend/src/hooks/useMarketOdds.ts`, the hook establishes a WebSocket connection and emits `join_market` to subscribe to live odds updates. If the internet drops and reconnects, the socket re-establishes connection but never re-subscribes to the active market room, leaving odds static until page reload.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Re-emit subscription messages for all active market rooms upon socket `open` event\n- [ ] Fallback to REST polling (every 10s) if WebSocket connection fails permanently\n- [ ] Display subtle visual indicator when live odds stream is disconnected\n- [ ] Add test verifying room re-subscription after simulated socket drop",
+        "title": "[Contracts] Implement partial order matching support for limit-style share orders",
+        "body": "### Context & Problem\nCurrently, users can only execute AMM market orders; there is no capability to place limit orders that execute when target odds are reached.\n\n### Proposed Solution\n1. Create an order storage structure with price limit, amount, and expiry.\n2. Match incoming swaps against resting limit orders before routing to the CPMM curve.\n\n### Acceptance Criteria\n- Partial fills update remaining order size.\n- Cancel order returns unspent balance to creator.",
         "labels": [
-            "bug",
-            "frontend",
-            "hooks",
-            "websocket"
+            "blockchain",
+            "trading",
+            "feature"
         ]
     },
     {
-        "num": 100,
-        "title": "#100 \u2014 Playwright E2E Tests Hardcode Port 3000 Without Checking Port Availability",
-        "body": "**Labels:** `devops` `frontend` `testing`\n\n## Description\nIn `frontend/playwright.config.ts` and `frontend/e2e/core-flows.spec.ts`, the base URL defaults strictly to `http://localhost:3000`. In development environments where port 3000 is occupied by another app or indexer, Playwright tests run against the wrong server and fail with obscure element lookup errors.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Use `process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000'` in `playwright.config.ts`\n- [ ] Add health check verification before test suite execution in `frontend/e2e/cleanup.ts`\n- [ ] Update README with instructions on running E2E tests against custom ports\n- [ ] Verify all E2E test files use relative navigation paths",
+        "title": "[Contracts] Implement automated contract event emissions for all state transitions",
+        "body": "### Context & Problem\nSome contract functions (such as dispute opening and fee updates) do not emit Soroban topics/events, forcing indexers to poll raw ledger entries.\n\n### Proposed Solution\n1. Define typed event structures for: `MarketCreated`, `BetPlaced`, `MarketResolved`, `DisputeOpened`, `FeesClaimed`.\n2. Emit events with indexed topics for contract ID, user address, and action.\n\n### Acceptance Criteria\n- Every critical state change emits a corresponding Soroban event.\n- Events follow unified schema matching indexer expectations.",
         "labels": [
-            "devops",
-            "frontend",
-            "testing"
+            "blockchain",
+            "markets",
+            "feature"
         ]
     },
     {
-        "num": 101,
-        "title": "#101 \u2014 Bet History Table Fails to Format Stroops to XLM When Bet Amount Exceeds 1 Million",
-        "body": "**Labels:** `bug` `frontend` `trading`\n\n## Description\nIn `frontend/src/components/bet/BetHistoryTable.tsx`, converting stroops to XLM uses `Number(amount) / 10_000_000`. For large bets (>100,000 XLM = >1,000,000,000,000 stroops), JavaScript floating point precision issues cause inaccurate decimal display (e.g. `100000.00000000001 XLM`).\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Use BigInt arithmetic or `bignumber.js` / Stellar SDK formatting helper for stroop conversions\n- [ ] Format displayed XLM with standard thousand separators and maximum 2 decimal places\n- [ ] Add test cases testing 1 stroop, 10 XLM, 1,000,000 XLM, and max stroop values\n- [ ] Ensure uniform formatting in `BetList.tsx` and `ClaimWinningsPanel.tsx`",
+        "title": "[Contracts] Implement daily withdrawal velocity limits per recipient in treasury contract",
+        "body": "### Context & Problem\nA compromised admin or authorized recipient can drain entire treasury balances in a single transaction.\n\n### Proposed Solution\n1. Maintain rolling 24-hour withdrawal totals per address in treasury contract.\n2. Reject withdrawals exceeding `daily_limit` unless a multi-day timelock is initiated.\n\n### Acceptance Criteria\n- Cumulative withdrawals within 24h exceeding limit revert.\n- Daily counters reset correctly after 24h window.",
         "labels": [
-            "bug",
-            "frontend",
-            "trading"
-        ]
-    },
-    {
-        "num": 102,
-        "title": "#102 \u2014 Sitemap Generation Route Fails on Backend API 500 Error During Static Build",
-        "body": "**Labels:** `bug` `frontend` `seo`\n\n## Description\nIn `frontend/src/app/sitemap.ts`, `sitemap()` fetches the list of active markets from `/api/markets` without a fallback catch block. If the backend is temporarily unavailable during `npm run build`, Next.js build fails completely.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Wrap backend market fetching in `sitemap.ts` in try/catch block\n- [ ] Fallback to returning core static routes (`/`, `/markets`, `/portfolio`, `/leaderboard`, `/governance`) if API is unreachable\n- [ ] Log warning during build if dynamic market routes could not be generated\n- [ ] Add test in `sitemap.test.ts` verifying fallback behavior when API returns 500",
-        "labels": [
-            "bug",
-            "frontend",
-            "seo"
-        ]
-    },
-    {
-        "num": 103,
-        "title": "#103 \u2014 Frontend Accessibility: Missing Aria Labels and Keyboard Traps on Modal Dialogs",
-        "body": "**Labels:** `accessibility` `frontend` `ux`\n\n## Description\nIn `frontend/src/components/bet/BetConfirmModal.tsx` and `frontend/src/components/layout/HeaderMobileNav.tsx`, dialogs do not trap keyboard focus or provide `aria-labelledby` / `aria-describedby` attributes. Screen reader users and keyboard-only navigators can lose focus behind open modal backdrops.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Trap focus within modal dialogs using `focus-trap-react` or custom focus cycle hook\n- [ ] Add `role=\"dialog\"`, `aria-modal=\"true\"`, and `aria-labelledby` attributes to all modals\n- [ ] Ensure pressing `Escape` key closes active dialogs\n- [ ] Pass `@axe-core/playwright` accessibility audit without violations",
-        "labels": [
-            "accessibility",
-            "frontend",
-            "ux"
-        ]
-    },
-    {
-        "num": 104,
-        "title": "#104 \u2014 Error Boundary Component Does Not Reset Query Cache on Retry Button Click",
-        "body": "**Labels:** `bug` `frontend` `ux`\n\n## Description\nIn `frontend/src/components/ui/ErrorBoundary.tsx`, clicking the 'Try Again' button resets local React error boundary state but does not call `QueryErrorResetBoundary` or `queryClient.resetQueries()`. As a result, React Query immediately re-throws the cached error and returns to the error screen.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Wrap error boundaries with `@tanstack/react-query` `QueryErrorResetBoundary`\n- [ ] Call `reset()` inside ErrorBoundary retry button click handler\n- [ ] Add unit test verifying clicking retry triggers query refetch\n- [ ] Verify clean recovery after network restoration",
-        "labels": [
-            "bug",
-            "frontend",
-            "ux"
-        ]
-    },
-    {
-        "num": 105,
-        "title": "#105 \u2014 API Service apiFetch Lacks AbortController Timeout Cleanup on Early Return",
-        "body": "**Labels:** `bug` `frontend` `performance`\n\n## Description\nIn `frontend/src/services/api.ts`, `apiFetchOnce` registers `const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)`. In some early return or non-standard error throw paths, `clearTimeout(timeoutId)` can be skipped, leaving pending timer handles in the browser event loop.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Ensure `clearTimeout(timeoutId)` is placed strictly in a `finally` block for all fetch requests\n- [ ] Cancel active in-flight requests when components unmount using React Query cancellation signals\n- [ ] Add test verifying timers are cleared on both success and error responses\n- [ ] Verify no memory leak warnings during Jest test execution",
-        "labels": [
-            "bug",
-            "frontend",
-            "performance"
-        ]
-    },
-    {
-        "num": 106,
-        "title": "#106 \u2014 Stale Markdown Summary and Fix Reports Cluttering Workspace Root Directory",
-        "body": "**Labels:** `tech-debt` `docs` `devex`\n\n## Description\nThe root workspace directory contains over 20 transient fix reports and scratch text files: `DRAW_BET_FIX.md`, `FIXES_QUICK_REFERENCE.md`, `FIXES_SUMMARY.md`, `FIX_SUMMARY.md`, `IMPLEMENTATION_CHANGES.md`, `IMPLEMENTATION_SUMMARY.md`, `INDEXER_ENV_FIX.md`, `INDEXER_POLLING_RESILIENCE.md`, `ISSUES_FIXED.md`, `ISSUES_FIX_SUMMARY.md`, `RACE_CONDITION_FIX.md`, `README_FIXES.md`, `SECURITY_FIXES_SUMMARY.md`, `STELLAR_SERVER_FIX.md`, `VERIFICATION_CHECKLIST.md`, `VERIFICATION_REPORT.md`, `WORK_COMPLETE.md`, `commit_msg.txt`, and `task1.md`. These transient files obscure primary project files and should be organized into `docs/archive/` or cleaned up.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Create directory `docs/archive/` and relocate historical fix reports and verification summaries into it\n- [ ] Remove scratch files like `commit_msg.txt` and `task1.md` from git tracking\n- [ ] Keep only essential top-level markdown files (`README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CHANGELOG.md`, `LICENSE`) in the repo root\n- [ ] Update `.gitignore` to prevent future temporary commit notes and markdown scratch files from being committed",
-        "labels": [
-            "tech-debt",
-            "docs",
-            "devex"
-        ]
-    },
-    {
-        "num": 107,
-        "title": "#107 \u2014 docker-compose.yml Defines Duplicate indexer Service with Conflicting Ports and Volumes",
-        "body": "**Labels:** `bug` `devops` `critical`\n\n## Description\nIn `docker-compose.yml`, the `indexer` service is defined twice: lines 32-42 (exposing port 3002:3002 and depending on postgres) and lines 57-68 (depending on backend, setting SOROBAN_RPC_URL, and mounting data without ports). This invalid syntax causes Docker Compose to overwrite the service definition non-deterministically and fail during startup.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Merge the two `indexer` definitions in `docker-compose.yml` into a single canonical service definition\n- [ ] Configure indexer to depend on `postgres` (condition: service_healthy) and `backend` (condition: service_started)\n- [ ] Expose port 3002:3002 and map `./indexer/.env` cleanly\n- [ ] Verify `docker compose config` validates with 0 syntax errors or duplicate key warnings",
-        "labels": [
-            "bug",
-            "devops",
-            "critical"
-        ]
-    },
-    {
-        "num": 108,
-        "title": "#108 \u2014 docker-compose.yml Has Circular Dependency Between Backend and Indexer Services",
-        "body": "**Labels:** `bug` `devops` `critical`\n\n## Description\nIn `docker-compose.yml`, line 51 specifies `backend` depends on `indexer: condition: service_started`, while line 60 has the second indexer definition depend on `backend: condition: service_started`. This circular dependency prevents `docker compose up` from resolving service startup ordering.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Break the circular dependency by having `indexer` depend on `postgres` and `backend` (or vice-versa)\n- [ ] Configure health checks on all dependent containers\n- [ ] Verify all containers spin up in correct topological order on a fresh machine\n- [ ] Test full stack boot with `docker compose up -d`",
-        "labels": [
-            "bug",
-            "devops",
-            "critical"
-        ]
-    },
-    {
-        "num": 109,
-        "title": "#109 \u2014 Backend Dockerfile Runs Node Process as Root User Instead of node User",
-        "body": "**Labels:** `security` `devops` `backend`\n\n## Description\nIn `backend/Dockerfile`, the runtime container stage executes as `root`. If an attacker exploits a remote code execution vulnerability in a dependency or endpoint, they immediately gain root access inside the container namespace.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Add `USER node` directive before `CMD [\"node\", \"dist/index.js\"]` in `backend/Dockerfile`\n- [ ] Ensure `/app` directory ownership is granted to `node:node` via `chown -R node:node /app`\n- [ ] Verify the application boots and writes logs without permission errors as user `node`\n- [ ] Audit `indexer/Dockerfile` to also enforce non-root execution",
-        "labels": [
-            "security",
-            "devops",
-            "backend"
-        ]
-    },
-    {
-        "num": 110,
-        "title": "#110 \u2014 Backend CI Workflow References Missing package-lock.json Causing npm ci Cache Failure",
-        "body": "**Labels:** `bug` `ci-cd` `backend`\n\n## Description\nIn `.github/workflows/backend-ci.yml`, actions cache uses `key: ${{ runner.os }}-node-modules-${{ hashFiles('backend/package-lock.json') }}` and `cache-dependency-path: backend/package-lock.json`. Because `backend/package-lock.json` is missing from the repository, the cache key evaluates to an empty hash and dependency caching fails.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Generate and commit `backend/package-lock.json` with resolved dependencies\n- [ ] Ensure `npm ci` in `backend-ci.yml` successfully hits cache and installs reproducibly\n- [ ] Verify GitHub Actions cache step passes without warnings\n- [ ] Add lockfile lint step in CI ensuring package.json and package-lock.json remain in sync",
-        "labels": [
-            "bug",
-            "ci-cd",
-            "backend"
-        ]
-    },
-    {
-        "num": 111,
-        "title": "#111 \u2014 Backend CI Workflow References Non-Existent Load Test Script activity-feed.loadtest.js",
-        "body": "**Labels:** `bug` `ci-cd` `backend` `testing`\n\n## Description\nIn `.github/workflows/backend-ci.yml`, the `load-test` job attempts to execute `k6 run tests/load/activity-feed.loadtest.js`. The directory `backend/tests/load/` and the script `activity-feed.loadtest.js` do not exist, causing the load-test CI step to fail with file not found error.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Create `backend/tests/load/activity-feed.loadtest.js` simulating 100 concurrent WebSocket connections receiving activity feed updates\n- [ ] Assert latency thresholds: p95 < 200ms and 0 error rate under simulated load\n- [ ] Verify `k6 run` executes successfully locally and in GitHub Actions\n- [ ] Document load testing guidelines in `docs/runbook.md`",
-        "labels": [
-            "bug",
-            "ci-cd",
-            "backend",
-            "testing"
-        ]
-    },
-    {
-        "num": 112,
-        "title": "#112 \u2014 E2E Soroban Workflow Uses Incorrect WASM File Names for Deployment",
-        "body": "**Labels:** `bug` `ci-cd` `contracts`\n\n## Description\nIn `.github/workflows/e2e-soroban.yml`, lines 83 and 93 deploy `--wasm target/wasm32-unknown-unknown/release/market_factory.wasm` and `market.wasm`. Because the Cargo package names are `boxmeout-market-factory` and `boxmeout-market`, cargo produces `boxmeout_market_factory.wasm` and `boxmeout_market.wasm`. The deployment step fails because the referenced files do not exist.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Update WASM paths in `e2e-soroban.yml` to `target/wasm32-unknown-unknown/release/boxmeout_market_factory.wasm` and `boxmeout_market.wasm`\n- [ ] Verify contract deployment steps in Soroban E2E workflow find the built WASM artifacts\n- [ ] Add step building backend before `node dist/index.js` in `e2e-soroban.yml`\n- [ ] Ensure full Soroban E2E workflow completes green",
-        "labels": [
-            "bug",
-            "ci-cd",
-            "contracts"
-        ]
-    },
-    {
-        "num": 113,
-        "title": "#113 \u2014 Contracts CI Fuzzing Step Uses Fixed 60s Duration That Times Out in GitHub Actions",
-        "body": "**Labels:** `bug` `ci-cd` `contracts` `testing`\n\n## Description\nIn `.github/workflows/contracts-ci.yml`, the `fuzz` job runs `cargo install cargo-fuzz --locked`. Compiling `cargo-fuzz` and all its dependencies from source on a standard GitHub Actions runner takes 12-15 minutes, frequently exceeding job timeout limits or burning monthly CI minutes.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Use precompiled `cargo-binstall` or pre-built binary for `cargo-fuzz` in GitHub Actions\n- [ ] Cache cargo-fuzz binary in runner cache\n- [ ] Limit fuzzing runs to scheduled nightly builds and pull requests modifying `contracts/shared/src/amm.rs`\n- [ ] Reduce fuzz step duration to 30s in PR checks",
-        "labels": [
-            "bug",
-            "ci-cd",
-            "contracts",
-            "testing"
-        ]
-    },
-    {
-        "num": 114,
-        "title": "#114 \u2014 Root package.json Lacks Unified Workspace Scripts for Test, Lint, and Build",
-        "body": "**Labels:** `enhancement` `devex` `ci-cd`\n\n## Description\nThe root `package.json` only defines `test:e2e` and `test:integration`. Developers cloning the repository cannot run `npm run test`, `npm run lint`, or `npm run build` from the workspace root to check all packages simultaneously.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Add root scripts `test`, `lint`, `build`, and `type-check` using npm workspaces or `--prefix` triggers\n- [ ] Ensure `npm test` runs backend, indexer, and frontend test suites sequentially\n- [ ] Ensure `npm run lint` lints all subprojects and reports unified status\n- [ ] Document root commands in `README.md`",
-        "labels": [
-            "enhancement",
-            "devex",
-            "ci-cd"
-        ]
-    },
-    {
-        "num": 115,
-        "title": "#115 \u2014 Staging Docker Compose Configuration Missing Redis Password and Environment Secrets",
-        "body": "**Labels:** `security` `devops`\n\n## Description\n`docker-compose.staging.yml` configures staging services without authentication on Redis and database instances. Anyone with network access to the staging host can connect directly to Redis without a password and read cached session tokens and user data.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Configure `requirepass ${REDIS_PASSWORD}` for Redis in `docker-compose.staging.yml`\n- [ ] Update backend and indexer environment variables to pass Redis authentication credentials\n- [ ] Ensure `.env.staging.example` includes `REDIS_PASSWORD` with strong placeholder requirement\n- [ ] Verify staging environment boots securely with password-protected Redis",
-        "labels": [
-            "security",
-            "devops"
-        ]
-    },
-    {
-        "num": 116,
-        "title": "#116 \u2014 Database Backup Scripts in backend/scripts Lack S3 or Remote Object Storage Upload",
-        "body": "**Labels:** `enhancement` `devops` `reliability` `database`\n\n## Description\nIn `backend/scripts/backup-db.sh`, database backups created with `pg_dump` are saved exclusively to the local disk path `/var/backups/bankerchanger/`. If the host disk crashes or the container is terminated, all database backups are lost simultaneously with the primary database.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Add optional AWS S3 or Google Cloud Storage upload step to `backup-db.sh` using AWS CLI / rclone\n- [ ] Encrypt backup dumps with GPG / AES-256 before uploading to off-site storage\n- [ ] Add retention lifecycle pruning to delete off-site backups older than 30 days\n- [ ] Document off-site backup configuration in `backend/BACKUP_STRATEGY.md`",
-        "labels": [
-            "enhancement",
-            "devops",
-            "reliability",
-            "database"
-        ]
-    },
-    {
-        "num": 117,
-        "title": "#117 \u2014 Database Restore Script Does Not Validate Backup Checksum Before Restoring",
-        "body": "**Labels:** `security` `devops` `database`\n\n## Description\nIn `backend/scripts/restore-db.sh`, the restore procedure accepts a backup file and immediately executes `pg_restore` into the database without checking SHA-256 integrity checksums. Restoring from a corrupted or tampered file can cause database corruption or arbitrary command execution via SQL injection in malformed dumps.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Generate a `.sha256` checksum file alongside every backup in `backup-db.sh`\n- [ ] Validate `sha256sum -c` in `restore-db.sh` before executing restore operations\n- [ ] Abort restore immediately with non-zero exit code if checksum verification fails\n- [ ] Add test verifying restore script rejects corrupted backup files",
-        "labels": [
-            "security",
-            "devops",
-            "database"
-        ]
-    },
-    {
-        "num": 118,
-        "title": "#118 \u2014 Staging Deployment Workflow Deploys Unverified WASM Artifacts to Network",
-        "body": "**Labels:** `security` `ci-cd` `contracts`\n\n## Description\nIn `.github/workflows/deploy-staging.yml`, smart contract artifacts are built and deployed directly to the network without verifying WASM build hashes or running security audits. Deploying unverified bytecode risks deploying vulnerable contract versions to staging.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Add step computing SHA-256 hash of compiled WASM bytecode in `deploy-staging.yml`\n- [ ] Log and record WASM hashes in deployment summary artifact\n- [ ] Require `cargo audit` and `cargo test` to pass before deploy stage is unlocked\n- [ ] Add verification check comparing deployed bytecode hash on-chain against build output",
-        "labels": [
-            "security",
-            "ci-cd",
-            "contracts"
-        ]
-    },
-    {
-        "num": 119,
-        "title": "#119 \u2014 Testnet Deployment Workflow Embeds Plaintext Deployer Key In Command Arguments",
-        "body": "**Labels:** `security` `ci-cd` `devops`\n\n## Description\nIn `.github/workflows/deploy-testnet.yml`, the deployer secret key is passed as a command-line parameter: `./contracts/scripts/deploy.sh --secret ${{ secrets.STELLAR_DEPLOYER_SECRET }}`. Command-line parameters are visible to system process monitors (`ps aux`) and can be logged in CI step transcripts.\n\n## Complexity\n**High**\n\n## Acceptance Criteria\n- [ ] Pass deployer key via environment variable `STELLAR_DEPLOYER_SECRET` or temporary file rather than command-line arguments\n- [ ] Ensure deployment scripts mask secrets in all stdout / stderr outputs\n- [ ] Add secret scanner verification in CI to detect leaked private keys\n- [ ] Update `contracts/scripts/deploy.sh` to read credentials securely from environment",
-        "labels": [
-            "security",
-            "ci-cd",
-            "devops"
-        ]
-    },
-    {
-        "num": 120,
-        "title": "#120 \u2014 Backup Drill Workflow Fails on Empty Database Due to Missing Initial Seed Step",
-        "body": "**Labels:** `bug` `ci-cd` `database`\n\n## Description\nIn `.github/workflows/backup-restore-drill.yml`, the automated backup/restore validation drill starts PostgreSQL containers and runs backup/restore tests immediately without seeding dummy data. The drill asserts `row_count > 0`, which fails because the freshly started database is empty.\n\n## Complexity\n**Medium**\n\n## Acceptance Criteria\n- [ ] Add database migration and synthetic test data seeding step before executing backup drill\n- [ ] Verify row counts for `markets`, `bets`, and `users` before and after restore\n- [ ] Ensure `backup-restore-drill.yml` workflow runs successfully end-to-end\n- [ ] Send alert notification on drill failure to maintainers",
-        "labels": [
-            "bug",
-            "ci-cd",
-            "database"
-        ]
-    },
-    {
-        "num": 121,
-        "title": "#121 \u2014 Dependabot Configuration Missing for Docker and GitHub Actions Ecosystems",
-        "body": "**Labels:** `enhancement` `ci-cd` `security`\n\n## Description\nIn `.github/dependabot.yml`, Dependabot is configured only for `npm` in `backend` and `frontend`. Outdated Docker base images (e.g. `postgres:15-alpine`, `node:20-alpine`) and GitHub Actions dependencies (`actions/checkout@v4`, `actions/setup-node@v4`) do not receive automated security patches.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Add `package-ecosystem: docker` for `/backend`, `/indexer`, and `/frontend` in `dependabot.yml`\n- [ ] Add `package-ecosystem: github-actions` for `/.github/workflows`\n- [ ] Add `package-ecosystem: cargo` for `/contracts`\n- [ ] Configure weekly check schedule with grouped pull requests for minor and patch updates",
-        "labels": [
-            "enhancement",
-            "ci-cd",
+            "blockchain",
+            "treasury",
             "security"
         ]
     },
     {
-        "num": 122,
-        "title": "#122 \u2014 Contributing Guidelines in CONTRIBUTING.md Reference Stale Branch Names and Commands",
-        "body": "**Labels:** `docs` `devex`\n\n## Description\nIn `CONTRIBUTING.md`, instructions reference creating pull requests against branch `master` (the repository default branch is `main`), and recommend obsolete Soroban CLI commands (`soroban contract build` instead of `stellar contract build`). New contributors following the guide face git branch confusion and failed build instructions.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Update all references from `master` to `main` across `CONTRIBUTING.md`\n- [ ] Update contract build commands to use current `stellar-cli` syntax\n- [ ] Add section explaining mono-repo folder structure and local development startup steps\n- [ ] Include links to code style guidelines and PR checklist",
+        "title": "[Contracts] Implement multi-token collateral support with Soroban token client validation",
+        "body": "### Context & Problem\nMarkets currently only support native XLM / standard test token; market creators cannot use verified stablecoins (e.g. USDC).\n\n### Proposed Solution\n1. Support arbitrary Stellar Asset Contract (SAC) token addresses in `create_market`.\n2. Validate token contract interface compatibility upon initialization.\n\n### Acceptance Criteria\n- Markets accept arbitrary Soroban-compatible token addresses.\n- Balance and transfers correctly interact with specified token client.",
         "labels": [
-            "docs",
-            "devex"
+            "blockchain",
+            "markets",
+            "feature"
         ]
     },
     {
-        "num": 123,
-        "title": "#123 \u2014 README.md Architecture Diagram Does Not Reflect Current Dual-Service Split",
-        "body": "**Labels:** `docs` `architecture`\n\n## Description\nIn `README.md`, the ASCII architecture diagram depicts the blockchain indexer as an internal component embedded inside the backend server. It does not reflect the dedicated `/indexer` standalone microservice or the real-time WebSocket event bus.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Update architecture diagram in `README.md` and `docs/architecture.md` with Mermaid diagram\n- [ ] Illustrate relationships between Soroban contracts, standalone Indexer, PostgreSQL, Redis, Backend API, and Frontend\n- [ ] Add port overview table (Frontend: 3000, Backend: 3001, Indexer: 3002, Postgres: 5432, Redis: 6379)\n- [ ] Verify all links in README point to valid documentation files",
+        "title": "[Contracts] Implement formal property-based fuzz tests for CPMM invariant k = x * y",
+        "body": "### Context & Problem\nNumerical precision loss and potential invariant drain attacks have not been tested with arbitrary random inputs.\n\n### Proposed Solution\n1. Add property-based testing harness using `proptest` or `quickcheck`.\n2. Assert that `k_after >= k_before` holds for all non-zero swaps and liquidity additions.\n\n### Acceptance Criteria\n- Fuzz tests execute 10,000+ random swap sequences without invariant violation.\n- Edge case bounds (min/max integer limits) are covered.",
         "labels": [
-            "docs",
-            "architecture"
+            "blockchain",
+            "testing",
+            "security"
         ]
     },
     {
-        "num": 124,
-        "title": "#124 \u2014 Security Policy SECURITY.md Missing Responsible Disclosure PGP Key and SLA Targets",
-        "body": "**Labels:** `security` `docs`\n\n## Description\nIn `SECURITY.md`, the security policy provides a generic placeholder contact email without PGP encryption keys, disclosure response SLA timelines, or bug bounty program scope details. Security researchers discovering critical smart contract or key management issues cannot submit encrypted reports.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Add dedicated security contact email and public PGP key fingerprint in `SECURITY.md`\n- [ ] Define response SLAs: 24h initial response, 72h severity assessment, 7-day patch target for critical issues\n- [ ] Specify in-scope and out-of-scope targets (Smart Contracts, Backend API vs third-party RPCs)\n- [ ] Document safe harbor guidelines for ethical vulnerability research",
+        "title": "[Contracts] Implement unit test suite for dispute escalation and voting quorum",
+        "body": "### Context & Problem\nTest coverage for the multi-tiered dispute escalation mechanism in `contracts/market/src/dispute.rs` is incomplete.\n\n### Proposed Solution\n1. Add comprehensive test cases for: invalid disputes, quorum not met, quorum met with overturn, tie-breaker handling.\n2. Verify token transfers and state transitions at every step.\n\n### Acceptance Criteria\n- Test coverage for dispute module reaches >= 90%.\n- All dispute paths pass cleanly in CI.",
+        "labels": [
+            "blockchain",
+            "testing",
+            "disputes"
+        ]
+    },
+    {
+        "title": "[Contracts] Implement gas and CPU instruction profiling benchmarks for market execution",
+        "body": "### Context & Problem\nHigh compute and storage metering can cause Soroban transactions to hit ledger resource limits under high market activity.\n\n### Proposed Solution\n1. Write benchmark scripts using `soroban-sdk` budget inspection APIs.\n2. Measure CPU cycles and memory footprint for `swap_shares`, `claim_winnings`, and `resolve_market`.\n\n### Acceptance Criteria\n- Benchmark reports generated and added to `contracts/benchmarks.md`.\n- Optimizations reduce swap transaction budget by at least 15%.",
+        "labels": [
+            "blockchain",
+            "testing",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Contracts] Implement contract upgradeability pattern via WASM hash migration in factory",
+        "body": "### Context & Problem\nBug fixes in market contracts cannot be applied to existing deployed instances without manual migration paths.\n\n### Proposed Solution\n1. Implement `upgrade(new_wasm_hash)` in market contracts restricted to factory/admin.\n2. Use Soroban `env.deployer().update_current_contract_wasm(new_wasm_hash)`.\n\n### Acceptance Criteria\n- Authorized upgrades update code while preserving storage.\n- Unauthorized upgrade attempts revert.",
+        "labels": [
+            "blockchain",
+            "security",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Contracts] Implement automated contract size verification in build script",
+        "body": "### Context & Problem\nSoroban has a strict limit on compiled contract WASM bytecode size. Large contracts risk build failure in production.\n\n### Proposed Solution\n1. Add a build script that optimizes WASM via `soroban contract optimize`.\n2. Fail CI if compiled binary exceeds 64KB threshold.\n\n### Acceptance Criteria\n- Build script logs WASM size.\n- Pre-merge checks enforce budget limit.",
+        "labels": [
+            "blockchain",
+            "testing",
+            "middleware"
+        ]
+    },
+    {
+        "title": "[Backend] Fix unhandled Promise rejections causing backend crash on Postgres pool timeout",
+        "body": "### Context & Problem\nWhen database connection pool runs out of available clients or encounters a network timeout, unhandled rejections crash the Node.js server process.\n\n### Proposed Solution\n1. Wrap pool acquisition and query executions in standard try/catch blocks with exponential retry.\n2. Add global `process.on('unhandledRejection')` and `process.on('uncaughtException')` handlers with graceful shutdown.\n\n### Acceptance Criteria\n- DB timeouts return 503 Service Unavailable instead of process termination.\n- Connection pool recovers automatically.",
+        "labels": [
+            "backend",
+            "bug",
+            "middleware"
+        ]
+    },
+    {
+        "title": "[Backend] Fix missing transaction isolation level causing race condition in simultaneous bets",
+        "body": "### Context & Problem\nConcurrent bet placement requests from the same user can lead to double-spending off-chain cached balances because queries run in default Read Committed mode.\n\n### Proposed Solution\n1. Wrap balance checks and bet placement in a serializable transaction: `tx.transaction(async (trx) => { ... }, { isolationLevel: 'serializable' })`.\n2. Use `FOR UPDATE` row-level locks on user balance records.\n\n### Acceptance Criteria\n- Simultaneous bet requests are executed atomically without balance drift.\n- Stress test verifies zero double-spends.",
+        "labels": [
+            "backend",
+            "security",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Backend] Fix JWT session invalidation bypass on password reset and role changes",
+        "body": "### Context & Problem\nWhen a user resets their password or is banned by admin, previously issued JWT tokens remain valid until expiration (up to 7 days).\n\n### Proposed Solution\n1. Add `token_version` column to the `users` table.\n2. Include `token_version` in the JWT payload and verify it against DB/Redis on every authenticated request.\n3. Increment `token_version` on password reset or account status changes.\n\n### Acceptance Criteria\n- Password change immediately invalidates all existing JWT sessions.\n- Invalid token returns 401 Unauthorized.",
+        "labels": [
+            "backend",
+            "auth",
+            "security"
+        ]
+    },
+    {
+        "title": "[Backend] Fix SQL injection risk in dynamic order filtering within MarketRepository",
+        "body": "### Context & Problem\nIn `backend/src/api/repositories/MarketRepository.ts`, raw SQL string concatenation is used for dynamic sort columns and direction, presenting SQL injection vectors.\n\n### Proposed Solution\n1. Whitelist acceptable sort columns (`created_at`, `volume`, `liquidity`, `end_time`).\n2. Use parameterized Drizzle ORM column references instead of string interpolation.\n\n### Acceptance Criteria\n- Arbitrary SQL fragments in query params are rejected with 400 Bad Request.\n- Valid sort options function as expected.",
+        "labels": [
+            "backend",
+            "security",
+            "repository"
+        ]
+    },
+    {
+        "title": "[Backend] Fix unbounded pagination queries on /api/governance/proposals and /api/markets",
+        "body": "### Context & Problem\nQuerying `/api/markets` without a `limit` parameter loads all historical records into Node.js heap memory, resulting in high latency and OOM crashes.\n\n### Proposed Solution\n1. Enforce default limit = 20 and maximum limit = 100 in pagination middleware.\n2. Add cursor-based pagination using `id` or `created_at` index for high-scale performance.\n\n### Acceptance Criteria\n- Requests with `limit > 100` are clamped or rejected with validation error.\n- Memory usage remains bounded under large datasets.",
+        "labels": [
+            "backend",
+            "markets",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Backend] Fix missing rate limiter on /api/auth/login and /api/auth/reset-password",
+        "body": "### Context & Problem\nAuthentication endpoints lack IP and user-based rate limiting, allowing credential stuffing and brute force attacks.\n\n### Proposed Solution\n1. Implement `express-rate-limit` with Redis store on `/api/auth/login` (5 attempts per 15 min).\n2. Add progressive delay backoff for failed attempts.\n\n### Acceptance Criteria\n- Exceeding 5 failed attempts returns 429 Too Many Requests with `Retry-After` header.\n- Successful login resets failure counter.",
+        "labels": [
+            "backend",
+            "auth",
+            "security"
+        ]
+    },
+    {
+        "title": "[Backend] Fix CORS configuration wildcard permitting unauthorized origins in production",
+        "body": "### Context & Problem\nCORS middleware uses `origin: \"*\"` when `NODE_ENV=production`, exposing internal API endpoints to cross-site request forgery and data exfiltration.\n\n### Proposed Solution\n1. Restrict CORS origins to an explicit whitelist configured via `ALLOWED_ORIGINS` environment variable.\n2. Reject requests with missing or unauthorized `Origin` headers in production.\n\n### Acceptance Criteria\n- Production requests from untrusted origins are blocked with CORS error.\n- Trusted domains pass cleanly.",
+        "labels": [
+            "backend",
+            "security",
+            "middleware"
+        ]
+    },
+    {
+        "title": "[Backend] Fix inconsistent error response format between Express middlewares and controllers",
+        "body": "### Context & Problem\nValidation errors return `{ error: string }`, while controller errors return `{ success: false, message: string }`, complicating frontend error handling.\n\n### Proposed Solution\n1. Standardize error format: `{ success: false, error: { code: string, message: string, details?: any } }`.\n2. Refactor centralized `errorHandler` middleware to format all standard and custom `AppError` instances.\n\n### Acceptance Criteria\n- All 4xx and 5xx responses adhere to the standard JSON error schema.\n- Frontend error handler reliably parses all backend errors.",
+        "labels": [
+            "backend",
+            "middleware",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Backend] Fix date validation parsing in useCreateMarket backend counterpart endpoint",
+        "body": "### Context & Problem\nThe `/api/markets` creation endpoint accepts timestamp values that parse as NaN, failing to validate minimum market duration (e.g. at least 1 hour in the future).\n\n### Proposed Solution\n1. Add Joi/Zod validation asserting `scheduledAt` is a valid ISO date >= `Date.now() + 3600000`.\n2. Return descriptive validation errors.\n\n### Acceptance Criteria\n- Past or malformed dates are rejected with 400 Bad Request.\n- Markets must have a duration of at least 1 hour.",
+        "labels": [
+            "backend",
+            "markets",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Backend] Fix memory leak in WebSocket connection manager when clients disconnect abruptly",
+        "body": "### Context & Problem\nWhen clients close WebSocket connections abruptly without TCP FIN handshake, socket references remain stored in `activeConnections` map, leading to memory leaks.\n\n### Proposed Solution\n1. Listen for socket `close` and `error` events and clean up channel subscription sets.\n2. Implement 30-second ping/pong heartbeat to identify and prune dead connections.\n\n### Acceptance Criteria\n- Disconnected sockets are removed from memory within 60 seconds.\n- Memory remains stable under continuous reconnect loops.",
+        "labels": [
+            "backend",
+            "websocket",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Backend] Fix missing database index on events.sequence_number causing full table scans",
+        "body": "### Context & Problem\nQueries querying indexer events by ledger sequence perform full table scans across millions of rows, slowing down indexer synchronization.\n\n### Proposed Solution\n1. Add migration: `CREATE INDEX CONCURRENTLY events_sequence_number_idx ON events(sequence_number);`.\n2. Add composite index on `(contract_id, sequence_number)` for filtered event queries.\n\n### Acceptance Criteria\n- Query execution plan shows Index Scan instead of Seq Scan.\n- Synchronization query time drops below 5ms.",
+        "labels": [
+            "backend",
+            "repository",
+            "blockchain"
+        ]
+    },
+    {
+        "title": "[Backend] Fix transaction export endpoint failing with 500 when exporting >10,000 rows",
+        "body": "### Context & Problem\n`GET /api/transactions/export` buffers all matching rows into memory before generating CSV, crashing on large user account histories.\n\n### Proposed Solution\n1. Stream database query results directly to HTTP response using Postgres cursor and `csv-stringify/sync`.\n2. Limit export date range to a maximum of 90 days.\n\n### Acceptance Criteria\n- Exports stream efficiently without buffering entire dataset in RAM.\n- Queries over 90 days return 400 Bad Request with guidance.",
+        "labels": [
+            "backend",
+            "wallet",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Backend] Fix TOTP two-factor authentication single-use backup codes being reusable",
+        "body": "### Context & Problem\nBackup recovery codes generated during 2FA setup are not marked as used upon login, allowing replay attacks.\n\n### Proposed Solution\n1. Store backup codes as hashed values with a `used_at: timestamp` flag.\n2. Invalidate code immediately upon first successful redemption in the same database transaction.\n\n### Acceptance Criteria\n- Reusing a redeemed backup code returns 401 Invalid Code.\n- Remaining unused codes continue to function.",
+        "labels": [
+            "backend",
+            "auth",
+            "security"
+        ]
+    },
+    {
+        "title": "[Backend] Fix health check endpoint /health coupling with external Soroban RPC status",
+        "body": "### Context & Problem\nWhen external Soroban RPC provider experiences transient latency, the entire backend `/health` endpoint returns 500, causing Kubernetes / Docker to restart healthy backend pods.\n\n### Proposed Solution\n1. Separate `/health/live` (checks process liveness) from `/health/ready` (checks DB and RPC dependencies).\n2. Set graceful timeouts on external RPC checks so transient hiccups do not report pod failure.\n\n### Acceptance Criteria\n- Container liveness probe remains green during upstream RPC degradation.\n- Readiness probe accurately reports dependency health.",
+        "labels": [
+            "backend",
+            "middleware",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Backend] Fix market analytics N+1 query when fetching market outcome odds history",
+        "body": "### Context & Problem\nFetching the list of markets triggers individual queries for each market's historical odds datapoints, resulting in 100+ DB queries per page request.\n\n### Proposed Solution\n1. Use SQL `JOIN` with `JSON_AGG` or window functions to fetch latest odds snapshots in a single query.\n2. Cache historical odds in Redis with 30-second TTL.\n\n### Acceptance Criteria\n- Single DB query fulfills market list + odds endpoint.\n- Endpoint response time reduced by >80%.",
+        "labels": [
+            "backend",
+            "markets",
+            "repository"
+        ]
+    },
+    {
+        "title": "[Backend] Implement request payload schema validation using Zod for all POST/PUT routes",
+        "body": "### Context & Problem\nSeveral controller endpoints parse `req.body` directly without schema validation, allowing unexpected fields and invalid types to reach business logic.\n\n### Proposed Solution\n1. Define Zod schemas for all route inputs (markets, predictions, profile, disputes).\n2. Create reusable validation middleware `validateBody(schema)`.\n\n### Acceptance Criteria\n- Malformed payloads return detailed 422 Unprocessable Entity errors.\n- Valid payloads are safely typed throughout controller code.",
+        "labels": [
+            "backend",
+            "middleware",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Backend] Implement structured JSON logging with correlation ID tracing via Pino",
+        "body": "### Context & Problem\nBackend logs use unstructured `console.log` statements, making distributed tracing and error diagnosis difficult in production.\n\n### Proposed Solution\n1. Replace `console.log` with `pino` logger.\n2. Attach `x-correlation-id` to incoming requests and forward it across logs and external service calls.\n\n### Acceptance Criteria\n- All logs output standardized JSON with timestamps, log levels, and correlation IDs.\n- Log aggregation tools can parse and trace requests seamlessly.",
+        "labels": [
+            "backend",
+            "middleware",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Backend] Implement Redis caching layer for high-throughput market odds and leaderboard endpoints",
+        "body": "### Context & Problem\nLeaderboard and active market endpoints receive heavy traffic, creating unnecessary database read load.\n\n### Proposed Solution\n1. Integrate Redis client with automatic fallback if Redis is unavailable.\n2. Cache leaderboard results for 60 seconds and market odds for 5 seconds.\n3. Invalidate cache on market resolution or large trades.\n\n### Acceptance Criteria\n- Cache hits serve in < 5ms without DB interaction.\n- Invalidation maintains data freshness.",
+        "labels": [
+            "backend",
+            "leaderboard",
+            "markets"
+        ]
+    },
+    {
+        "title": "[Backend] Implement idempotent webhook delivery mechanism with HMAC-SHA256 signatures",
+        "body": "### Context & Problem\nWebhooks sent to external partners or consumers can fail on network errors and lack cryptographic verification.\n\n### Proposed Solution\n1. Add webhook event queue with exponential retry backoff.\n2. Sign webhook payloads with HMAC-SHA256 using partner secret.\n3. Include `X-Webhook-Signature` and `X-Event-ID` headers for idempotency.\n\n### Acceptance Criteria\n- Webhooks deliver with valid HMAC signatures.\n- Failed deliveries retry up to 5 times before moving to DLQ.",
+        "labels": [
+            "backend",
+            "notifications",
+            "security"
+        ]
+    },
+    {
+        "title": "[Backend] Implement audit logging table capturing all administrative and dispute actions",
+        "body": "### Context & Problem\nAdmin actions (market resolution, bans, config updates) are not recorded in an immutable audit trail, creating compliance and security risks.\n\n### Proposed Solution\n1. Create `audit_logs` table: `id`, `actor_id`, `action`, `resource_type`, `resource_id`, `ip_address`, `before_state`, `after_state`, `timestamp`.\n2. Add middleware logging all admin actions automatically.\n\n### Acceptance Criteria\n- Every privileged action creates an immutable audit record.\n- Audit records can be queried by security admins.",
+        "labels": [
+            "backend",
+            "security",
+            "repository"
+        ]
+    },
+    {
+        "title": "[Backend] Implement automated database backup and point-in-time recovery strategy",
+        "body": "### Context & Problem\nThere is no automated script or verification process for database backups, exposing the platform to data loss in case of hardware failure.\n\n### Proposed Solution\n1. Create automated pg_dump backup script with S3 / cloud storage upload.\n2. Implement weekly automated restore verification test in staging.\n\n### Acceptance Criteria\n- Backup script executes cleanly via cron.\n- Documented recovery time objective (RTO) < 1 hour.",
+        "labels": [
+            "backend",
+            "repository",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Backend] Implement WebSocket heartbeat ping/pong mechanism to prune dead client sockets",
+        "body": "### Context & Problem\nZombie WebSocket connections consume system file descriptors and memory.\n\n### Proposed Solution\n1. Server sends ping frame every 30 seconds to all connected clients.\n2. Terminate socket if pong is not received within 10 seconds.\n\n### Acceptance Criteria\n- Stale connections are pruned automatically.\n- Total connection count accurately reflects active clients.",
+        "labels": [
+            "backend",
+            "websocket",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Backend] Implement user referral tree depth capping and commission calculation bounds",
+        "body": "### Context & Problem\nReferral payouts lack depth bounds, creating risk of unbounded recursion during payout calculation.\n\n### Proposed Solution\n1. Limit referral tree traversal to 2 tiers (direct and tier-2).\n2. Validate total referral commission cap (maximum 5% of trading fee).\n\n### Acceptance Criteria\n- Referral calculations execute in O(1) time complexity.\n- Total commission payout never exceeds allotted fee percentage.",
+        "labels": [
+            "backend",
+            "referrals",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Backend] Implement OpenAPI/Swagger schema synchronization validation in CI pipeline",
+        "body": "### Context & Problem\n`backend/openapi.yaml` frequently falls out of sync with actual controller routes and payload structures.\n\n### Proposed Solution\n1. Add a CI check comparing OpenAPI spec endpoints against registered Express routes.\n2. Use `swagger-parser` to validate YAML syntax and schema correctness.\n\n### Acceptance Criteria\n- CI fails if routes exist without OpenAPI documentation or if spec contains syntax errors.",
+        "labels": [
+            "backend",
+            "testing",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Backend] Implement social feature profanity and spam filter for market comments",
+        "body": "### Context & Problem\nMarket comments lack content moderation, allowing spam, phishing URLs, and profanity to be posted freely.\n\n### Proposed Solution\n1. Implement text filtering middleware checking comments against profanity blocklist.\n2. Restrict URL posting to verified domains or block URLs for unverified users.\n\n### Acceptance Criteria\n- Prohibited words and suspicious links are blocked with 400 Bad Request.\n- Rate limiting prevents comment spamming.",
+        "labels": [
+            "backend",
+            "users",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Backend] Implement activity privacy filter for user betting history",
+        "body": "### Context & Problem\nUser profile betting history is publicly exposed without option for privacy controls.\n\n### Proposed Solution\n1. Add `is_profile_private: boolean` to user settings.\n2. Obfuscate or hide prediction history from public view if privacy is enabled.\n\n### Acceptance Criteria\n- Private profiles hide bet amounts and market specifics from other users.\n- User can always view their own history.",
+        "labels": [
+            "backend",
+            "users",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Backend] Implement automated database migration rollback scripts and smoke tests",
+        "body": "### Context & Problem\nDatabase migrations only have `up` scripts; failed deployments cannot be automatically rolled back.\n\n### Proposed Solution\n1. Write corresponding `down` migration scripts for all schema changes in `backend/migrations`.\n2. Add CI test that runs `migrate up` followed by `migrate down` and verifies clean schema state.\n\n### Acceptance Criteria\n- Both up and down migrations execute cleanly in test environment.\n- Documentation added for rollback procedures.",
+        "labels": [
+            "backend",
+            "repository",
+            "testing"
+        ]
+    },
+    {
+        "title": "[Backend] Implement end-to-end integration tests for user authentication and session lifecycle",
+        "body": "### Context & Problem\nAuthentication flow (register, verify, login, refresh token, 2FA, logout) lacks comprehensive automated integration tests.\n\n### Proposed Solution\n1. Build test suite using Jest and Supertest exercising full auth lifecycle.\n2. Test token expiration, refresh rotation, and revocation scenarios.\n\n### Acceptance Criteria\n- Auth integration test suite achieves >95% statement coverage.\n- All tests execute in CI without flakes.",
+        "labels": [
+            "backend",
+            "auth",
+            "testing"
+        ]
+    },
+    {
+        "title": "[Backend] Implement test suite for market resolution payout calculation service",
+        "body": "### Context & Problem\nEdge cases in outcome payout distribution (e.g., ties, cancelled markets, zero winning bets) lack dedicated unit tests.\n\n### Proposed Solution\n1. Create unit tests covering binary, categorical, and cancelled resolution states.\n2. Verify precision and rounding behavior under fractional shares.\n\n### Acceptance Criteria\n- 100% of calculation branches covered with assertions.\n- Verified zero token leakage across all scenarios.",
+        "labels": [
+            "backend",
+            "testing",
+            "predictions"
+        ]
+    },
+    {
+        "title": "[Backend] Implement Prometheus metrics endpoint /metrics for API latency and error rates",
+        "body": "### Context & Problem\nProduction monitoring lacks visibility into endpoint latency percentiles (p50, p95, p99) and HTTP error code distributions.\n\n### Proposed Solution\n1. Use `prom-client` to collect HTTP request durations, active socket counts, and database query durations.\n2. Expose `/metrics` endpoint protected by basic auth or internal network restriction.\n\n### Acceptance Criteria\n- Prometheus successfully scrapes metrics.\n- Standard metrics (requests total, duration histogram, memory usage) are published.",
+        "labels": [
+            "backend",
+            "middleware",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Indexer] Fix indexer crash on unexpected event topic formatting from unverified contracts",
+        "body": "### Context & Problem\nIf an unverified contract or malicious actor emits events targeting the indexer address with malformed topics, `indexer/src/poller.ts` crashes on JSON/XDR decode.\n\n### Proposed Solution\n1. Wrap event decoding in `safeDecodeXdr` try/catch block.\n2. Log malformed events to a dead-letter queue and continue processing remaining ledger events.\n\n### Acceptance Criteria\n- Malformed XDR events are safely bypassed without terminating the indexer thread.\n- Metrics counter `indexer_malformed_events_total` increments.",
+        "labels": [
+            "blockchain",
+            "bug",
+            "cron"
+        ]
+    },
+    {
+        "title": "[Indexer] Fix ledger gap recovery skipping event batches when Soroban RPC lags behind",
+        "body": "### Context & Problem\nWhen the Soroban RPC node temporarily desyncs and skips ledgers, the indexer advances its cursor without detecting missed event sequences.\n\n### Proposed Solution\n1. Track expected `last_processed_ledger`.\n2. If `new_ledger > last_processed_ledger + 1`, enter gap recovery mode to backfill missed ledgers sequentially.\n\n### Acceptance Criteria\n- No ledgers are skipped during network disruptions.\n- Gap recovery logs clear progress and resumes normal polling once caught up.",
+        "labels": [
+            "blockchain",
+            "bug",
+            "cron"
+        ]
+    },
+    {
+        "title": "[Indexer] Fix cursor non-atomic persistence causing duplicate event processing on restart",
+        "body": "### Context & Problem\nEvent records are inserted into the database, but cursor state is saved in a separate non-transactional step. A crash in between results in re-processing already ingested events.\n\n### Proposed Solution\n1. Save event batch insertions and cursor updates inside a single database transaction: `BEGIN ... INSERT events ... UPDATE cursor ... COMMIT`.\n\n### Acceptance Criteria\n- Cursor updates atomically with event records.\n- Zero duplicate processing after abrupt process kill.",
+        "labels": [
+            "blockchain",
+            "repository",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Indexer] Fix unhandled RPC 429 rate limit errors crashing the indexer poller thread",
+        "body": "### Context & Problem\nPublic and private Soroban RPC nodes return HTTP 429 when rate limits are exceeded, which causes uncaught errors in the polling loop.\n\n### Proposed Solution\n1. Catch 429 errors and extract `Retry-After` header if present.\n2. Apply exponential backoff with randomized jitter (e.g. 1s, 2s, 4s, up to 30s) before retrying.\n\n### Acceptance Criteria\n- 429 errors trigger backoff rather than crash.\n- Poller gracefully resumes once rate limit resets.",
+        "labels": [
+            "blockchain",
+            "cron",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Indexer] Fix memory leak in indexer event queue under sustained high transaction volume",
+        "body": "### Context & Problem\nEvents fetched from RPC are pushed to an in-memory array that grows unbounded if database ingestion throughput falls behind.\n\n### Proposed Solution\n1. Introduce a bounded queue (e.g. max 5,000 items) with backpressure.\n2. Pause RPC polling when queue reaches 80% capacity until DB writer catches up.\n\n### Acceptance Criteria\n- Heap memory usage remains flat under extreme event ingestion load.\n- Backpressure pauses and resumes polling cleanly.",
+        "labels": [
+            "blockchain",
+            "cron",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Indexer] Fix duplicate event ingestion on network reorgs using database unique constraints",
+        "body": "### Context & Problem\nWhen a short ledger reorganization occurs, re-emitted events with the same transaction hash create duplicate records in the database.\n\n### Proposed Solution\n1. Add unique constraint: `UNIQUE (transaction_hash, event_index)`.\n2. Use `ON CONFLICT (transaction_hash, event_index) DO NOTHING` on event inserts.\n\n### Acceptance Criteria\n- Duplicate events are silently skipped without error.\n- Event table integrity is preserved.",
+        "labels": [
+            "blockchain",
+            "repository",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Indexer] Fix missing indexer heartbeat metric causing silent failure in monitoring",
+        "body": "### Context & Problem\nIf the polling loop hangs due to an unhandled socket promise, no process exit occurs, making it appear healthy to health checks while no new events are indexed.\n\n### Proposed Solution\n1. Update `last_polled_timestamp` in memory every polling cycle.\n2. Expose health check that returns 500 if `Date.now() - last_polled_timestamp > 60000`.\n\n### Acceptance Criteria\n- Stalled pollers fail health check and trigger container restart.\n- Metric `indexer_last_polled_timestamp_seconds` published to Prometheus.",
+        "labels": [
+            "blockchain",
+            "cron",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Indexer] Fix race condition in concurrent block processing corrupting outcome token balances",
+        "body": "### Context & Problem\nRunning multiple worker threads to index blocks concurrently causes race conditions when two blocks update the same market's pool reserves out of order.\n\n### Proposed Solution\n1. Ensure events for a given `market_id` are processed strictly in ledger sequence order.\n2. Use partition-based worker routing or sequential processing per contract ID.\n\n### Acceptance Criteria\n- Market pool balances match contract state exactly at every ledger height.\n- Out-of-order execution is prevented.",
+        "labels": [
+            "blockchain",
+            "markets",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Indexer] Fix unhandled JSON-RPC socket connection drops without automatic reconnect",
+        "body": "### Context & Problem\nWebSocket / persistent HTTP connections to the Stellar RPC node close after network idle timeouts, leaving the indexer idle permanently.\n\n### Proposed Solution\n1. Implement keep-alive ping and reconnect listener on the RPC provider client.\n2. Reset and re-establish connection if no message is received within 45 seconds.\n\n### Acceptance Criteria\n- Dropped socket connections reconnect automatically within 5 seconds.\n- Poller resumes without manual intervention.",
+        "labels": [
+            "blockchain",
+            "websocket",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Indexer] Fix timestamp desynchronization between ledger close time and ingestion timestamp",
+        "body": "### Context & Problem\nEvents currently store `ingested_at = NOW()` instead of the actual Stellar ledger close timestamp, distorting historical chart timeframes.\n\n### Proposed Solution\n1. Extract `ledger_closed_at` from block header and persist it as `event_timestamp`.\n2. Use `event_timestamp` for all frontend candle and analytics calculations.\n\n### Acceptance Criteria\n- Event records store true on-chain ledger timestamp.\n- Chart time series data matches blockchain history.",
+        "labels": [
+            "blockchain",
+            "markets",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Indexer] Implement exponential backoff with jitter on Soroban RPC connection failures",
+        "body": "### Context & Problem\nImmediate retry on connection failures hammers struggling RPC servers and risks getting IP blacklisted.\n\n### Proposed Solution\n1. Implement full jitter algorithm: `sleep = min(MAX_SLEEP, rand(0, BASE * 2^attempt))`.\n2. Log connection attempts and retry status clearly.\n\n### Acceptance Criteria\n- Reconnect attempts back off smoothly without thundering herd problems.",
+        "labels": [
+            "blockchain",
+            "cron",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Indexer] Implement configurable batch size and polling interval via environment variables",
+        "body": "### Context & Problem\nBatch size (100) and polling interval (2000ms) are hardcoded, preventing tuning for testnet vs mainnet environments.\n\n### Proposed Solution\n1. Read `INDEXER_BATCH_SIZE` and `INDEXER_POLL_INTERVAL_MS` from environment with sensible defaults.\n2. Validate values on startup.\n\n### Acceptance Criteria\n- Operators can tune polling speed via environment variables without code modification.",
+        "labels": [
+            "blockchain",
+            "cron",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Indexer] Implement WebSocket event dispatcher decoupling indexing from socket broadcasting",
+        "body": "### Context & Problem\nBroadcasting events to thousands of connected frontend WebSocket clients directly within the polling loop slows down blockchain ingestion.\n\n### Proposed Solution\n1. Publish indexed events to a Redis Pub/Sub channel (`events:market:<id>`).\n2. Have API server WebSocket workers consume Redis channels independently.\n\n### Acceptance Criteria\n- Indexer loop processing time is independent of connected client count.\n- Broadcast latency remains under 50ms.",
+        "labels": [
+            "blockchain",
+            "websocket",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Indexer] Implement dead-letter queue (DLQ) for failed event ingestion records",
+        "body": "### Context & Problem\nWhen an event fails to process due to a business logic error, it either halts the entire indexer or is dropped without trace.\n\n### Proposed Solution\n1. Create `failed_events` table storing payload, error message, stack trace, and retry count.\n2. Provide admin CLI command `npm run indexer:retry-dlq` to re-process failed items.\n\n### Acceptance Criteria\n- Poison pill events are quarantined to DLQ while indexer continues.\n- Admins can inspect and re-drive failed events.",
+        "labels": [
+            "blockchain",
+            "repository",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Indexer] Implement ledger sequence lag reporting and alerting threshold",
+        "body": "### Context & Problem\nThere is no metric tracking how many ledgers the indexer is behind the Stellar network tip.\n\n### Proposed Solution\n1. Query network latest ledger height periodically.\n2. Calculate and export `indexer_ledger_lag = network_latest - last_processed_ledger`.\n3. Alert if lag > 50 ledgers for > 5 minutes.\n\n### Acceptance Criteria\n- Lag metric is exposed and visible in Grafana.\n- Threshold violations trigger alerts.",
+        "labels": [
+            "blockchain",
+            "cron",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Indexer] Implement indexer data pruning routine for historical low-priority events",
+        "body": "### Context & Problem\nRaw event logs accumulate gigabytes of data over time, increasing database hosting costs and backup times.\n\n### Proposed Solution\n1. Implement scheduled monthly cron job archiving events older than 180 days to cold storage (e.g. Parquet / S3).\n2. Retain aggregated market summaries in active database.\n\n### Acceptance Criteria\n- Pruning runs without locking active tables.\n- Historical queries fall back to archive gracefully.",
+        "labels": [
+            "blockchain",
+            "cron",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Indexer] Implement event schema validation before persisting to Postgres tables",
+        "body": "### Context & Problem\nUnvalidated event payloads can insert unexpected nulls or malformed JSON into the database.\n\n### Proposed Solution\n1. Validate event payloads against Zod schemas matching contract event definitions.\n2. Reject non-conforming events to DLQ.\n\n### Acceptance Criteria\n- Database contains only strictly typed, valid event structures.",
+        "labels": [
+            "blockchain",
+            "repository",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Indexer] Implement snapshot replay mechanism for re-indexing from specific ledger heights",
+        "body": "### Context & Problem\nWhen bugs are fixed in event parsing, developers must wipe the entire database to re-index from scratch.\n\n### Proposed Solution\n1. Add CLI flag `--from-ledger <number>` and `--to-ledger <number>`.\n2. Allow selective re-indexing of specific contracts or block ranges with upsert semantics.\n\n### Acceptance Criteria\n- CLI allows re-indexing targeted ledger intervals without wiping unaffected data.",
+        "labels": [
+            "blockchain",
+            "cron",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Indexer] Implement integration tests with mock Soroban RPC server simulating reorgs",
+        "body": "### Context & Problem\nIndexer resilience during network forks and reorgs is untested in automated CI.\n\n### Proposed Solution\n1. Build mock RPC test server that simulates ledger forks, skipped sequences, and 429 rate limits.\n2. Verify indexer handles all fault conditions cleanly.\n\n### Acceptance Criteria\n- Comprehensive test suite validates recovery scenarios in CI.",
+        "labels": [
+            "blockchain",
+            "testing",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Indexer] Implement Docker healthcheck verifying indexer ledger processing freshness",
+        "body": "### Context & Problem\nThe indexer container in `docker-compose.yml` lacks a healthcheck, preventing orchestrators from restarting hung containers.\n\n### Proposed Solution\n1. Add healthcheck script checking timestamp of last processed event in DB.\n2. Configure `healthcheck` in `docker-compose.yml`.\n\n### Acceptance Criteria\n- Unhealthy indexer container status triggers restart automatically.",
+        "labels": [
+            "blockchain",
+            "testing",
+            "middleware"
+        ]
+    },
+    {
+        "title": "[Frontend] Fix Next.js hydration error caused by server-rendered locale-specific dates",
+        "body": "### Context & Problem\nRendering market expiration dates with `toLocaleDateString()` produces different outputs on the Node.js server vs browser, triggering React hydration mismatch warnings.\n\n### Proposed Solution\n1. Create a `<FormattedDate date={...} />` component that renders a placeholder during SSR and updates on client mount.\n2. Alternatively, standardize on UTC format until hydration completes.\n\n### Acceptance Criteria\n- Zero hydration mismatch warnings in browser console on market pages.",
+        "labels": [
+            "markets",
+            "bug",
+            "good first issue"
+        ]
+    },
+    {
+        "title": "[Frontend] Fix Freighter wallet unhandled rejection when user denies signature request",
+        "body": "### Context & Problem\nWhen a user rejects a transaction signing prompt in the Freighter extension, the promise rejects without a catch block, displaying an uncaught error modal to the user.\n\n### Proposed Solution\n1. Wrap Freighter signing calls in try/catch.\n2. Display a user-friendly toast: 'Transaction was cancelled in wallet.'\n\n### Acceptance Criteria\n- Rejecting signature in wallet handles gracefully without application error.",
+        "labels": [
+            "wallet",
+            "bug",
+            "good first issue"
+        ]
+    },
+    {
+        "title": "[Frontend] Fix NaN displaying in betting slip odds when market liquidity is zero",
+        "body": "### Context & Problem\nWhen viewing a newly created market before initial liquidity is deposited, the odds calculation divides by zero, displaying `NaN%` and breaking the betting slip input.\n\n### Proposed Solution\n1. Guard division: if total liquidity is 0, display default odds (e.g. 50% / 50%) or disabled state 'Awaiting Liquidity'.\n2. Disable bet placement buttons until liquidity exists.\n\n### Acceptance Criteria\n- Zero-liquidity markets display clear status message without NaN.",
+        "labels": [
+            "markets",
+            "predictions",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Frontend] Fix missing React Error Boundary on market trading widget causing entire page whiteout",
+        "body": "### Context & Problem\nAn unhandled exception in the order book or chart component crashes the entire page tree to a white screen.\n\n### Proposed Solution\n1. Wrap `TradingWidget`, `OrderBook`, and `PriceChart` in dedicated React Error Boundaries.\n2. Render fallback UI with a 'Reload Widget' button.\n\n### Acceptance Criteria\n- Widget errors are isolated without crashing navigation or adjacent components.",
+        "labels": [
+            "trading",
+            "bug",
+            "good first issue"
+        ]
+    },
+    {
+        "title": "[Frontend] Fix memory leak in WebSocket hook failing to unsubscribe on component unmount",
+        "body": "### Context & Problem\n`useMarketWebSocket` hook registers event listeners on global socket manager but does not clean them up in the `useEffect` return function.\n\n### Proposed Solution\n1. Return cleanup function calling `socket.off(...)` and unsubscribe from market channel on unmount.\n\n### Acceptance Criteria\n- Listener count returns to baseline when navigating between market pages.",
+        "labels": [
+            "websocket",
+            "bug",
+            "markets"
+        ]
+    },
+    {
+        "title": "[Frontend] Fix stale market prices displayed after WebSocket reconnection",
+        "body": "### Context & Problem\nWhen WebSocket reconnects after a temporary network drop, client retains stale market prices until a new trade event occurs.\n\n### Proposed Solution\n1. On WebSocket reconnect event, immediately trigger a background REST refetch of active market data.\n\n### Acceptance Criteria\n- Reconnecting socket synchronizes prices with server immediately.",
+        "labels": [
+            "websocket",
+            "markets",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Frontend] Fix form submission double-click triggering duplicate Soroban transactions",
+        "body": "### Context & Problem\nRapidly clicking 'Place Bet' or 'Create Market' triggers two concurrent Freighter signature prompts, leading to accidental duplicate transactions.\n\n### Proposed Solution\n1. Set button loading state immediately on first click and disable the button until transaction settles or fails.\n2. Use idempotency keys on client-side requests.\n\n### Acceptance Criteria\n- Double-clicking is prevented; only one transaction is built and submitted.",
+        "labels": [
+            "predictions",
+            "wallet",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Frontend] Fix dark mode color contrast ratios failing WCAG 2.1 AA accessibility guidelines",
+        "body": "### Context & Problem\nCertain text labels (muted timestamps, odds pills) have insufficient contrast in dark mode (< 4.5:1 ratio), failing accessibility audits.\n\n### Proposed Solution\n1. Adjust Tailwind color tokens in `tailwind.config.ts` for dark mode variants to guarantee >= 4.5:1 contrast.\n2. Run automated axe-core accessibility checks.\n\n### Acceptance Criteria\n- All text elements pass WCAG 2.1 AA contrast requirements.",
+        "labels": [
+            "feature",
+            "bug",
+            "good first issue"
+        ]
+    },
+    {
+        "title": "[Frontend] Fix mobile viewport layout breaking on market detail order book tabs",
+        "body": "### Context & Problem\nOn mobile screens (< 375px), the order book table overflows horizontally, breaking the viewport and hiding action buttons.\n\n### Proposed Solution\n1. Implement responsive horizontal scroll or compact view for mobile viewports.\n2. Ensure betting slip docks neatly to bottom of screen on mobile.\n\n### Acceptance Criteria\n- Zero horizontal overflow on screen widths down to 320px.",
+        "labels": [
+            "trading",
+            "markets",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Frontend] Fix token balance not refreshing automatically after transaction confirmation",
+        "body": "### Context & Problem\nAfter completing a bet or liquidity deposit, the displayed wallet token balance remains unchanged until full page refresh.\n\n### Proposed Solution\n1. Trigger global balance invalidation via React Query / SWR upon transaction confirmation receipt.\n\n### Acceptance Criteria\n- Wallet token balance updates within 2 seconds of transaction confirmation.",
+        "labels": [
+            "wallet",
+            "bug",
+            "good first issue"
+        ]
+    },
+    {
+        "title": "[Frontend] Fix user notification dropdown failing to mark notifications as read",
+        "body": "### Context & Problem\nClicking 'Mark all as read' in the notification dropdown updates local state but does not send the mutation to the backend API.\n\n### Proposed Solution\n1. Wire mutation to `POST /api/notifications/mark-read`.\n2. Sync unread badge count with server response.\n\n### Acceptance Criteria\n- Notifications remain marked as read across page refreshes.",
+        "labels": [
+            "notifications",
+            "bug",
+            "good first issue"
+        ]
+    },
+    {
+        "title": "[Frontend] Fix XSS vulnerability in user profile bio and display name rendering",
+        "body": "### Context & Problem\nUser profile bio renders raw HTML in user card without sanitization, allowing stored XSS attacks.\n\n### Proposed Solution\n1. Use `DOMPurify` to sanitize user bio text or render as plain text only.\n2. Set strict Content Security Policy (CSP) headers in Next.js configuration.\n\n### Acceptance Criteria\n- Malicious `<script>` and `onerror` payloads in bios are neutralized.",
         "labels": [
             "security",
-            "docs"
+            "users",
+            "bug"
         ]
     },
     {
-        "num": 125,
-        "title": "#125 \u2014 .gitignore Missing Entries for Rust Target Artifacts and Playwright Test Results",
-        "body": "**Labels:** `devex` `devops`\n\n## Description\nIn `.gitignore`, entries are missing for `frontend/test-results/`, `frontend/playwright-report/`, `backend/dist/`, `indexer/dist/`, `indexer/data/`, and `contracts/**/target/`. Running local tests or builds produces unstaged binary blobs and screenshot traces that clutter git status and risk accidental commits.\n\n## Complexity\n**Low**\n\n## Acceptance Criteria\n- [ ] Add Playwright test artifacts (`test-results/`, `playwright-report/`) to `.gitignore`\n- [ ] Add TypeScript compilation output directories (`**/dist/`, `**/.tsbuildinfo`) to `.gitignore`\n- [ ] Add SQLite and indexer local data files (`indexer/data/`, `*.db`, `cursor.json`) to `.gitignore`\n- [ ] Verify `git status` remains completely clean after running local build and test commands",
+        "title": "[Frontend] Fix infinite re-render loop in useMarketData hook dependencies",
+        "body": "### Context & Problem\n`useMarketData` defines an object literal inside `useEffect` dependency array, triggering infinite re-renders on market detail page.\n\n### Proposed Solution\n1. Memoize query options using `useMemo` and extract primitive dependencies (`marketId`).\n\n### Acceptance Criteria\n- Hook re-executes only when `marketId` actually changes.",
         "labels": [
-            "devex",
-            "devops"
+            "markets",
+            "bug",
+            "good first issue"
+        ]
+    },
+    {
+        "title": "[Frontend] Fix transaction toast notification persisting indefinitely on network timeout",
+        "body": "### Context & Problem\nIf transaction polling times out, the 'Transaction in progress' toast never dismisses or transitions to error state.\n\n### Proposed Solution\n1. Add a 60-second timeout to transaction status watchers.\n2. Transition toast to 'Transaction taking longer than expected. Check Stellar Expert' with link.\n\n### Acceptance Criteria\n- Toast automatically dismisses or displays error after timeout.",
+        "labels": [
+            "notifications",
+            "bug",
+            "wallet"
+        ]
+    },
+    {
+        "title": "[Frontend] Fix dispute evidence upload failing without user-visible error on oversized files",
+        "body": "### Context & Problem\nUploading evidence files > 5MB fails silently without alerting the user.\n\n### Proposed Solution\n1. Add client-side file size check before initiating upload.\n2. Display clear error: 'File exceeds 5MB limit. Please upload a smaller screenshot/PDF.'\n\n### Acceptance Criteria\n- Oversized uploads are rejected immediately with user-facing message.",
+        "labels": [
+            "disputes",
+            "bug",
+            "good first issue"
+        ]
+    },
+    {
+        "title": "[Frontend] Implement optimistic UI state updates with automatic rollback on transaction failure",
+        "body": "### Context & Problem\nUsers wait several seconds for Soroban transaction confirmation before seeing their bet appear in the active positions table.\n\n### Proposed Solution\n1. Immediately append pending position to local state.\n2. Revert to previous state with an error toast if transaction fails on-chain.\n\n### Acceptance Criteria\n- Bet appears instantly in UI with 'Pending confirmation' status indicator.",
+        "labels": [
+            "predictions",
+            "trading",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Frontend] Implement skeleton loading states across market lists, portfolios, and leaderboards",
+        "body": "### Context & Problem\nPages display blank screens or jarring layout shifts while data is loading from the API.\n\n### Proposed Solution\n1. Create reusable SVG skeleton loader components matching market card, table row, and chart dimensions.\n2. Display skeletons during loading states.\n\n### Acceptance Criteria\n- Smooth visual transition from skeleton to populated content without layout shifts.",
+        "labels": [
+            "markets",
+            "leaderboard",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Frontend] Implement responsive sticky betting slip for mobile screens",
+        "body": "### Context & Problem\nMobile users have to scroll back and forth between market chart and betting slip.\n\n### Proposed Solution\n1. Create bottom-sheet drawer for betting slip on viewports < 768px.\n2. Allow swipe down to minimize and tap to expand.\n\n### Acceptance Criteria\n- Mobile users can interact with betting slip seamlessly from anywhere on page.",
+        "labels": [
+            "trading",
+            "feature",
+            "good first issue"
+        ]
+    },
+    {
+        "title": "[Frontend] Implement comprehensive form validation with clear inline error messages",
+        "body": "### Context & Problem\nMarket creation form errors are only shown in a top banner, making it hard to see which input was invalid.\n\n### Proposed Solution\n1. Integrate React Hook Form with Zod resolver.\n2. Highlight invalid fields with red borders and inline explanation text.\n\n### Acceptance Criteria\n- Form fields validate on blur with clear error feedback.",
+        "labels": [
+            "markets",
+            "feature",
+            "good first issue"
+        ]
+    },
+    {
+        "title": "[Frontend] Implement localized currency and timezone formatters across all financial tables",
+        "body": "### Context & Problem\nTimestamps and currency amounts use unformatted numbers, causing confusion for global users.\n\n### Proposed Solution\n1. Create formatting utilities using `Intl.NumberFormat` and `Intl.DateTimeFormat`.\n2. Display user's local timezone alongside UTC indicator.\n\n### Acceptance Criteria\n- All numbers format with thousands separators and accurate decimal places.",
+        "labels": [
+            "wallet",
+            "feature",
+            "good first issue"
+        ]
+    },
+    {
+        "title": "[Frontend] Implement market search and multi-facet filtering (category, status, liquidity, volume)",
+        "body": "### Context & Problem\nUsers cannot easily filter markets by status (Open, Resolved, Disputed) or category (Crypto, Sports, Politics).\n\n### Proposed Solution\n1. Add interactive filter sidebar and debounce search bar.\n2. Synchronize filters with URL search params for shareable links.\n\n### Acceptance Criteria\n- Filtering updates market list instantly; URL reflects active filter state.",
+        "labels": [
+            "markets",
+            "feature",
+            "good first issue"
+        ]
+    },
+    {
+        "title": "[Frontend] Implement user activity feed with real-time bet placement toasts",
+        "body": "### Context & Problem\nThe platform lacks social proof and real-time excitement of ongoing market activity.\n\n### Proposed Solution\n1. Subscribe to global trade WebSocket channel.\n2. Display unobtrusive toast for recent bets over threshold ($50+).\n\n### Acceptance Criteria\n- Activity feed updates in real-time with toggle to mute in user settings.",
+        "labels": [
+            "notifications",
+            "websocket",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Frontend] Implement Playwright E2E tests for wallet connection and market creation flow",
+        "body": "### Context & Problem\nEnd-to-end user journeys are not tested automatically, leading to regressions in releases.\n\n### Proposed Solution\n1. Create Playwright test suite using mock wallet extension.\n2. Test end-to-end market creation and form validation.\n\n### Acceptance Criteria\n- E2E test runs headlessly in CI pipeline and passes reliably.",
+        "labels": [
+            "testing",
+            "markets",
+            "wallet"
+        ]
+    },
+    {
+        "title": "[Frontend] Implement Playwright E2E tests for placing predictions and claiming payouts",
+        "body": "### Context & Problem\nPrediction placement, share redemption, and payout claiming lack automated E2E test coverage.\n\n### Proposed Solution\n1. Write Playwright test simulating full user bet lifecycle from purchase to payout claim.\n\n### Acceptance Criteria\n- Automated test verifies balance updates and success confirmation modal.",
+        "labels": [
+            "testing",
+            "predictions",
+            "trading"
+        ]
+    },
+    {
+        "title": "[Frontend] Implement client-side error telemetry reporting to Sentry",
+        "body": "### Context & Problem\nFrontend JavaScript exceptions in user browsers go unnoticed unless reported manually.\n\n### Proposed Solution\n1. Configure `@sentry/nextjs` with environment-specific DSN.\n2. Capture unhandled errors and React Error Boundary events with user consent.\n\n### Acceptance Criteria\n- Errors report to Sentry dashboard with sourcemaps and breadcrumbs.",
+        "labels": [
+            "testing",
+            "feature",
+            "middleware"
+        ]
+    },
+    {
+        "title": "[Treasury] Fix quorum percentage rounding allowing proposals to pass with insufficient votes",
+        "body": "### Context & Problem\nInteger division when calculating 66% supermajority quorum rounds down, allowing proposals to pass with fewer votes than legally required.\n\n### Proposed Solution\n1. Implement ceiling division for quorum: `(total_votes * required_bps + 9999) / 10000`.\n2. Ensure strict `>` or `>=` threshold enforcement.\n\n### Acceptance Criteria\n- Quorum math requires strict qualifying vote count before passing.",
+        "labels": [
+            "treasury",
+            "bug",
+            "security"
+        ]
+    },
+    {
+        "title": "[Treasury] Fix proposal vote double-counting when user transfers governance tokens mid-vote",
+        "body": "### Context & Problem\nA user can vote on a proposal, transfer governance tokens to another address, and vote again on the same proposal.\n\n### Proposed Solution\n1. Implement voting snapshot mechanism based on token balance at proposal creation ledger height.\n2. Reject votes from tokens acquired after proposal start.\n\n### Acceptance Criteria\n- Tokens can only vote once per proposal based on snapshot balance.",
+        "labels": [
+            "treasury",
+            "security",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Treasury] Fix oracle resolution timeout window mismatch between contract and backend cron",
+        "body": "### Context & Problem\nThe backend cron attempts to trigger default resolution at 24 hours, while the smart contract requires 48 hours, causing repeated transaction failures.\n\n### Proposed Solution\n1. Align timeout constants across `contracts/shared/src/lib.rs` and `backend/src/config.ts`.\n2. Document dispute and resolution timing parameters clearly.\n\n### Acceptance Criteria\n- Automated resolution executes cleanly once contract window opens.",
+        "labels": [
+            "treasury",
+            "oracle",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Treasury] Fix dispute bond confiscation failing when dispute resolves as inconclusive",
+        "body": "### Context & Problem\nIf a market resolves as 'Inconclusive / Cancelled', the dispute bond is locked in the contract rather than returned to the disputer.\n\n### Proposed Solution\n1. Add logic to return 100% of dispute bond to disputer when outcome is deemed inconclusive through no fault of their own.\n\n### Acceptance Criteria\n- Bonds refund properly upon inconclusive market cancellation.",
+        "labels": [
+            "treasury",
+            "disputes",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Treasury] Fix multi-sig execution authorization bypass in treasury withdrawal proposals",
+        "body": "### Context & Problem\nA logic flaw in signature counting allows multiple signatures from the same authorized signer to count toward the threshold.\n\n### Proposed Solution\n1. Enforce unique signer addresses using a bitmask or set verification.\n2. Assert `unique_signers.len() >= required_signatures`.\n\n### Acceptance Criteria\n- Replay signatures from the same key are rejected with `DuplicateSigner`.",
+        "labels": [
+            "treasury",
+            "security",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Treasury] Fix staking reward distribution integer truncation favoring early claimants",
+        "body": "### Context & Problem\nReward rate truncation in early blocks over-allocates rewards to early stakers, leaving insufficient reward pool for subsequent stakers.\n\n### Proposed Solution\n1. Implement standard Synthetix-style `rewardPerTokenStored` accumulator with high-precision scaling (1e18).\n\n### Acceptance Criteria\n- Reward distribution remains mathematically fair across all staker deposit times.",
+        "labels": [
+            "treasury",
+            "bug",
+            "wallet"
+        ]
+    },
+    {
+        "title": "[Treasury] Fix emergency freeze failing to pause withdrawal queues in treasury",
+        "body": "### Context & Problem\nTriggering `freeze()` halts new withdrawal requests but fails to pause queued withdrawals already scheduled for release.\n\n### Proposed Solution\n1. Check `!frozen` flag inside `execute_withdrawal` as well as `request_withdrawal`.\n\n### Acceptance Criteria\n- All withdrawal executions are halted while freeze is active.",
+        "labels": [
+            "treasury",
+            "security",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Treasury] Fix oracle reputation score not decrementing after submitting refuted outcome",
+        "body": "### Context & Problem\nWhen an oracle's reported outcome is overturned by governance dispute, the oracle's on-chain reputation score remains unchanged.\n\n### Proposed Solution\n1. Deduct reputation points upon upheld dispute and slash a portion of the oracle's staked bond.\n2. Auto-delist oracle if score drops below minimum threshold.\n\n### Acceptance Criteria\n- Erroneous oracle reports result in automatic penalty and slashing.",
+        "labels": [
+            "oracle",
+            "disputes",
+            "bug"
+        ]
+    },
+    {
+        "title": "[Treasury] Implement 2-of-3 oracle consensus validation with signature verification",
+        "body": "### Context & Problem\nSingle-oracle market resolution creates centralization risk and single points of failure.\n\n### Proposed Solution\n1. Require outcome reports from at least 2 independent registered oracles.\n2. Resolve market only when reports match; trigger dispute automatically if reports conflict.\n\n### Acceptance Criteria\n- Markets resolve automatically when 2 of 3 oracles submit matching reports.",
+        "labels": [
+            "oracle",
+            "security",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Treasury] Implement dispute escalation tier requiring increasing bond deposits per appeal",
+        "body": "### Context & Problem\nTrivially low dispute bond amounts allow bad actors to repeatedly stall market settlements with frivolous appeals.\n\n### Proposed Solution\n1. Double the required bond deposit on each subsequent appeal tier (100 -> 200 -> 400 XLM).\n2. Cap appeals at 3 tiers before ultimate community referendum.\n\n### Acceptance Criteria\n- Escalated disputes require exponentially higher bond amounts.",
+        "labels": [
+            "disputes",
+            "feature",
+            "treasury"
+        ]
+    },
+    {
+        "title": "[Treasury] Implement quadratic voting mechanism for governance grant allocations",
+        "body": "### Context & Problem\nLarge token holders completely dominate governance treasury funding decisions.\n\n### Proposed Solution\n1. Calculate voting weight as `sqrt(token_balance)` for ecosystem grant proposals.\n\n### Acceptance Criteria\n- Quadratic vote weighting verified in unit tests.",
+        "labels": [
+            "treasury",
+            "feature",
+            "good first issue"
+        ]
+    },
+    {
+        "title": "[Treasury] Implement automated treasury balance reconciliation cron job with Slack alerting",
+        "body": "### Context & Problem\nNo automated system verifies that on-chain treasury token balances match internal ledger records.\n\n### Proposed Solution\n1. Create hourly cron comparing on-chain contract balances against database aggregates.\n2. Trigger high-priority alert if delta exceeds tolerance threshold.\n\n### Acceptance Criteria\n- Hourly reconciliation logs balance parity; alerts on discrepancies.",
+        "labels": [
+            "treasury",
+            "cron",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Treasury] Implement governance proposal cancellation by author before voting starts",
+        "body": "### Context & Problem\nProposers who discover a typo or flaw in their proposal cannot cancel it once submitted.\n\n### Proposed Solution\n1. Add `cancel_proposal` allowing proposer to withdraw proposal before voting opens.\n2. Return submission deposit.\n\n### Acceptance Criteria\n- Authors can cancel pending proposals and reclaim deposit.",
+        "labels": [
+            "treasury",
+            "feature",
+            "good first issue"
+        ]
+    },
+    {
+        "title": "[Treasury] Implement time-locked delay on critical parameter changes (fees, oracle whitelist)",
+        "body": "### Context & Problem\nImmediate parameter changes give users no time to exit positions if fees or governance rules change unfavorably.\n\n### Proposed Solution\n1. Enforce 48-hour timelock between proposing a fee change and executing it.\n\n### Acceptance Criteria\n- Parameter modifications enforce 48-hour delay with event notification.",
+        "labels": [
+            "treasury",
+            "security",
+            "feature"
+        ]
+    },
+    {
+        "title": "[Treasury] Implement unit tests for multi-sig threshold changes and timelock expiration",
+        "body": "### Context & Problem\nThreshold change edge cases (e.g. reducing threshold below signer count, removing active signers) need thorough test coverage.\n\n### Proposed Solution\n1. Write test suite in `contracts/treasury/src/test.rs` covering all governance mutation scenarios.\n\n### Acceptance Criteria\n- 100% test coverage of multi-sig admin operations.",
+        "labels": [
+            "treasury",
+            "testing",
+            "security"
+        ]
+    },
+    {
+        "title": "[DevOps] Fix Docker Compose staging container startup race condition between DB and backend",
+        "body": "### Context & Problem\nIn `docker-compose.staging.yml`, the backend service starts before PostgreSQL is ready to accept connections, causing boot crash loops.\n\n### Proposed Solution\n1. Add `pg_isready` healthcheck to the `db` service.\n2. Use `depends_on: db: condition: service_healthy` on backend and indexer containers.\n\n### Acceptance Criteria\n- `docker compose -f docker-compose.staging.yml up` boots cleanly without container restarts.",
+        "labels": [
+            "security",
+            "middleware",
+            "bug"
+        ]
+    },
+    {
+        "title": "[DevOps] Fix Dependabot alerts and update vulnerable dependencies in backend and frontend",
+        "body": "### Context & Problem\nMultiple high and moderate severity Dependabot alerts exist across npm dependencies (`cross-spawn`, `cookie`, `micromatch`).\n\n### Proposed Solution\n1. Audit and upgrade vulnerable dependencies in `backend/package.json` and `frontend/package.json`.\n2. Run automated test suites to ensure zero breaking regressions.\n\n### Acceptance Criteria\n- `npm audit` reports 0 high or critical vulnerabilities.",
+        "labels": [
+            "security",
+            "backend",
+            "bug"
+        ]
+    },
+    {
+        "title": "[DevOps] Fix Gitleaks false positives and enforce secret scanning in pre-commit hooks",
+        "body": "### Context & Problem\nTest keys and mock tokens in test files trigger false positive failures in Gitleaks.\n\n### Proposed Solution\n1. Update `.gitleaks.toml` with explicit path allowlists for mock fixtures.\n2. Add pre-commit hook script blocking commits with actual credentials.\n\n### Acceptance Criteria\n- Gitleaks scans pass cleanly in CI while protecting against real leaks.",
+        "labels": [
+            "security",
+            "testing",
+            "bug"
+        ]
+    },
+    {
+        "title": "[DevOps] Fix missing non-root user in Dockerfiles posing container escape risks",
+        "body": "### Context & Problem\n`backend/Dockerfile` and `indexer/Dockerfile` run applications as `root`, violating container security best practices.\n\n### Proposed Solution\n1. Create a dedicated non-root user: `RUN addgroup -S app && adduser -S app -G app`.\n2. Add `USER app` before `CMD` instruction.\n\n### Acceptance Criteria\n- Containers execute under unprivileged user permissions.",
+        "labels": [
+            "security",
+            "middleware",
+            "bug"
+        ]
+    },
+    {
+        "title": "[DevOps] Implement GitHub Actions workflow for automated Soroban contract compilation and test",
+        "body": "### Context & Problem\nPull requests can merge with broken Soroban contract code because CI only tests backend TypeScript.\n\n### Proposed Solution\n1. Add `.github/workflows/contracts.yml` running `cargo clippy`, `cargo test`, and `cargo check`.\n\n### Acceptance Criteria\n- Every PR automatically tests Rust contracts in CI.",
+        "labels": [
+            "testing",
+            "blockchain",
+            "feature"
+        ]
+    },
+    {
+        "title": "[DevOps] Implement automated testnet deployment pipeline triggered on main branch merge",
+        "body": "### Context & Problem\nDeploying contracts and backend to Stellar Testnet requires manual developer intervention.\n\n### Proposed Solution\n1. Create CD workflow deploying updated contracts to Stellar testnet and updating contract ID configs.\n\n### Acceptance Criteria\n- Merges to `main` trigger automated deployment and smoke tests.",
+        "labels": [
+            "blockchain",
+            "feature",
+            "cron"
+        ]
+    },
+    {
+        "title": "[DevOps] Implement database connection pooling tuning for high-concurrency production load",
+        "body": "### Context & Problem\nDefault connection pool limit of 10 clients exhausts quickly under concurrent traffic spikes.\n\n### Proposed Solution\n1. Tune pool settings in `backend/src/db/index.ts`: `max: 50, idleTimeoutMillis: 30000, connectionTimeoutMillis: 5000`.\n2. Configure PgBouncer in staging docker compose.\n\n### Acceptance Criteria\n- System handles 500 concurrent requests without connection acquisition errors.",
+        "labels": [
+            "backend",
+            "repository",
+            "feature"
+        ]
+    },
+    {
+        "title": "[DevOps] Implement automated contract bytecode size and optimization verification in CI",
+        "body": "### Context & Problem\nUnchecked WASM sizes can exceed Soroban limits silently.\n\n### Proposed Solution\n1. Integrate `soroban contract optimize` in CI workflow.\n2. Assert optimized WASM <= 64KB with artifact upload.\n\n### Acceptance Criteria\n- PRs report compiled WASM sizes; fail if over limit.",
+        "labels": [
+            "blockchain",
+            "testing",
+            "feature"
+        ]
+    },
+    {
+        "title": "[DevOps] Implement comprehensive seed script for local development and testnet simulation",
+        "body": "### Context & Problem\nNew developers starting locally have an empty database with no markets, categories, or test users.\n\n### Proposed Solution\n1. Create `npm run db:seed` script generating realistic categories, active markets, orders, and mock oracles.\n\n### Acceptance Criteria\n- Single command seeds a fully functional local development environment.",
+        "labels": [
+            "backend",
+            "feature",
+            "good first issue"
+        ]
+    },
+    {
+        "title": "[DevOps] Implement centralized logging and metric dashboard configuration with Grafana and Prometheus",
+        "body": "### Context & Problem\nNo consolidated dashboard exists to monitor system health across backend, indexer, and contract interactions.\n\n### Proposed Solution\n1. Add Prometheus and Grafana service definitions to `docker-compose.staging.yml`.\n2. Pre-configure dashboard JSON tracking API RPS, error rates, indexer lag, and contract volume.\n\n### Acceptance Criteria\n- Grafana dashboard visualizes full-stack metrics out-of-the-box.",
+        "labels": [
+            "middleware",
+            "feature",
+            "testing"
         ]
     }
 ]
 
-def ensure_labels(gh_bin, token):
-    print("Verifying and creating labels...")
+def export_documentation():
+    # Export to markdown
+    with open("ISSUES_125.md", "w") as f:
+        f.write("# BANKERCHANGER - 125 Repository Issues & Action Items\n\n")
+        f.write("Comprehensive task backlog covering every component of the repository: Smart Contracts, Backend API, Blockchain Indexer, Frontend UI/UX, Treasury & Governance, and DevOps / CI/CD.\n\n")
+        f.write("A significant portion of these issues directly address critical bugs, compilation failures, security vulnerabilities, and stability fixes necessary to make the repository production-ready.\n\n")
+        f.write("---\n\n")
+        
+        for idx, issue in enumerate(ISSUES, 1):
+            f.write(f"## Issue #{idx}: {issue['title']}\n\n")
+            f.write(f"**Labels**: `{', '.join(issue['labels'])}`\n\n")
+            f.write(issue['body'] + "\n\n")
+            f.write("---\n\n")
+    print("Exported ISSUES_125.md")
+
+    # Export to JSON
+    with open("issues_125.json", "w") as f:
+        json.dump(ISSUES, f, indent=2)
+    print("Exported issues_125.json")
+
+def main():
+    export_documentation()
+
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    gh_bin = subprocess.run(["which", "gh"], capture_output=True, text=True).stdout.strip()
+    if not gh_bin and os.path.exists(os.path.expanduser("~/.local/bin/gh")):
+        gh_bin = os.path.expanduser("~/.local/bin/gh")
+
+    print(f"Total issues to process: {len(ISSUES)}")
+    print(f"Total labels to process: {len(LABELS)}")
+
+    # Check authentication
+    has_auth = False
+    if gh_bin:
+        check = subprocess.run([gh_bin, "auth", "status"], capture_output=True, text=True)
+        if check.returncode == 0:
+            has_auth = True
+    if token:
+        has_auth = True
+
+    if not has_auth:
+        print("\n[!] Notice: No active GitHub CLI login or GH_TOKEN detected.")
+        print("To push these 125 issues directly to GitHub, run:")
+        print("  gh auth login")
+        print("  OR")
+        print("  GH_TOKEN=<your_token> python3 create_125_issues.py")
+        print("\nAll 125 issues have been compiled and exported to ISSUES_125.md and issues_125.json.")
+        return
+
+    # 1. Create labels
+    print("\nCreating / verifying GitHub labels...")
     for label in LABELS:
         name = label["name"]
         color = label["color"]
@@ -1371,15 +1351,10 @@ def create_issue_api(gh_bin, token, title, body, labels):
         return code in ["200", "201"], body_resp, f"HTTP {code}"
     return False, "", "No gh CLI or GH_TOKEN found"
 
-def main():
-    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
-    gh_bin = subprocess.run(["which", "gh"], capture_output=True, text=True).stdout.strip()
-    if not gh_bin and os.path.exists(os.path.expanduser("~/.local/bin/gh")):
-        gh_bin = os.path.expanduser("~/.local/bin/gh")
+    print("Labels verified.")
 
-    print(f"Total issues to process: {len(ISSUES)}")
-    ensure_labels(gh_bin, token)
-
+    # 2. Create issues
+    print(f"\nPushing {len(ISSUES)} issues to {REPO}...")
     success_count = 0
     failed = []
 
@@ -1403,19 +1378,9 @@ def main():
                 success_count += 1
                 created = True
             else:
-                if "rate limit" in (out + err).lower() or "secondary" in (out + err).lower() or "403" in (out + err) or "429" in (out + err):
-                    print(f"[{idx}/{len(ISSUES)}] Rate limit hit, backing off 10s...")
-                    time.sleep(10)
-                else:
-                    print(f"[{idx}/{len(ISSUES)}] Error creating '{title}': {err[:150]}")
-                    time.sleep(2)
-                retries -= 1
-
-        if not created:
-            failed.append((idx, title))
-
-        # 1-second delay to comply with GitHub secondary rate limits
-        time.sleep(1.0)
+                print(f"[{idx}/{len(ISSUES)}] API Error: {res.stdout[:100]}")
+        
+        time.sleep(0.2)
 
     print(f"\n==================================================")
     print(f"Finished! Successfully created {success_count} / {len(ISSUES)} issues on {REPO}.")

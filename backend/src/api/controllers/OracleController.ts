@@ -1,10 +1,11 @@
 import type { Request, Response, NextFunction } from 'express';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { AppError } from '../../utils/AppError';
-import { validate } from '../middleware/validate';
+import { validate } from '../../middleware/validation.middleware';
 import * as OracleService from '../../oracle/OracleService';
 import { redis } from '../../config/redis';
 import { z } from 'zod';
+import { pool } from '../../config/db';
 
 // ---------------------------------------------------------------------------
 // Zod schema for POST /api/oracle/submit body
@@ -95,8 +96,22 @@ export async function submitOracleResult(
  * Returns all oracle reports for a fight.
  */
 export async function getOracleReports(
-  _req: Request,
-  _res: Response,
+  req: Request,
+  res: Response,
+  next: NextFunction,
 ): Promise<void> {
-  // TODO: implement
+  try {
+    const { rows } = await pool.query(
+      `SELECT reported_at AS timestamp, oracle_address, outcome, signature
+       FROM oracle_reports WHERE match_id = $1 ORDER BY reported_at ASC`,
+      [req.params.match_id],
+    );
+    if (rows.length === 0) {
+      res.status(404).json({ success: false, error: { message: 'No oracle reports found for this match' } });
+      return;
+    }
+    res.status(200).json({ match_id: req.params.match_id, reports: rows });
+  } catch (error) {
+    next(error);
+  }
 }

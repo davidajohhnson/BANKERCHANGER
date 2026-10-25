@@ -13,7 +13,7 @@ import {
     simulatePayout,
     simulatePayoutValidation,
 } from '../api/controllers/MarketController';
-import { requireAdminJwt } from '../middleware/requireAdminJwt.middleware';
+import { requireAdmin } from '../middleware/admin.middleware';
 
 const router = Router();
 
@@ -219,6 +219,6 @@ router.get('/:market_id/simulate', simulatePayoutValidation, simulatePayout);
  *       404:
  *         description: Market not found
  */
-router.post('/:market_id/resolve', requireAdminJwt, resolveMarket);
+router.post('/:market_id/resolve', requireAdmin, resolveMarket);
 
 export default router;

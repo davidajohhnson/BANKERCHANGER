@@ -7,6 +7,7 @@
     "build": "next build",
     "analyze": "ANALYZE=true next build",
     "start": "next start -p 3000",
+    "type-check": "tsc --noEmit",
     "test": "jest",
     "lint": "next lint",
     "format": "prettier --write 'src/**/*.{ts,tsx}'",

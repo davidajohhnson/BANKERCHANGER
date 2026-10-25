@@ -3,6 +3,7 @@ import * as QRCode from 'qrcode';
 import crypto from 'crypto';
 import { pool } from '../config/db';
 import { AppError } from '../utils/AppError';
+import { logger } from '../utils/logger';
 
 export function generateSecret(accountName: string): { secret: string; otpauthUrl: string } {
   const totp = new OTPAuth.TOTP({
@@ -110,62 +111,68 @@ export function resetBackupCodes(): void {
   memoryBackupCodes.clear();
 }
 
+function emitSecurityEvent(type: 'BACKUP_CODE_USED', userId: string, ip?: string): void {
+  logger.warn(
+    {
+      event: {
+        type,
+        userId,
+        ip: ip ?? 'unknown',
+      },
+    },
+    'SecurityEvent'
+  );
+}
+
 /**
- * Atomically validates and marks a backup code as used in a single transaction.
+ * Atomically validates and marks a backup code as used in a single SQL statement.
  *
  * Rules:
  * - If code does not exist: throws 401 Unauthorized "Invalid backup code"
  * - If code has already been used: throws 401 Unauthorized "Backup code already used"
  * - If valid and unused: marks used_at atomically and returns true
  */
-export async function validateBackupCode(userId: string, code: string): Promise<boolean> {
+export async function validateBackupCode(userId: string, code: string, ip?: string): Promise<boolean> {
   const codeHash = hashBackupCode(code);
   const memoryKey = `${userId}:${codeHash}`;
   const memoryRecord = memoryBackupCodes.get(memoryKey);
 
-  // First check database transaction if database is connected
   try {
     const client = await pool.connect();
     try {
-      await client.query('BEGIN');
-
-      const selectRes = await client.query(
-        `SELECT id, used_at FROM totp_backup_codes
-         WHERE user_id = $1 AND code_hash = $2
-         FOR UPDATE`,
+      const updateResult = await client.query(
+        `UPDATE totp_backup_codes
+         SET used_at = NOW()
+         WHERE user_id = $1 AND code_hash = $2 AND used_at IS NULL
+         RETURNING id`,
         [userId, codeHash]
       );
 
-      if (selectRes.rows.length === 0) {
-        // Fall back to memory check before failing
-        if (!memoryRecord) {
-          await client.query('ROLLBACK');
+      if (updateResult.rows.length === 0) {
+        const existingRow = await client.query(
+          `SELECT id, used_at FROM totp_backup_codes
+           WHERE user_id = $1 AND code_hash = $2
+           LIMIT 1`,
+          [userId, codeHash]
+        );
+
+        if (existingRow.rows.length === 0) {
           throw new AppError(401, 'Invalid backup code');
         }
-      } else {
-        const row = selectRes.rows[0];
-        if (row.used_at !== null) {
-          await client.query('ROLLBACK');
+
+        if (existingRow.rows[0].used_at !== null) {
           throw new AppError(401, 'Backup code already used');
         }
 
-        await client.query(
-          `UPDATE totp_backup_codes
-           SET used_at = NOW()
-           WHERE id = $1 AND used_at IS NULL`,
-          [row.id]
-        );
-
-        await client.query('COMMIT');
-
-        if (memoryRecord) {
-          memoryRecord.usedAt = new Date();
-        }
-        return true;
+        throw new AppError(401, 'Backup code already used');
       }
-    } catch (err) {
-      await client.query('ROLLBACK');
-      throw err;
+
+      if (memoryRecord) {
+        memoryRecord.usedAt = new Date();
+      }
+
+      emitSecurityEvent('BACKUP_CODE_USED', userId, ip);
+      return true;
     } finally {
       client.release();
     }
@@ -176,7 +183,6 @@ export async function validateBackupCode(userId: string, code: string): Promise<
     // Database unreachable or table not provisioned; proceed with atomic in-memory validation
   }
 
-  // In-memory atomic validation fallback
   if (!memoryRecord) {
     throw new AppError(401, 'Invalid backup code');
   }
@@ -185,7 +191,7 @@ export async function validateBackupCode(userId: string, code: string): Promise<
     throw new AppError(401, 'Backup code already used');
   }
 
-  // Atomically mark code as used
   memoryRecord.usedAt = new Date();
+  emitSecurityEvent('BACKUP_CODE_USED', userId, ip);
   return true;
 }

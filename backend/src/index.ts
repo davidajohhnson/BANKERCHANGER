@@ -9,6 +9,7 @@ import { version } from '../package.json';
 import { createCorsMiddleware } from "./config/cors";
 import { setupSwagger } from "./config/swagger";
 import { errorMiddleware } from "./middleware/error.middleware";
+import { requireAdmin } from "./middleware/admin.middleware";
 import { initSentry, applySentryRequestHandler } from "./middleware/sentry.middleware";
 import { rateLimit } from "./middleware/rate-limit.middleware";
 import { requestLogging } from "./middleware/request-logging.middleware";
@@ -16,20 +17,27 @@ import { AppError } from "./utils/AppError";
 import { logger } from "./utils/logger";
 import { pool } from "./config/db";
 import { redis } from "./config/redis";
+import { requireAdminJwt } from "./middleware/requireAdminJwt.middleware";
 import authRouter from "./routes/auth.routes";
 import marketRouter from "./routes/market.routes";
 import governanceRouter from "./routes/governance.routes";
-import adminRouter from "./routes/admin.routes";
 import usersRouter from "./routes/users.routes";
+import adminRouter from "./routes/admin.routes";
+import operationsRouter from "./routes/operations.routes";
+import operationsRouter from "./routes/operations.routes";
 
+import disputesRouter from "./routes/disputes.routes";
+import oracleRouter from "./routes/oracle.routes";
+import walletsRouter from "./routes/wallets.routes";
+import notificationsRouter from "./routes/notifications.routes";
 import engagementRouter from "./routes/engagement.routes";
 import { getPortfolio, getPlatformStats } from "./api/controllers/MarketController";
 import claimsRouter from "./routes/bet.routes";
 import { startAutoResolutionCron, startAutoLockCron } from "./cron/autoResolution.cron";
 import { startCleanupCron } from "./cron/cleanup.cron";
+import { startWebhookDeliveryCron } from "./cron/webhookDelivery.cron";
 import { initActivityFeed, getActivityFeed } from "./websocket/realtime";
 import { engagementService } from "./services/engagement.service";
-import { register, httpRequestDuration, httpRequestsTotal } from "./services/metrics.service";
 
 import { setDbAdapter, defaultDbAdapter } from "./services/MarketService";
 
@@ -73,20 +81,18 @@ app.use((req, res, next) => {
 });
 
 // Routes
-// Public health endpoint (Issue #682) — returns only { status, version, timestamp }
+// Public health endpoint — returns no internal service or version details.
 app.get("/health", async (_req, res) => {
   try {
     await pool.query("SELECT 1");
     await redis.ping();
     res.json({
       status: "healthy",
-      version,
       timestamp: new Date().toISOString(),
     });
   } catch {
     res.status(503).json({
       status: "unhealthy",
-      version,
       timestamp: new Date().toISOString(),
     });
   }
@@ -138,32 +144,12 @@ app.use("/api/bets", claimsRouter);
 app.get("/api/stats", getPlatformStats);
 app.get("/api/portfolio/:address", getPortfolio);
 app.use("/api/users", usersRouter);
+app.use("/api/disputes", disputesRouter);
+app.use("/api/oracle", oracleRouter);
+app.use("/api/wallets", walletsRouter);
+app.use("/api/notifications", notificationsRouter);
 app.use("/api/admin", adminRouter);
-app.post("/trading/bet", (_req, res) => res.json({ ok: true }));
-app.post("/wallet/withdraw", (_req, res) => res.json({ ok: true }));
-
-// Example route that throws AppError
-app.get("/test-error", (_req, _res, next) => {
-  const error = AppError.notFound("Resource not found", undefined, { resource: "user" });
-  next(error);
-});
-
-// Example route with unhandled error
-app.get("/test-unhandled", (_req, _res) => {
-  throw new Error("Unexpected error occurred");
-});
-
-// Example route with validation error
-app.post("/api/users", (req, res, next) => {
-  if (!req.body.email) {
-    const error = AppError.badRequest("Validation error", undefined, {
-      field: "email",
-      reason: "Email is required",
-    });
-    return next(error);
-  }
-  res.json({ success: true });
-});
+app.use(operationsRouter);
 
 // 404 handler - must be before error middleware
 app.use((_req, _res, next) => {
@@ -185,6 +171,7 @@ const server = app.listen(PORT, () => {
   startAutoResolutionCron();
   startAutoLockCron();
   startCleanupCron();
+  startWebhookDeliveryCron();
 });
 
 // Startup health check — catch misconfigured env vars or failed connections early

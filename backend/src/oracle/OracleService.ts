@@ -11,6 +11,7 @@ import { invokeContract } from '../services/StellarService';
 import { logger } from '../utils/logger';
 import { cacheGet, cacheSet, redis } from '../services/cache.service';
 import { incrWithExpire } from '../services/redis-lua';
+import { getLatestLedgerCloseTime } from '../indexer/StellarIndexer';
 import type { OracleReport } from '../models/OracleReport';
 import type { Market } from '../models/Market';
 import { boxingApiResponseSchema } from '../schemas/validation.schemas';
@@ -20,6 +21,7 @@ export type FightOutcome = 'fighter_a' | 'fighter_b' | 'draw' | 'no_contest';
 const FAILURE_THRESHOLD = 3;
 const FAILURE_KEY_PREFIX = 'oracle:failure:';
 const ALERT_SENT_KEY_PREFIX = 'oracle:alert_sent:';
+const AUTO_LOCK_GRACE_BUFFER_SECONDS = 60;
 
 async function trackFailure(market_id: string): Promise<boolean> {
   const failureKey = `${FAILURE_KEY_PREFIX}${market_id}`;
@@ -597,7 +599,7 @@ export const pollFightResults = runAutoResolutionJob;
  * Auto-lock job: locks open markets that have passed their lock threshold.
  *
  * Steps:
- *   1. Query all markets with `status = 'open'` AND `scheduled_at - lock_before_secs <= NOW()`
+ *   1. Query open markets whose lock threshold is at least 60 seconds behind the latest ledger close time
  *   2. For each: update DB status to 'locked'
  *   3. Returns `{ locked: number, failed: number }`
  *
@@ -610,12 +612,20 @@ export async function runAutoLockMarketsJob(): Promise<{ locked: number; failed:
   const stats = { locked: 0, failed: 0 };
 
   try {
-    const { rows } = await pool.query<{ market_id: string; contract_address: string }>(
-      `SELECT market_id, contract_address
+    const ledgerCloseTime = await getLatestLedgerCloseTime();
+    const { rows } = await pool.query<{
+      market_id: string;
+      contract_address: string;
+      scheduled_at: Date;
+      lock_before_secs: number | null;
+    }>(
+      `SELECT market_id, contract_address, scheduled_at, lock_before_secs
          FROM markets
         WHERE status = 'open'
-          AND EXTRACT(EPOCH FROM scheduled_at) - COALESCE(lock_before_secs, 3600) <= EXTRACT(EPOCH FROM NOW())
+          AND EXTRACT(EPOCH FROM scheduled_at) - COALESCE(lock_before_secs, 3600) + $1
+              <= EXTRACT(EPOCH FROM $2::timestamptz)
         ORDER BY scheduled_at ASC`,
+      [AUTO_LOCK_GRACE_BUFFER_SECONDS, ledgerCloseTime],
     );
 
     if (rows.length === 0) {
@@ -627,20 +637,34 @@ export async function runAutoLockMarketsJob(): Promise<{ locked: number; failed:
 
     for (const market of rows) {
       try {
-        await pool.query(
-          `UPDATE markets SET status = 'locked', updated_at = NOW() WHERE market_id = $1 AND status = 'open'`,
-          [market.market_id],
+        const { rowCount } = await pool.query(
+          `UPDATE markets SET status = 'locked', updated_at = $2
+            WHERE market_id = $1 AND status = 'open'
+            RETURNING market_id`,
+          [market.market_id, ledgerCloseTime],
         );
 
+        if (!rowCount) continue;
+
         stats.locked++;
-        logger.info({ market_id: market.market_id }, 'runAutoLockMarketsJob: market locked');
+        const lockThresholdAt = new Date(
+          market.scheduled_at.getTime() - (market.lock_before_secs ?? 3600) * 1000
+            + AUTO_LOCK_GRACE_BUFFER_SECONDS * 1000,
+        );
+        logger.info({
+          market_id: market.market_id,
+          contract_address: market.contract_address,
+          ledger_close_time: ledgerCloseTime.toISOString(),
+          effective_lock_threshold: lockThresholdAt.toISOString(),
+          grace_buffer_seconds: AUTO_LOCK_GRACE_BUFFER_SECONDS,
+        }, 'runAutoLockMarketsJob: market locked');
       } catch (err) {
         logger.error({ err, market_id: market.market_id }, 'runAutoLockMarketsJob: error locking market');
         stats.failed++;
       }
     }
   } catch (err) {
-    logger.error({ err }, 'runAutoLockMarketsJob: failed to query markets for locking');
+    logger.error({ err }, 'runAutoLockMarketsJob: failed to get ledger time or query markets for locking');
   }
 
   logger.info(stats, 'runAutoLockMarketsJob: completed');

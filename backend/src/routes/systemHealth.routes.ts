@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { validate } from '../api/middleware/validate';
+import { validate } from '../middleware/validation.middleware';
 import { requireAuth } from '../middleware/auth.middleware';
-import { requireAdminJwt } from '../middleware/requireAdminJwt.middleware';
+import { requireAdmin } from '../middleware/admin.middleware';
 import { AppError } from '../utils/AppError';
 import { pool } from '../config/db';
 import { redis } from '../config/redis';
@@ -173,8 +173,8 @@ const detailedHealthHandler = async (req: Request, res: Response, next: NextFunc
 };
 
 // Admin-gated detailed health endpoints
-router.get('/detailed', requireAdminJwt, detailedHealthHandler);
-router.get('/health/detailed', requireAdminJwt, detailedHealthHandler);
+router.get('/detailed', requireAdmin, detailedHealthHandler);
+router.get('/health/detailed', requireAdmin, detailedHealthHandler);
 
 /**
  * @swagger
@@ -278,7 +278,7 @@ router.get(
 router.get(
   '/diagnostics',
   requireAuth,
-  requireAdminJwt,
+  requireAdmin,
   validate(systemDiagnosticsQuery, 'query'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {

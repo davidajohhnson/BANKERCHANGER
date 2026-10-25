@@ -25,7 +25,7 @@ describe('Auth Group 1 API Module Integration Tests', () => {
         });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
 
     it('rejects registration with weak password', async () => {
@@ -38,7 +38,7 @@ describe('Auth Group 1 API Module Integration Tests', () => {
         });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
 
     it('rejects registration with invalid username characters', async () => {
@@ -51,7 +51,7 @@ describe('Auth Group 1 API Module Integration Tests', () => {
         });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
 
     it('rejects registration with invalid Stellar wallet address format', async () => {
@@ -65,7 +65,7 @@ describe('Auth Group 1 API Module Integration Tests', () => {
         });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
   });
 
@@ -78,7 +78,7 @@ describe('Auth Group 1 API Module Integration Tests', () => {
         });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
 
     it('rejects login with invalid email format', async () => {
@@ -90,7 +90,7 @@ describe('Auth Group 1 API Module Integration Tests', () => {
         });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
   });
 
@@ -103,7 +103,7 @@ describe('Auth Group 1 API Module Integration Tests', () => {
         });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
 
     it('rejects refresh token requests with short/invalid token', async () => {
@@ -114,7 +114,7 @@ describe('Auth Group 1 API Module Integration Tests', () => {
         });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
   });
 
@@ -128,7 +128,7 @@ describe('Auth Group 1 API Module Integration Tests', () => {
         });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
 
     it('rejects MFA verification with non-numeric code', async () => {
@@ -140,7 +140,7 @@ describe('Auth Group 1 API Module Integration Tests', () => {
         });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
   });
 
@@ -154,7 +154,7 @@ describe('Auth Group 1 API Module Integration Tests', () => {
         });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
   });
 

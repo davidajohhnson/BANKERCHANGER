@@ -69,7 +69,7 @@ describe('Categories, Tagging & Live Odds (Endpoint Group 14) Integration Tests'
         .query({ q: 'T' });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
   });
 

@@ -41,11 +41,13 @@ const { pool } = require('../../src/config/db');
 const { acquireLock } = require('../../src/utils/distributedLock');
 
 describe('API Module Group 4: Betting Operations & Slippage Guard Endpoints', () => {
-  const validStellarAddress = 'GBZXN7PIRZGNMHGA72YD2MKXT3MYMVGBLMHMT6A2R63FWIFKIIOHPSTA';
+  const validStellarAddress = 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF';
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (pool.connect as jest.Mock).mockResolvedValue(mockClient);
+    (pool.connect as jest.Mock).mockReset().mockResolvedValue(mockClient);
+    mockClient.query.mockReset();
+    (acquireLock as jest.Mock).mockReset().mockResolvedValue(null);
   });
 
   describe('POST /api/v2/bets/place', () => {
@@ -54,7 +56,7 @@ describe('API Module Group 4: Betting Operations & Slippage Guard Endpoints', ()
       bettor_address: validStellarAddress,
       side: 'fighter_a',
       amount: '10000000',
-      max_slippage_bps: 500,
+      max_slippage_bps: 5000,
     };
 
     it('places bet successfully on open market', async () => {
@@ -91,7 +93,7 @@ describe('API Module Group 4: Betting Operations & Slippage Guard Endpoints', ()
       (pool.connect as jest.Mock).mockImplementation(async () => {
         let releaseTransactionLock: (() => void) | undefined;
         const query = jest.fn(async (sql: string, values: unknown[] = []) => {
-          if (sql === 'BEGIN') return {};
+          if (sql === 'BEGIN ISOLATION LEVEL SERIALIZABLE') return {};
 
           if (sql.includes('SELECT * FROM markets')) {
             expect(sql).toMatch(/FOR UPDATE/i);
@@ -162,13 +164,40 @@ describe('API Module Group 4: Betting Operations & Slippage Guard Endpoints', ()
       expect(acquireLock).toHaveBeenCalledTimes(50);
     });
 
+    it('rolls back and retries serialization failures using a fresh transaction', async () => {
+      mockClient.query
+        .mockResolvedValueOnce({})
+        .mockRejectedValueOnce(Object.assign(new Error('serialization failure'), { code: '40001' }))
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce({ rows: [{ status: 'open', total_pool: '0', pool_a: '0' }] })
+        .mockResolvedValueOnce({ rows: [{ id: 42 }] })
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce({});
+      const res = await request(app).post('/api/v2/bets/place').send(validBetPayload);
+      expect(res.status).toBe(201);
+      expect(res.body.data.id).toBe(42);
+      expect(pool.connect).toHaveBeenCalledTimes(2);
+      expect(mockClient.query.mock.calls.map(call => call[0])).toEqual([
+        'BEGIN ISOLATION LEVEL SERIALIZABLE',
+        expect.stringContaining('FOR UPDATE'),
+        'ROLLBACK',
+        'BEGIN ISOLATION LEVEL SERIALIZABLE',
+        expect.stringContaining('FOR UPDATE'),
+        expect.stringContaining('INSERT INTO bets'),
+        expect.stringContaining('UPDATE markets'),
+        'COMMIT',
+      ]);
+      expect(mockClient.release).toHaveBeenCalledTimes(2);
+    });
+
     it('rejects invalid Stellar address with 422', async () => {
       const res = await request(app)
         .post('/api/v2/bets/place')
         .send({ ...validBetPayload, bettor_address: 'invalid_address' });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
 
     it('rejects bet when market is not found with 404', async () => {

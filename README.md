@@ -63,6 +63,17 @@ cd indexer && npm install && npm run dev
 cd frontend && npm install && npm run dev
 ```
 
+### Workspace Checks
+
+Install dependencies in `backend/`, `indexer/`, and `frontend/` as shown above, then run these commands from the repository root:
+
+```bash
+npm test             # Run backend, indexer, and frontend tests sequentially
+npm run lint         # Lint all three subprojects
+npm run build        # Build all three subprojects
+npm run type-check   # Type-check all three subprojects
+```
+
 ## Contract Deployment
 
 Requires [Rust](https://rustup.rs/) and the [Stellar CLI](https://developers.stellar.org/docs/tools/developer-tools/cli/stellar-cli).

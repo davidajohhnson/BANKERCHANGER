@@ -8,7 +8,7 @@ on:
     paths:
       - 'contracts/**'
   schedule:
-    - cron: '0 3 * * 1'  # weekly Monday 03:00 UTC
+    - cron: '0 3 * * *'  # nightly 03:00 UTC
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -46,10 +46,9 @@ jobs:
         working-directory: contracts
         run: cargo clippy --all-targets --all-features -- -D warnings
 
-      # Tests disabled - test structure refactoring in progress
-      # - name: Tests
-      #   working-directory: contracts
-      #   run: cargo test --all --all-features
+      - name: Tests
+        working-directory: contracts
+        run: cargo test --all --all-features
 
       - name: Build wasm
         working-directory: contracts
@@ -69,10 +68,39 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Determine if fuzzing should run
+        id: check-fuzz
+        run: |
+          RUN_FUZZ="false"
+          FUZZ_TIME="30"
+
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "Triggered by schedule: running full 60s fuzz"
+            RUN_FUZZ="true"
+            FUZZ_TIME="60"
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin ${{ github.base_ref }} --depth=1 || true
+            DIFF_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD 2>/dev/null || git diff --name-only HEAD~1 2>/dev/null || true)
+            if echo "$DIFF_FILES" | grep -q "contracts/shared/src/amm\.rs"; then
+              echo "Pull request modifies contracts/shared/src/amm.rs: running 30s fuzz"
+              RUN_FUZZ="true"
+              FUZZ_TIME="30"
+            else
+              echo "contracts/shared/src/amm.rs not modified: skipping fuzz"
+            fi
+          else
+            echo "Event ${{ github.event_name }} is neither schedule nor pull_request: skipping fuzz"
+          fi
+
+          echo "should_run=${RUN_FUZZ}" >> $GITHUB_OUTPUT
+          echo "fuzz_time=${FUZZ_TIME}" >> $GITHUB_OUTPUT
+
       - name: Install Rust nightly
+        if: steps.check-fuzz.outputs.should_run == 'true'
         uses: dtolnay/rust-toolchain@nightly
 
       - name: Cache cargo
+        if: steps.check-fuzz.outputs.should_run == 'true'
         uses: actions/cache@v4
         with:
           path: |
@@ -81,13 +109,26 @@ jobs:
             contracts/target
           key: ${{ runner.os }}-cargo-fuzz-${{ hashFiles('contracts/Cargo.lock') }}
 
-      - name: Install cargo-fuzz
-        run: cargo install cargo-fuzz --locked
+      - name: Cache cargo-fuzz binary
+        if: steps.check-fuzz.outputs.should_run == 'true'
+        uses: actions/cache@v4
+        id: cache-cargo-fuzz
+        with:
+          path: ~/.cargo/bin/cargo-fuzz
+          key: ${{ runner.os }}-cargo-fuzz-bin
 
-      - name: Fuzz AMM price functions (60 s)
-        working-directory: contracts/shared
-        run: cargo fuzz run amm_fuzz -- -max_total_time=60
+      - name: Install cargo-binstall and cargo-fuzz
+        if: steps.check-fuzz.outputs.should_run == 'true' && steps.cache-cargo-fuzz.outputs.cache-hit != 'true'
+        run: |
+          curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+          cargo binstall --no-confirm cargo-fuzz
 
-      - name: Fuzz payout calculations (60 s)
-        working-directory: contracts/shared
-        run: cargo fuzz run payout_fuzz -- -max_total_time=60
+      - name: Fuzz AMM price functions
+        if: steps.check-fuzz.outputs.should_run == 'true'
+        working-directory: contracts
+        run: cargo fuzz run --manifest-path shared/fuzz/Cargo.toml amm_fuzz -- -max_total_time=${{ steps.check-fuzz.outputs.fuzz_time }}
+
+      - name: Fuzz payout calculations
+        if: steps.check-fuzz.outputs.should_run == 'true'
+        working-directory: contracts
+        run: cargo fuzz run --manifest-path shared/fuzz/Cargo.toml payout_fuzz -- -max_total_time=${{ steps.check-fuzz.outputs.fuzz_time }}

@@ -1,4 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
+import { requestContext } from '../utils/requestContext';
+import { randomUUID } from 'crypto';
 import { logger } from '../utils/logger';
 
 const SENSITIVE_PATHS = [
@@ -53,5 +55,5 @@ export function requestLogging(req: Request, res: Response, next: NextFunction):
     return originalSend.call(this, data);
   };
 
-  next();
+  requestContext.run({ requestId: String(req.id ?? randomUUID()) }, next);
 }

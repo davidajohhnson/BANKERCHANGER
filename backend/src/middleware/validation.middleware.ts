@@ -64,64 +64,40 @@ export const DisputeSchema = z.object({
 // ─── Validation Middleware Factory ────────────────────────────────────────────
 
 export function validateBody(schema: ZodSchema) {
-  return (req: Request, _res: Response, next: NextFunction): void => {
-    try {
-      req.body = schema.parse(req.body);
-      next();
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const formattedErrors = error.issues.map((err) => ({
-          field: err.path.join("."),
-          message: err.message,
-          code: err.code,
-        }));
-        const msg = error.issues.length === 1 ? error.issues[0].message : `Validation failed: ${formattedErrors.map((e) => e.message).join("; ")}`;
-        return next(new AppError(400, msg));
-      }
-      next(error);
-    }
-  };
+  return validate(schema, 'body');
 }
 
 export function validateQuery(schema: ZodSchema) {
-  return (req: Request, _res: Response, next: NextFunction): void => {
-    try {
-      req.query = schema.parse(req.query) as any;
-      next();
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const formattedErrors = error.issues.map((err) => ({
-          field: err.path.join("."),
-          message: err.message,
-          code: err.code,
-        }));
-        return next(
-          new AppError(400, `Query validation failed: ${formattedErrors.map((e) => e.message).join("; ")}`),
-        );
-      }
-      next(error);
-    }
-  };
+  return validate(schema, 'query');
 }
 
 export function validateParams(schema: ZodSchema) {
-  return (req: Request, _res: Response, next: NextFunction): void => {
-    try {
-      req.params = schema.parse(req.params) as any;
-      next();
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const formattedErrors = error.issues.map((err) => ({
-          field: err.path.join("."),
-          message: err.message,
-          code: err.code,
+  return validate(schema, 'params');
+}
+
+type ValidationTarget = 'body' | 'query' | 'params';
+
+/** Canonical request validation middleware. Invalid input always has one API shape. */
+export function validate(schemaOrSchemas: ZodSchema | Partial<Record<ValidationTarget, ZodSchema>>, target: ValidationTarget = 'body') {
+  const schemas = typeof (schemaOrSchemas as ZodSchema).safeParse === 'function'
+    ? { [target]: schemaOrSchemas }
+    : schemaOrSchemas;
+  return (req: Request, res: Response, next: NextFunction): void => {
+    for (const [requestTarget, schema] of Object.entries(schemas) as [ValidationTarget, ZodSchema][]) {
+      const parsed = schema.safeParse(req[requestTarget]);
+      if (!parsed.success) {
+        const details = parsed.error.issues.map((issue) => ({
+          field: issue.path.join('.'), message: issue.message, code: issue.code,
         }));
-        return next(
-          new AppError(400, `Params validation failed: ${formattedErrors.map((e) => e.message).join("; ")}`),
-        );
+        res.status(422).json({
+          success: false,
+          error: { message: 'Request validation failed', code: 'VALIDATION_ERROR', details },
+        });
+        return;
       }
-      next(error);
+      (req as any)[requestTarget] = parsed.data;
     }
+    next();
   };
 }
 

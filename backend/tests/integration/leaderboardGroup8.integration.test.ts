@@ -29,7 +29,7 @@ describe('Leaderboard & Competitive Seasons (Endpoint Group 8) Integration Tests
         .query({ timeframe: 'decade_invalid' });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
 
     it('rejects invalid metric parameter in query', async () => {
@@ -38,7 +38,7 @@ describe('Leaderboard & Competitive Seasons (Endpoint Group 8) Integration Tests
         .query({ metric: 'invalid_metric_score' });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
   });
 
@@ -56,7 +56,7 @@ describe('Leaderboard & Competitive Seasons (Endpoint Group 8) Integration Tests
     it('rejects malformed Stellar address param', async () => {
       const res = await request(app).get('/api/v2/leaderboard/users/INVALID_ADDRESS/rank');
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
   });
 

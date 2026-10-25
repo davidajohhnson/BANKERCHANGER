@@ -1,4 +1,35 @@
 use crate::errors::ContractError;
+use ethnum::U256;
+
+/// Computes `(a * b) / c` with a 256-bit intermediate and truncation toward zero.
+/// The final quotient must fit in i128; zero divisors and unrepresentable results
+/// return `MathOverflow`.
+pub fn mul_div(a: i128, b: i128, c: i128) -> Result<i128, ContractError> {
+    if c == 0 {
+        return Err(ContractError::MathOverflow);
+    }
+    let negative = (a < 0) ^ (b < 0) ^ (c < 0);
+    let product = U256::new(a.unsigned_abs())
+        .checked_mul(U256::new(b.unsigned_abs()))
+        .ok_or(ContractError::MathOverflow)?;
+    let quotient = product
+        .checked_div(U256::new(c.unsigned_abs()))
+        .ok_or(ContractError::MathOverflow)?;
+    let limit = if negative { 1u128 << 127 } else { i128::MAX as u128 };
+    if quotient > U256::new(limit) {
+        return Err(ContractError::MathOverflow);
+    }
+    let magnitude = quotient.as_u128();
+    if negative {
+        if magnitude == (1u128 << 127) {
+            Ok(i128::MIN)
+        } else {
+            Ok(-(magnitude as i128))
+        }
+    } else {
+        Ok(magnitude as i128)
+    }
+}
 
 /// Returns |a - b| without overflow for any i128 pair.
 pub fn abs_diff(a: i128, b: i128) -> i128 {
@@ -28,7 +59,7 @@ pub fn clamp(val: i128, min_val: i128, max_val: i128) -> i128 {
 /// All multiplication uses `checked_mul` with explicit overflow handling.
 ///
 /// # Errors
-/// - Returns `ContractError::ArithmeticOverflow` on arithmetic overflow.
+/// - Returns `ContractError::MathOverflow` when the result cannot fit in i128.
 /// - Returns `ContractError::InvalidAmount` if inputs are negative.
 pub fn calculate_payout(
     bettor_stake: i128,
@@ -42,24 +73,26 @@ pub fn calculate_payout(
         return Ok(0);
     }
 
-    let product = bettor_stake
-        .checked_mul(net_pool)
-        .ok_or(ContractError::ArithmeticOverflow)?;
-
-    let payout = product
-        .checked_div(winning_pool)
-        .ok_or(ContractError::ArithmeticOverflow)?;
-
-    Ok(payout)
+    mul_div(bettor_stake, net_pool, winning_pool)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use proptest::prelude::*;
+    use soroban_sdk::Env;
 
     const MIN: i128 = i128::MIN;
     const MAX: i128 = i128::MAX;
+
+    #[test]
+    fn mul_div_uses_wide_intermediate_and_checks_result_bounds() {
+        let env = Env::default();
+        assert_eq!(mul_div(MAX, 2, 2), Ok(MAX));
+        assert_eq!(mul_div(i128::MIN, 1, 1), Ok(i128::MIN));
+        assert_eq!(mul_div(MAX, 2, 1), Err(ContractError::MathOverflow));
+        assert_eq!(mul_div(1, 1, 0), Err(ContractError::MathOverflow));
+    }
 
     #[test]
     fn abs_diff_normal() {
@@ -142,20 +175,20 @@ mod tests {
 
         // half_max * 3 overflows i128 before division reduces the value
         let res_overflow = calculate_payout(half_max, 3, 1);
-        assert_eq!(res_overflow.unwrap_err(), ContractError::ArithmeticOverflow);
+        assert_eq!(res_overflow.unwrap_err(), ContractError::MathOverflow);
 
         // half_max * half_max overflows i128
         let res_overflow_half = calculate_payout(half_max, half_max, 1);
         assert_eq!(
             res_overflow_half.unwrap_err(),
-            ContractError::ArithmeticOverflow
+            ContractError::MathOverflow
         );
 
         // i128::MAX * 2 overflows i128
         let res_overflow_max = calculate_payout(i128::MAX, 2, 1);
         assert_eq!(
             res_overflow_max.unwrap_err(),
-            ContractError::ArithmeticOverflow
+            ContractError::MathOverflow
         );
     }
 
@@ -167,7 +200,7 @@ mod tests {
             winning_pool in 1i128..=10_000_000i128,
         ) {
             let res = calculate_payout(stake, price, winning_pool);
-            prop_assert_eq!(res, Err(ContractError::ArithmeticOverflow));
+            prop_assert_eq!(res, Err(ContractError::MathOverflow));
         }
 
         #[test]

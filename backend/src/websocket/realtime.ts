@@ -420,8 +420,9 @@ export class ActivityFeed {
 
   /** Publish an activity event to all subscribers of the market. */
   publish(event: ActivityEvent): void {
-    const { marketId } = event as { marketId: string };
-    if (event.type !== 'market:resolved' && !this.rateLimiter.allow(marketId)) return;
+    if ('marketId' in event && typeof event.marketId === 'string' && event.marketId) {
+      const { marketId } = event;
+      if (event.type !== 'market:resolved' && !this.rateLimiter.allow(marketId)) return;
 
       const sockets = this.subscriptions.get(marketId);
       if (!sockets?.size) return;
@@ -436,7 +437,7 @@ export class ActivityFeed {
       return;
     }
 
-    if ('leaderboardId' in event && event.leaderboardId) {
+    if ('leaderboardId' in event && typeof event.leaderboardId === 'string' && event.leaderboardId) {
       const sockets = this.leaderboardSubscriptions.get(event.leaderboardId);
       if (sockets?.size) {
         const payload = JSON.stringify(event);

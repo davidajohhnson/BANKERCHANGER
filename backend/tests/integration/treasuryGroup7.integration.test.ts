@@ -115,7 +115,7 @@ describe('Treasury & Fee Management (Endpoint Group 7) Integration Tests', () =>
         .query({ type: 'invalid_type_123' });
 
       expect(res.status).toBe(422);
-      expect(res.body.errors).toBeDefined();
+      expect(res.body.error).toMatchObject({ code: 'VALIDATION_ERROR', details: expect.any(Array) });
     });
   });
 });

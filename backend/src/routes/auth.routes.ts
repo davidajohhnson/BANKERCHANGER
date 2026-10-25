@@ -3,7 +3,7 @@ import { createHash } from 'crypto';
 import { z } from 'zod';
 import * as authService from '../services/auth.service';
 import { AppError } from '../utils/AppError';
-import { validateBody } from '../api/middleware/validate';
+import { validateBody } from '../middleware/validation.middleware';
 import { rateLimit } from '../middleware/rate-limit.middleware';
 import { requireAuth } from '../middleware/auth.middleware';
 

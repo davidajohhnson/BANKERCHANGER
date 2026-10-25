@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { validate } from '../api/middleware/validate';
+import { validate } from '../middleware/validation.middleware';
 import { requireAuth } from '../middleware/auth.middleware';
-import { requireAdminJwt } from '../middleware/requireAdminJwt.middleware';
+import { requireAdmin } from '../middleware/admin.middleware';
 import { rateLimit } from '../middleware/rate-limit.middleware';
 import {
   listMarketsQuery,
@@ -190,7 +190,7 @@ router.get(
 router.post(
   '/escrow/hold',
   requireAuth,
-  requireAdminJwt,
+  requireAdmin,
   rateLimit({ windowMs: 60_000, max: 20, keyBy: 'userId' }),
   validate(escrowHoldBody, 'body'),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -256,7 +256,7 @@ router.post(
 router.post(
   '/markets/:marketId/close',
   requireAuth,
-  requireAdminJwt,
+  requireAdmin,
   validate(marketIdParam, 'params'),
   rateLimit({ windowMs: 60_000, max: 20, keyBy: 'userId' }),
   validate(closeMarketBody, 'body'),
@@ -321,7 +321,7 @@ router.post(
 router.post(
   '/markets/:marketId/settle',
   requireAuth,
-  requireAdminJwt,
+  requireAdmin,
   validate(marketIdParam, 'params'),
   rateLimit({ windowMs: 60_000, max: 20, keyBy: 'userId' }),
   validate(settleEscrowBody, 'body'),

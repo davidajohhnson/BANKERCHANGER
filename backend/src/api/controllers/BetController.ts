@@ -9,6 +9,9 @@ import { StrKey } from '@stellar/stellar-sdk';
 import * as BetService from '../../services/BetService';
 import * as MarketService from '../../services/MarketService';
 import { AppError } from '../../utils/AppError';
+import type { PoolClient } from 'pg';
+import { pool } from '../../config/db';
+import { acquireLock } from '../../utils/distributedLock';
 import { ERROR_CODES } from '../../constants/errorCodes';
 
 const claimBodySchema = z.object({
@@ -182,3 +185,129 @@ export async function claimRefund(
     next(err);
   }
 }
+
+export const placeBet = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  for (let attempt = 0; attempt < 50; attempt++) {
+    let client: PoolClient | undefined;
+    let marketLock: Awaited<ReturnType<typeof acquireLock>> = null;
+    try {
+      client = await pool.connect();
+      const {
+        market_id,
+        bettor_address,
+        side,
+        amount,
+        max_slippage_bps,
+        idempotency_key,
+      } = req.body;
+
+      // PostgreSQL's row lock below remains authoritative; Redis adds a
+      // cross-instance guard when available without rejecting contending bets.
+      marketLock = await acquireLock({
+        key: `bet:market:${market_id}`,
+        ttl: 60,
+      });
+
+      await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
+
+      const marketRes = await client.query(
+        'SELECT * FROM markets WHERE market_id = $1 FOR UPDATE',
+        [market_id],
+      );
+
+      if (marketRes.rows.length === 0) {
+        throw AppError.notFound(`Market with id '${market_id}' not found`);
+      }
+
+      const market = marketRes.rows[0];
+      if (market.status !== 'open') {
+        throw AppError.badRequest(
+          `Cannot bet on market with status '${market.status}'`,
+        );
+      }
+
+      const betAmountBig = BigInt(amount);
+      const totalPoolBig = BigInt(market.total_pool ?? '0');
+      const sidePoolCol =
+        side === 'fighter_a'
+          ? 'pool_a'
+          : side === 'fighter_b'
+            ? 'pool_b'
+            : 'pool_draw';
+      const currentSidePoolBig = BigInt(market[sidePoolCol] ?? '0');
+
+      // Calculate initial odds vs post-bet odds for slippage guard
+      if (totalPoolBig > 0n && currentSidePoolBig > 0n) {
+        const initialOddsBps = (totalPoolBig * 10000n) / currentSidePoolBig;
+        const newTotalPool = totalPoolBig + betAmountBig;
+        const newSidePool = currentSidePoolBig + betAmountBig;
+        const newOddsBps = (newTotalPool * 10000n) / newSidePool;
+
+        if (initialOddsBps > newOddsBps) {
+          const slippageBps = Number(
+            ((initialOddsBps - newOddsBps) * 10000n) / initialOddsBps,
+          );
+          if (
+            max_slippage_bps !== undefined &&
+            slippageBps > max_slippage_bps
+          ) {
+            throw AppError.badRequest(
+              `Slippage exceeded: expected max ${max_slippage_bps} bps, calculated ${slippageBps} bps`,
+            );
+          }
+        }
+      }
+
+      const txHash = idempotency_key
+        ? `tx_${idempotency_key}`
+        : `tx_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+      const betInsertRes = await client.query(
+        `INSERT INTO bets (
+          market_id, bettor_address, side, amount, amount_xlm,
+          tx_hash, ledger_sequence, placed_at, claimed
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), false)
+        RETURNING *`,
+        [
+          market_id,
+          bettor_address,
+          side,
+          amount,
+          Number(amount) / 10_000_000,
+          txHash,
+          1000,
+        ],
+      );
+
+      await client.query(
+        `UPDATE markets
+         SET ${sidePoolCol} = ${sidePoolCol} + $1,
+             total_pool = total_pool + $1,
+             updated_at = NOW()
+         WHERE market_id = $2`,
+        [amount, market_id],
+      );
+
+      await client.query('COMMIT');
+
+      res.status(201).json({
+        success: true,
+        message: 'Bet placed successfully',
+        data: betInsertRes.rows[0],
+      });
+    } catch (err) {
+      if (client) await client.query('ROLLBACK');
+      if ((err as { code?: string }).code === '40001' && attempt < 49) continue;
+      next(err);
+      return;
+    } finally {
+      client?.release();
+      await marketLock?.release();
+    }
+    return;
+  }
+};

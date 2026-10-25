@@ -1,5 +1,6 @@
 import { pool } from '../config/db';
 import { cacheDeletePattern } from '../services/cache.service';
+import { enqueueWebhookEvent } from '../services/webhookDelivery.service';
 
 export interface RawStellarEvent {
   contract_address: string;
@@ -169,6 +170,18 @@ export class StellarEventProcessor implements EventProcessor {
           SET status = 'resolved', outcome = $1, resolved_at = $2, oracle_used = $3, updated_at = NOW()
         WHERE market_id = $4`,
         [p.outcome, event.ledger_close_time, p.oracle_address ?? null, p.market_id]
+      );
+
+      await enqueueWebhookEvent(
+        client,
+        'market.resolved',
+        event.tx_hash || `${p.market_id}:${event.ledger_close_time}`,
+        {
+          id: event.tx_hash,
+          type: 'market.resolved',
+          created_at: event.ledger_close_time,
+          data: p,
+        },
       );
 
       await client.query(

@@ -1,6 +1,7 @@
 import {
   pgTable,
   serial,
+  bigserial,
   text,
   numeric,
   boolean,
@@ -10,7 +11,6 @@ import {
   date,
   uniqueIndex,
   index,
-  primaryKey,
 } from 'drizzle-orm/pg-core';
 
 export const markets = pgTable(
@@ -204,6 +204,15 @@ export const users = pgTable(
     email_idx: uniqueIndex('users_email_idx').on(table.email),
   }),
 );
+
+export const user_notification_settings = pgTable('user_notification_settings', {
+  user_id: text('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  email_enabled: boolean('email_enabled').notNull().default(true),
+  push_enabled: boolean('push_enabled').notNull().default(true),
+  settings: jsonb('settings').notNull().default({}),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
 
 export const user_sessions = pgTable(
   'user_sessions',
@@ -406,6 +415,59 @@ export const user_notifications = pgTable(
   (table) => ({
     address_idx: index('user_notifications_address_idx').on(table.address),
     read_idx: index('user_notifications_read_idx').on(table.read),
+  }),
+);
+
+export const webhook_subscriptions = pgTable(
+  'webhook_subscriptions',
+  {
+    id: text('id').primaryKey(),
+    user_id: text('user_id'),
+    url: text('url').notNull(),
+    secret: text('secret').notNull(),
+    topics: text('topics').array().notNull(),
+    description: text('description'),
+    status: text('status').notNull().default('active'),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    user_id_idx: index('webhook_subscriptions_user_id_idx').on(table.user_id),
+    status_idx: index('webhook_subscriptions_status_idx').on(table.status),
+  }),
+);
+
+export const webhook_deliveries = pgTable(
+  'webhook_deliveries',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    webhook_id: text('webhook_id').notNull(),
+    target_url: text('target_url').notNull(),
+    signing_secret: text('signing_secret').notNull(),
+    event_type: text('event_type').notNull(),
+    event_key: text('event_key').notNull(),
+    payload: jsonb('payload').notNull(),
+    status: text('status').notNull().default('pending'),
+    attempt_count: integer('attempt_count').notNull().default(0),
+    retry_count: integer('retry_count').notNull().default(0),
+    next_attempt_at: timestamp('next_attempt_at', { withTimezone: true }).notNull().defaultNow(),
+    locked_at: timestamp('locked_at', { withTimezone: true }),
+    last_error_response_code: integer('last_error_response_code'),
+    last_error: text('last_error'),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    delivered_at: timestamp('delivered_at', { withTimezone: true }),
+  },
+  (table) => ({
+    unique_event_idx: uniqueIndex('webhook_deliveries_unique_event_idx').on(
+      table.webhook_id,
+      table.event_type,
+      table.event_key,
+    ),
+    status_attempt_idx: index('webhook_deliveries_status_attempt_idx').on(
+      table.status,
+      table.next_attempt_at,
+    ),
+    webhook_id_idx: index('webhook_deliveries_webhook_id_idx').on(table.webhook_id),
   }),
 );
 

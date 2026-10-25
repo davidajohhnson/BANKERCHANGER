@@ -1,4 +1,4 @@
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { Keypair, xdr } from '@stellar/stellar-sdk';
 
 // ── Shared RPC mock state (defined before jest.mock so factory can close over them) ──
@@ -81,6 +81,11 @@ const TX_HASH  = 'abc123hash';
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 describe('invokeContract()', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     process.env.STELLAR_RPC_URL = 'https://soroban-testnet.stellar.org';
@@ -118,6 +123,66 @@ describe('invokeContract()', () => {
     rpc.sendTransaction.mockResolvedValue({ status: 'ERROR', hash: TX_HASH, errorResult: {} });
     await expect(invokeContract(CONTRACT, METHOD, ARGS, KEYPAIR))
       .rejects.toBeInstanceOf(StellarInvocationError);
+    expect(rpc.sendTransaction).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['504 Gateway Timeout', { response: { status: 504 } }],
+    ['429 Too Many Requests', { statusCode: 429 }],
+    ['socket hangup', Object.assign(new Error('socket hang up'), { code: 'ECONNRESET' })],
+    ['network timeout', Object.assign(new Error('request timed out'), { code: 'ETIMEDOUT' })],
+  ])('retries transient submit error: %s', async (_description, error) => {
+    jest.useFakeTimers();
+    jest.spyOn(Math, 'random').mockReturnValue(0);
+    const timeoutSpy = jest.spyOn(global, 'setTimeout');
+    rpc.sendTransaction
+      .mockRejectedValueOnce(error)
+      .mockResolvedValueOnce({ status: 'PENDING', hash: TX_HASH });
+
+    const invocation = invokeContract(CONTRACT, METHOD, ARGS, KEYPAIR);
+    await jest.advanceTimersByTimeAsync(500);
+    await expect(invocation).resolves.toBe(TX_HASH);
+
+    expect(rpc.sendTransaction).toHaveBeenCalledTimes(2);
+    expect(timeoutSpy.mock.calls[0][1]).toBe(500);
+  });
+
+  it('stops after three transient submit retries', async () => {
+    jest.useFakeTimers();
+    jest.spyOn(Math, 'random').mockReturnValue(0);
+    const timeoutSpy = jest.spyOn(global, 'setTimeout');
+    const error = { response: { status: 504 } };
+    rpc.sendTransaction.mockRejectedValue(error);
+
+    const invocation = invokeContract(CONTRACT, METHOD, ARGS, KEYPAIR);
+    const rejection = expect(invocation).rejects.toBe(error);
+    await jest.advanceTimersByTimeAsync(3500);
+    await rejection;
+
+    expect(rpc.sendTransaction).toHaveBeenCalledTimes(4);
+    expect(timeoutSpy.mock.calls.map(([, delay]) => delay)).toEqual([500, 1000, 2000]);
+  });
+
+  it('does not retry a bad transaction response', async () => {
+    rpc.sendTransaction.mockResolvedValue({
+      status: 'ERROR',
+      hash: TX_HASH,
+      errorResult: { resultCodes: { operations: ['op_underfunded'] } },
+    });
+
+    await expect(invokeContract(CONTRACT, METHOD, ARGS, KEYPAIR))
+      .rejects.toBeInstanceOf(StellarInvocationError);
+    expect(rpc.sendTransaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry an HTTP 400 transaction error', async () => {
+    const error = Object.assign(new Error('Transaction submission failed'), {
+      response: { status: 400, data: { extras: { result_codes: { operations: ['op_underfunded'] } } } },
+    });
+    rpc.sendTransaction.mockRejectedValue(error);
+
+    await expect(invokeContract(CONTRACT, METHOD, ARGS, KEYPAIR)).rejects.toBe(error);
+    expect(rpc.sendTransaction).toHaveBeenCalledTimes(1);
   });
 
   // ── AC2: FAILED on-chain throws StellarInvocationError ─────────────────

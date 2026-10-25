@@ -14,7 +14,7 @@ const mockClient = {
 
 jest.mock('../../src/config/db', () => ({
   pool: {
-    connect: jest.fn().mockResolvedValue(mockClient),
+    connect: jest.fn(),
     query: jest.fn(),
   },
 }));
@@ -32,15 +32,17 @@ jest.mock('../../src/utils/distributedLock', () => ({
   }),
 }));
 
-const VALID_ADDRESS = 'GBZXN7PIRZGNMHGA72YD2MKXT3MYMVGBLMHMT6A2R63FWIFKIIOHPSTA';
+const VALID_ADDRESS = 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF';
 const MARKET_ID = 'mkt_concurrent';
 
 describe('BetService race condition fix (issue #26)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    require('../../src/config/db').pool.connect.mockResolvedValue(mockClient);
+    require('../../src/utils/distributedLock').acquireLock.mockResolvedValue({ release: jest.fn().mockResolvedValue(undefined) });
     let callCount = 0;
     mockClient.query.mockImplementation(async (sql: string) => {
-      if (sql === 'BEGIN' || sql === 'COMMIT') return {};
+      if (sql === 'BEGIN ISOLATION LEVEL SERIALIZABLE' || sql === 'COMMIT') return {};
       if (typeof sql === 'string' && sql.toUpperCase().includes('FOR UPDATE')) {
         return { rows: [{ market_id: MARKET_ID }] };
       }
@@ -93,7 +95,7 @@ describe('BetService race condition fix (issue #26)', () => {
 
   it('throws 409 when the distributed lock cannot be acquired', async () => {
     const { acquireLock } = require('../../src/utils/distributedLock');
-    (acquireLock as jest.Mock).mockResolvedValueOnce(null);
+    (acquireLock as jest.Mock).mockResolvedValue(null);
 
     await expect(
       recordBet(MARKET_ID, VALID_ADDRESS, 'fighter_a', '1000000', 'tx_nolock', 888),

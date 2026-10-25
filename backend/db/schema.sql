@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS markets (
   title_fight      BOOLEAN     NOT NULL DEFAULT FALSE,
   venue            TEXT        NOT NULL DEFAULT '',
   scheduled_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  lock_before_secs INTEGER     NOT NULL DEFAULT 3600,
   status           TEXT        NOT NULL DEFAULT 'open',
   outcome          TEXT,
   pool_a           NUMERIC     NOT NULL DEFAULT 0,
@@ -178,3 +179,42 @@ CREATE TABLE IF NOT EXISTS user_notifications (
   read        BOOLEAN     NOT NULL DEFAULT FALSE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS webhook_subscriptions (
+  id          TEXT        PRIMARY KEY,
+  user_id     TEXT,
+  url         TEXT        NOT NULL,
+  secret      TEXT        NOT NULL,
+  topics      TEXT[]      NOT NULL,
+  description TEXT,
+  status      TEXT        NOT NULL DEFAULT 'active',
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS webhook_subscriptions_user_id_idx ON webhook_subscriptions (user_id);
+CREATE INDEX IF NOT EXISTS webhook_subscriptions_status_idx ON webhook_subscriptions (status);
+
+CREATE TABLE IF NOT EXISTS webhook_deliveries (
+  id                         BIGSERIAL   PRIMARY KEY,
+  webhook_id                 TEXT        NOT NULL,
+  target_url                 TEXT        NOT NULL,
+  signing_secret             TEXT        NOT NULL,
+  event_type                 TEXT        NOT NULL,
+  event_key                  TEXT        NOT NULL,
+  payload                    JSONB       NOT NULL,
+  status                     TEXT        NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'retrying', 'success', 'failed')),
+  attempt_count              INTEGER     NOT NULL DEFAULT 0,
+  retry_count                INTEGER     NOT NULL DEFAULT 0,
+  next_attempt_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  locked_at                  TIMESTAMPTZ,
+  last_error_response_code   INTEGER,
+  last_error                 TEXT,
+  created_at                 TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at                 TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  delivered_at               TIMESTAMPTZ,
+  CONSTRAINT webhook_deliveries_unique_event UNIQUE (webhook_id, event_type, event_key)
+);
+CREATE INDEX IF NOT EXISTS webhook_deliveries_status_attempt_idx
+  ON webhook_deliveries (status, next_attempt_at);
+CREATE INDEX IF NOT EXISTS webhook_deliveries_webhook_id_idx
+  ON webhook_deliveries (webhook_id);

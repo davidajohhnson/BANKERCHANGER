@@ -32,7 +32,7 @@ components:
         success: { type: boolean, example: false }
         message: { type: string, description: "Bad request. Invalid query parameters, request body, or format." }
         code: { type: string, example: "INVALID_REQUEST" }
-      required: [success, message]
+      required: [ success, message ]
 
     ErrorResponse401:
       type: object
@@ -40,7 +40,7 @@ components:
         success: { type: boolean, example: false }
         message: { type: string, description: "Missing, invalid, or expired authentication credentials." }
         code: { type: string, example: "UNAUTHORIZED" }
-      required: [success, message]
+      required: [ success, message ]
 
     ErrorResponse403:
       type: object
@@ -48,7 +48,7 @@ components:
         success: { type: boolean, example: false }
         message: { type: string, description: "Authenticated but insufficient permissions for this resource." }
         code: { type: string, example: "FORBIDDEN" }
-      required: [success, message]
+      required: [ success, message ]
 
     ErrorResponse429:
       type: object
@@ -57,7 +57,7 @@ components:
         message: { type: string, description: "Rate limit exceeded. Check Retry-After header for reset time." }
         code: { type: string, example: "RATE_LIMIT_EXCEEDED" }
         retryAfter: { type: integer, description: "Seconds until the rate limit window resets." }
-      required: [success, message]
+      required: [ success, message ]
 
     ErrorResponse500:
       type: object
@@ -66,120 +66,120 @@ components:
         message: { type: string, description: "Internal server error. Please try again later." }
         code: { type: string, example: "INTERNAL_SERVER_ERROR" }
         requestId: { type: string, description: "Unique identifier for this error instance for debugging." }
-      required: [success, message]
+      required: [ success, message ]
 
     UserDTO:
       type: object
       properties:
-        id:               { type: string }
-        email:            { type: string, format: email }
-        emailVerified:    { type: boolean }
+        id: { type: string }
+        email: { type: string, format: email }
+        emailVerified: { type: boolean }
         twoFactorEnabled: { type: boolean }
-        createdAt:        { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
 
     Market:
       type: object
       properties:
-        id:               { type: integer }
-        market_id:        { type: string }
+        id: { type: integer }
+        market_id: { type: string }
         contract_address: { type: string }
-        match_id:         { type: string }
-        fighter_a:        { type: string }
-        fighter_b:        { type: string }
-        weight_class:     { type: string }
-        title_fight:      { type: boolean }
-        venue:            { type: string }
-        scheduled_at:     { type: string, format: date-time }
+        match_id: { type: string }
+        fighter_a: { type: string }
+        fighter_b: { type: string }
+        weight_class: { type: string }
+        title_fight: { type: boolean }
+        venue: { type: string }
+        scheduled_at: { type: string, format: date-time }
         status:
           type: string
-          enum: [open, locked, resolved, cancelled, disputed]
+          enum: [ open, locked, resolved, cancelled, disputed ]
         outcome:
           type: string
           nullable: true
-          enum: [fighter_a, fighter_b, draw, no_contest]
-        pool_a:           { type: string }
-        pool_b:           { type: string }
-        pool_draw:        { type: string }
-        total_pool:       { type: string }
-        fee_bps:          { type: integer }
-        resolved_at:      { type: string, format: date-time, nullable: true }
-        oracle_used:      { type: string, nullable: true, enum: [primary, fallback, admin] }
-        created_at:       { type: string, format: date-time }
-        updated_at:       { type: string, format: date-time }
-        ledger_sequence:  { type: integer }
+          enum: [ fighter_a, fighter_b, draw, no_contest ]
+        pool_a: { type: string }
+        pool_b: { type: string }
+        pool_draw: { type: string }
+        total_pool: { type: string }
+        fee_bps: { type: integer }
+        resolved_at: { type: string, format: date-time, nullable: true }
+        oracle_used: { type: string, nullable: true, enum: [ primary, fallback, admin ] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        ledger_sequence: { type: integer }
 
     MarketOdds:
       type: object
       properties:
-        market_id:   { type: string }
-        odds_a:      { type: number }
-        odds_b:      { type: number }
-        odds_draw:   { type: number }
-        pool_a:      { type: string }
-        pool_b:      { type: string }
-        pool_draw:   { type: string }
-        total_pool:  { type: string }
+        market_id: { type: string }
+        odds_a: { type: number }
+        odds_b: { type: number }
+        odds_draw: { type: number }
+        pool_a: { type: string }
+        pool_b: { type: string }
+        pool_draw: { type: string }
+        total_pool: { type: string }
 
     MarketStats:
       type: object
       properties:
-        market_id:        { type: string }
-        total_bets:       { type: integer }
-        unique_bettors:   { type: integer }
-        largest_bet_xlm:  { type: number }
-        average_bet_xlm:  { type: number }
+        market_id: { type: string }
+        total_bets: { type: integer }
+        unique_bettors: { type: integer }
+        largest_bet_xlm: { type: number }
+        average_bet_xlm: { type: number }
         total_pooled_xlm: { type: number }
 
     SimulatePayout:
       type: object
       properties:
-        market_id:       { type: string }
-        amount:          { type: number }
-        outcome:         { type: integer, enum: [0, 1] }
+        market_id: { type: string }
+        amount: { type: number }
+        outcome: { type: integer, enum: [ 0, 1 ] }
         estimated_payout: { type: number }
-        fee_xlm:         { type: number }
-        odds:            { type: number }
+        fee_xlm: { type: number }
+        odds: { type: number }
 
     PlatformStats:
       type: object
       properties:
-        totalMarkets:  { type: integer }
+        totalMarkets: { type: integer }
         activeMarkets: { type: integer }
-        totalVolume:   { type: number }
-        totalBets:     { type: integer }
+        totalVolume: { type: number }
+        totalBets: { type: integer }
 
     Bet:
       type: object
       properties:
-        id:              { type: integer }
-        market_id:       { type: string }
-        bettor_address:  { type: string }
+        id: { type: integer }
+        market_id: { type: string }
+        bettor_address: { type: string }
         side:
           type: string
-          enum: [fighter_a, fighter_b, draw]
-        amount:          { type: string }
-        amount_xlm:      { type: number }
-        placed_at:       { type: string, format: date-time }
-        claimed:         { type: boolean }
-        claimed_at:      { type: string, format: date-time, nullable: true }
-        payout:          { type: string, nullable: true }
-        tx_hash:         { type: string }
+          enum: [ fighter_a, fighter_b, draw ]
+        amount: { type: string }
+        amount_xlm: { type: number }
+        placed_at: { type: string, format: date-time }
+        claimed: { type: boolean }
+        claimed_at: { type: string, format: date-time, nullable: true }
+        payout: { type: string, nullable: true }
+        tx_hash: { type: string }
         ledger_sequence: { type: integer }
 
     BettorStats:
       type: object
       properties:
-        address:          { type: string }
-        total_bets:       { type: integer }
+        address: { type: string }
+        total_bets: { type: integer }
         total_staked_xlm: { type: number }
-        total_won_xlm:    { type: number }
-        total_lost_xlm:   { type: number }
-        win_rate:         { type: number }
+        total_won_xlm: { type: number }
+        total_lost_xlm: { type: number }
+        win_rate: { type: number }
 
     Portfolio:
       type: object
       properties:
-        address:          { type: string }
+        address: { type: string }
         active_bets:
           type: array
           items: { $ref: '#/components/schemas/Bet' }
@@ -190,63 +190,63 @@ components:
           type: array
           items: { $ref: '#/components/schemas/Bet' }
         total_staked_xlm: { type: number }
-        total_won_xlm:    { type: number }
-        total_lost_xlm:   { type: number }
+        total_won_xlm: { type: number }
+        total_lost_xlm: { type: number }
 
     OracleReport:
       type: object
       properties:
-        id:             { type: integer }
-        match_id:       { type: string }
+        id: { type: integer }
+        match_id: { type: string }
         oracle_address: { type: string }
-        outcome:        { type: string }
-        reported_at:    { type: string, format: date-time }
-        signature:      { type: string }
-        accepted:       { type: boolean }
-        tx_hash:        { type: string, nullable: true }
-        created_at:     { type: string, format: date-time }
+        outcome: { type: string }
+        reported_at: { type: string, format: date-time }
+        signature: { type: string }
+        accepted: { type: boolean }
+        tx_hash: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
 
     Dispute:
       type: object
       properties:
-        id:           { type: string, format: uuid }
-        market_id:    { type: string }
-        reason:       { type: string }
+        id: { type: string, format: uuid }
+        market_id: { type: string }
+        reason: { type: string }
         status:
           type: string
-          enum: [open, reviewing, resolved, dismissed]
-        admin_notes:  { type: string, nullable: true }
+          enum: [ open, reviewing, resolved, dismissed ]
+        admin_notes: { type: string, nullable: true }
         final_outcome: { type: string, nullable: true }
-        raised_at:    { type: string, format: date-time }
-        reviewed_at:  { type: string, format: date-time, nullable: true }
-        resolved_at:  { type: string, format: date-time, nullable: true }
+        raised_at: { type: string, format: date-time }
+        reviewed_at: { type: string, format: date-time, nullable: true }
+        resolved_at: { type: string, format: date-time, nullable: true }
 
     Pagination:
       type: object
       properties:
-        page:       { type: integer }
-        limit:      { type: integer }
-        total:      { type: integer }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
         totalPages: { type: integer }
-        hasNext:    { type: boolean }
-        hasPrev:    { type: boolean }
+        hasNext: { type: boolean }
+        hasPrev: { type: boolean }
 
     GovernanceProposal:
       type: object
       properties:
-        id:           { type: string }
-        type:         { type: string }
-        value:        { type: string }
-        description:  { type: string }
+        id: { type: string }
+        type: { type: string }
+        value: { type: string }
+        description: { type: string }
         status:
           type: string
-          enum: [Active, Passed, Failed, Executed]
-        proposer:     { type: string }
-        votesFor:     { type: number }
+          enum: [ Active, Passed, Failed, Executed ]
+        proposer: { type: string }
+        votesFor: { type: number }
         votesAgainst: { type: number }
         votesAbstain: { type: number }
-        createdAt:    { type: string, format: date-time }
-        expiresAt:    { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
 
   x-rateLimit-defaults:
     description: |
@@ -287,7 +287,7 @@ paths:
     get:
       summary: Health check for the API, database, and Redis
       operationId: healthCheck
-      tags: [System]
+      tags: [ System ]
       responses:
         '200':
           description: All dependencies reachable
@@ -297,8 +297,8 @@ paths:
                 type: object
                 properties:
                   status: { type: string, example: ok }
-                  db:     { type: string, example: connected }
-                  redis:  { type: string, example: connected }
+                  db: { type: string, example: connected }
+                  redis: { type: string, example: connected }
                   version: { type: string }
         '503':
           description: One or more dependencies unreachable
@@ -313,7 +313,7 @@ paths:
     get:
       summary: Prometheus metrics endpoint
       operationId: prometheusMetrics
-      tags: [System]
+      tags: [ System ]
       responses:
         '200':
           description: Metrics in Prometheus text exposition format
@@ -328,7 +328,7 @@ paths:
     post:
       summary: Register a new user
       operationId: register
-      tags: [Auth]
+      tags: [ Auth ]
       x-rateLimit-windowMs: 60000
       x-rateLimit-max: 10
       x-rateLimit-keyBy: ip
@@ -338,9 +338,9 @@ paths:
           application/json:
             schema:
               type: object
-              required: [email, password]
+              required: [ email, password ]
               properties:
-                email:    { type: string, format: email }
+                email: { type: string, format: email }
                 password: { type: string, minLength: 8 }
       responses:
         '201':
@@ -350,8 +350,8 @@ paths:
               schema:
                 type: object
                 properties:
-                  userId:   { type: string }
-                  message:  { type: string }
+                  userId: { type: string }
+                  message: { type: string }
         '400':
           description: Invalid email format or password too short
           content:
@@ -377,16 +377,16 @@ paths:
     post:
       summary: Login with email and password
       operationId: login
-      tags: [Auth]
+      tags: [ Auth ]
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [email, password]
+              required: [ email, password ]
               properties:
-                email:    { type: string, format: email }
+                email: { type: string, format: email }
                 password: { type: string }
       responses:
         '200':
@@ -396,10 +396,10 @@ paths:
               schema:
                 type: object
                 properties:
-                  accessToken:  { type: string }
+                  accessToken: { type: string }
                   refreshToken: { type: string }
-                  tempToken:    { type: string, description: Present only when 2FA is required }
-                  requires2FA:  { type: boolean }
+                  tempToken: { type: string, description: Present only when 2FA is required }
+                  requires2FA: { type: boolean }
         '400':
           description: Missing or invalid credentials
           content:
@@ -425,14 +425,14 @@ paths:
     post:
       summary: Exchange a refresh token for a new access token
       operationId: refresh
-      tags: [Auth]
+      tags: [ Auth ]
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [refreshToken]
+              required: [ refreshToken ]
               properties:
                 refreshToken: { type: string }
       responses:
@@ -443,7 +443,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  accessToken:  { type: string }
+                  accessToken: { type: string }
                   refreshToken: { type: string }
         '400':
           description: Missing or invalid request body
@@ -470,14 +470,14 @@ paths:
     post:
       summary: Revoke a refresh token server-side
       operationId: logout
-      tags: [Auth]
+      tags: [ Auth ]
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [refreshToken]
+              required: [ refreshToken ]
               properties:
                 refreshToken: { type: string }
       responses:
@@ -509,14 +509,14 @@ paths:
     post:
       summary: Request a password-reset email
       operationId: forgotPassword
-      tags: [Auth]
+      tags: [ Auth ]
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [email]
+              required: [ email ]
               properties:
                 email: { type: string, format: email }
       responses:
@@ -548,16 +548,16 @@ paths:
     post:
       summary: Reset password using a reset token
       operationId: resetPassword
-      tags: [Auth]
+      tags: [ Auth ]
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [token, newPassword]
+              required: [ token, newPassword ]
               properties:
-                token:       { type: string }
+                token: { type: string }
                 newPassword: { type: string, minLength: 8 }
       responses:
         '200':
@@ -588,7 +588,7 @@ paths:
     post:
       summary: Generate TOTP secret and QR code
       operationId: setup2FA
-      tags: [Auth]
+      tags: [ Auth ]
       security:
         - bearerAuth: []
       responses:
@@ -599,8 +599,8 @@ paths:
               schema:
                 type: object
                 properties:
-                  secret:   { type: string }
-                  qrCode:   { type: string, description: Base64 PNG data URI }
+                  secret: { type: string }
+                  qrCode: { type: string, description: Base64 PNG data URI }
         '401':
           description: Unauthorized
           content:
@@ -621,7 +621,7 @@ paths:
     post:
       summary: Enable 2FA after verifying TOTP code
       operationId: enable2FA
-      tags: [Auth]
+      tags: [ Auth ]
       security:
         - bearerAuth: []
       requestBody:
@@ -630,7 +630,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [otp]
+              required: [ otp ]
               properties:
                 otp: { type: string, minLength: 6, maxLength: 6 }
       responses:
@@ -661,7 +661,7 @@ paths:
     post:
       summary: Disable 2FA
       operationId: disable2FA
-      tags: [Auth]
+      tags: [ Auth ]
       security:
         - bearerAuth: []
       requestBody:
@@ -670,7 +670,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [otp]
+              required: [ otp ]
               properties:
                 otp: { type: string, minLength: 6, maxLength: 6 }
       responses:
@@ -701,17 +701,17 @@ paths:
     post:
       summary: Complete login by verifying 2FA OTP
       operationId: verify2FA
-      tags: [Auth]
+      tags: [ Auth ]
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [tempToken, otp]
+              required: [ tempToken, otp ]
               properties:
                 tempToken: { type: string }
-                otp:       { type: string, minLength: 6, maxLength: 6 }
+                otp: { type: string, minLength: 6, maxLength: 6 }
       responses:
         '200':
           description: Access and refresh tokens issued
@@ -720,7 +720,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  accessToken:  { type: string }
+                  accessToken: { type: string }
                   refreshToken: { type: string }
         '400':
           description: Invalid request format
@@ -750,7 +750,7 @@ paths:
     get:
       summary: Get authenticated user's profile
       operationId: getMyProfile
-      tags: [Users]
+      tags: [ Users ]
       security:
         - bearerAuth: []
       responses:
@@ -762,7 +762,7 @@ paths:
                 type: object
                 properties:
                   success: { type: boolean }
-                  data:    { $ref: '#/components/schemas/UserDTO' }
+                  data: { $ref: '#/components/schemas/UserDTO' }
         '401':
           description: Unauthorized
           content:
@@ -781,7 +781,7 @@ paths:
     patch:
       summary: Update authenticated user's profile
       operationId: updateMyProfile
-      tags: [Users]
+      tags: [ Users ]
       security:
         - bearerAuth: []
       requestBody:
@@ -806,7 +806,7 @@ paths:
                 type: object
                 properties:
                   success: { type: boolean }
-                  data:    { $ref: '#/components/schemas/UserDTO' }
+                  data: { $ref: '#/components/schemas/UserDTO' }
         '400':
           description: Invalid profile data
           content:
@@ -837,7 +837,7 @@ paths:
     get:
       summary: Export user transaction and betting history as CSV or JSON audit report
       operationId: exportUserHistory
-      tags: [Users]
+      tags: [ Users ]
       parameters:
         - name: address
           in: path
@@ -850,7 +850,7 @@ paths:
           description: Export format (csv or json)
           schema:
             type: string
-            enum: [csv, json]
+            enum: [ csv, json ]
             default: csv
         - name: startDate
           in: query
@@ -882,7 +882,7 @@ paths:
                     transactionHash: { type: string }
                     marketId: { type: string }
                     marketTitle: { type: string }
-                    actionType: { type: string, enum: [BET, CLAIM, REFUND] }
+                    actionType: { type: string, enum: [ BET, CLAIM, REFUND ] }
                     outcomePicked: { type: string }
                     amountXlm: { type: number }
                     payoutXlm: { type: number }
@@ -907,7 +907,7 @@ paths:
     get:
       summary: Get public user profile
       operationId: getProfile
-      tags: [Users]
+      tags: [ Users ]
       parameters:
         - name: id
           in: path
@@ -922,7 +922,7 @@ paths:
                 type: object
                 properties:
                   success: { type: boolean }
-                  data:    { $ref: '#/components/schemas/UserDTO' }
+                  data: { $ref: '#/components/schemas/UserDTO' }
         '400':
           description: Invalid user ID format
           content:
@@ -948,7 +948,7 @@ paths:
     get:
       summary: List all users (admin only)
       operationId: listUsers
-      tags: [Users]
+      tags: [ Users ]
       security:
         - bearerAuth: []
       parameters:
@@ -962,12 +962,12 @@ paths:
           in: query
           schema:
             type: string
-            enum: [BEGINNER, ADVANCED, EXPERT, LEGENDARY]
+            enum: [ BEGINNER, ADVANCED, EXPERT, LEGENDARY ]
         - name: status
           in: query
           schema:
             type: string
-            enum: [active, suspended]
+            enum: [ active, suspended ]
         - name: search
           in: query
           schema: { type: string }
@@ -987,7 +987,7 @@ paths:
                         type: array
                         items: { $ref: '#/components/schemas/UserDTO' }
                       total: { type: integer }
-                      page:  { type: integer }
+                      page: { type: integer }
                       limit: { type: integer }
         '400':
           description: Invalid query parameters
@@ -1019,7 +1019,7 @@ paths:
     patch:
       summary: Suspend a user account (admin only)
       operationId: suspendUser
-      tags: [Users]
+      tags: [ Users ]
       security:
         - bearerAuth: []
       parameters:
@@ -1060,7 +1060,7 @@ paths:
     patch:
       summary: Update user role (admin only)
       operationId: updateUserRole
-      tags: [Users]
+      tags: [ Users ]
       security:
         - bearerAuth: []
       parameters:
@@ -1074,11 +1074,11 @@ paths:
           application/json:
             schema:
               type: object
-              required: [role]
+              required: [ role ]
               properties:
                 role:
                   type: string
-                  enum: [BEGINNER, ADVANCED, EXPERT, LEGENDARY]
+                  enum: [ BEGINNER, ADVANCED, EXPERT, LEGENDARY ]
       responses:
         '200':
           description: Role updated
@@ -1091,7 +1091,7 @@ paths:
                   data:
                     type: object
                     properties:
-                      id:   { type: string }
+                      id: { type: string }
                       tier: { type: string }
         '400':
           description: Invalid role
@@ -1131,7 +1131,7 @@ paths:
     get:
       summary: Get platform statistics
       operationId: getPlatformStats
-      tags: [Platform]
+      tags: [ Platform ]
       responses:
         '200':
           description: Platform statistics
@@ -1156,7 +1156,7 @@ paths:
     get:
       summary: List markets
       operationId: listMarkets
-      tags: [Markets]
+      tags: [ Markets ]
       x-rateLimit-windowMs: 60000
       x-rateLimit-max: 60
       x-rateLimit-keyBy: ip
@@ -1165,7 +1165,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [open, locked, resolved, cancelled, disputed]
+            enum: [ open, locked, resolved, cancelled, disputed ]
         - name: weight_class
           in: query
           schema: { type: string }
@@ -1187,7 +1187,7 @@ paths:
                     type: array
                     items: { $ref: '#/components/schemas/Market' }
                   total: { type: integer }
-                  page:  { type: integer }
+                  page: { type: integer }
                   limit: { type: integer }
         '400':
           description: Invalid query parameters
@@ -1209,7 +1209,7 @@ paths:
     get:
       summary: Get market by ID
       operationId: getMarket
-      tags: [Markets]
+      tags: [ Markets ]
       parameters:
         - name: market_id
           in: path
@@ -1246,7 +1246,7 @@ paths:
     get:
       summary: Get bets for a market
       operationId: getMarketBets
-      tags: [Markets]
+      tags: [ Markets ]
       parameters:
         - name: market_id
           in: path
@@ -1273,7 +1273,7 @@ paths:
                     type: array
                     items: { $ref: '#/components/schemas/Bet' }
                   total: { type: integer }
-                  page:  { type: integer }
+                  page: { type: integer }
                   limit: { type: integer }
         '400':
           description: Invalid parameters
@@ -1300,7 +1300,7 @@ paths:
     get:
       summary: Get current odds for a market
       operationId: getMarketOdds
-      tags: [Markets]
+      tags: [ Markets ]
       parameters:
         - name: market_id
           in: path
@@ -1337,7 +1337,7 @@ paths:
     get:
       summary: Server-Sent Events stream of live odds for a market
       operationId: streamMarketOdds
-      tags: [Markets]
+      tags: [ Markets ]
       parameters:
         - name: market_id
           in: path
@@ -1377,7 +1377,7 @@ paths:
     get:
       summary: Get aggregate stats for a market
       operationId: getMarketStats
-      tags: [Markets]
+      tags: [ Markets ]
       parameters:
         - name: market_id
           in: path
@@ -1414,7 +1414,7 @@ paths:
     get:
       summary: Simulate payout for a given bet amount and outcome
       operationId: simulatePayout
-      tags: [Markets]
+      tags: [ Markets ]
       parameters:
         - name: market_id
           in: path
@@ -1427,7 +1427,7 @@ paths:
         - name: outcome
           in: query
           required: true
-          schema: { type: integer, enum: [0, 1] }
+          schema: { type: integer, enum: [ 0, 1 ] }
       responses:
         '200':
           description: Simulated payout
@@ -1459,7 +1459,7 @@ paths:
     post:
       summary: Resolve a market (admin only)
       operationId: resolveMarket
-      tags: [Markets]
+      tags: [ Markets ]
       security:
         - bearerAuth: []
       parameters:
@@ -1473,9 +1473,9 @@ paths:
           application/json:
             schema:
               type: object
-              required: [winningOutcome]
+              required: [ winningOutcome ]
               properties:
-                winningOutcome: { type: integer, enum: [0, 1] }
+                winningOutcome: { type: integer, enum: [ 0, 1 ] }
       responses:
         '200':
           description: Market resolved
@@ -1523,7 +1523,7 @@ paths:
     get:
       summary: Get all bets by a Stellar address
       operationId: getBetsByAddress
-      tags: [Bets]
+      tags: [ Bets ]
       parameters:
         - name: bettor_address
           in: path
@@ -1547,7 +1547,7 @@ paths:
                     type: array
                     items: { $ref: '#/components/schemas/Bet' }
                   total: { type: integer }
-                  page:  { type: integer }
+                  page: { type: integer }
                   limit: { type: integer }
         '400':
           description: Invalid Stellar address
@@ -1569,7 +1569,7 @@ paths:
     get:
       summary: Get betting statistics for an address
       operationId: getBettorStats
-      tags: [Bets]
+      tags: [ Bets ]
       parameters:
         - name: bettor_address
           in: path
@@ -1601,7 +1601,7 @@ paths:
     get:
       summary: Get portfolio summary for a Stellar address
       operationId: getPortfolio
-      tags: [Bets]
+      tags: [ Bets ]
       parameters:
         - name: address
           in: path
@@ -1636,7 +1636,7 @@ paths:
     get:
       summary: List all governance proposals (paginated)
       operationId: listProposals
-      tags: [Governance]
+      tags: [ Governance ]
       parameters:
         - name: page
           in: query
@@ -1648,7 +1648,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [active, passed, failed, executed]
+            enum: [ active, passed, failed, executed ]
       responses:
         '200':
           description: Paginated list of proposals
@@ -1682,7 +1682,7 @@ paths:
     get:
       summary: Get a single governance proposal by ID
       operationId: getProposal
-      tags: [Governance]
+      tags: [ Governance ]
       parameters:
         - name: proposal_id
           in: path
@@ -1697,7 +1697,7 @@ paths:
                 type: object
                 properties:
                   success: { type: boolean }
-                  data:    { $ref: '#/components/schemas/GovernanceProposal' }
+                  data: { $ref: '#/components/schemas/GovernanceProposal' }
         '404':
           description: Proposal not found
           content:
@@ -1718,16 +1718,16 @@ paths:
     post:
       summary: Claim winnings for a resolved market
       operationId: claimWinnings
-      tags: [Bets]
+      tags: [ Bets ]
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [marketId, bettorAddress]
+              required: [ marketId, bettorAddress ]
               properties:
-                marketId:      { type: string }
+                marketId: { type: string }
                 bettorAddress: { type: string }
       responses:
         '200':
@@ -1758,16 +1758,16 @@ paths:
     post:
       summary: Claim a refund for a cancelled market
       operationId: claimRefund
-      tags: [Bets]
+      tags: [ Bets ]
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [marketId, bettorAddress]
+              required: [ marketId, bettorAddress ]
               properties:
-                marketId:      { type: string }
+                marketId: { type: string }
                 bettorAddress: { type: string }
       responses:
         '200':
@@ -1801,7 +1801,7 @@ paths:
     post:
       summary: Submit a signed oracle fight result
       operationId: submitOracleResult
-      tags: [Oracle]
+      tags: [ Oracle ]
       x-rateLimit-windowMs: 60000
       x-rateLimit-max: 10
       x-rateLimit-keyBy: ip
@@ -1813,11 +1813,11 @@ paths:
           application/json:
             schema:
               type: object
-              required: [matchId, winningOutcome]
+              required: [ matchId, winningOutcome ]
               properties:
-                matchId:        { type: string }
-                winningOutcome: { type: integer, enum: [0, 1] }
-                reportedAt:     { type: string, format: date-time }
+                matchId: { type: string }
+                winningOutcome: { type: integer, enum: [ 0, 1 ] }
+                reportedAt: { type: string, format: date-time }
       responses:
         '200':
           description: Oracle result submitted
@@ -1826,7 +1826,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  tx_hash:   { type: string }
+                  tx_hash: { type: string }
                   report_id: { type: integer }
         '400':
           description: Invalid request body
@@ -1853,7 +1853,7 @@ paths:
     get:
       summary: Get all oracle reports for a fight
       operationId: getOracleReports
-      tags: [Oracle]
+      tags: [ Oracle ]
       parameters:
         - name: match_id
           in: path
@@ -1895,7 +1895,7 @@ paths:
     post:
       summary: Submit a new dispute
       operationId: submitDispute
-      tags: [Disputes]
+      tags: [ Disputes ]
       security:
         - bearerAuth: []
       requestBody:
@@ -1904,10 +1904,10 @@ paths:
           application/json:
             schema:
               type: object
-              required: [marketId, reason]
+              required: [ marketId, reason ]
               properties:
-                marketId:    { type: string }
-                reason:      { type: string, minLength: 10, maxLength: 1000 }
+                marketId: { type: string }
+                reason: { type: string, minLength: 10, maxLength: 1000 }
                 evidenceUrl: { type: string, format: uri }
       responses:
         '201':
@@ -1918,7 +1918,7 @@ paths:
                 type: object
                 properties:
                   success: { type: boolean }
-                  data:    { $ref: '#/components/schemas/Dispute' }
+                  data: { $ref: '#/components/schemas/Dispute' }
         '400':
           description: Invalid market status
           content:
@@ -1947,7 +1947,7 @@ paths:
     get:
       summary: List all disputes (admin only)
       operationId: listDisputesApi
-      tags: [Disputes]
+      tags: [ Disputes ]
       security:
         - bearerAuth: []
       parameters:
@@ -1955,7 +1955,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [open, reviewing, resolved, dismissed]
+            enum: [ open, reviewing, resolved, dismissed ]
         - name: marketId
           in: query
           schema: { type: string }
@@ -2007,7 +2007,7 @@ paths:
     get:
       summary: Get dispute details
       operationId: getDispute
-      tags: [Disputes]
+      tags: [ Disputes ]
       parameters:
         - name: disputeId
           in: path
@@ -2022,7 +2022,7 @@ paths:
                 type: object
                 properties:
                   success: { type: boolean }
-                  data:    { $ref: '#/components/schemas/Dispute' }
+                  data: { $ref: '#/components/schemas/Dispute' }
         '400':
           description: Invalid dispute ID format
           content:
@@ -2048,7 +2048,7 @@ paths:
     patch:
       summary: Mark dispute as under review (admin only)
       operationId: reviewDispute
-      tags: [Disputes]
+      tags: [ Disputes ]
       security:
         - bearerAuth: []
       parameters:
@@ -2062,7 +2062,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [adminNotes]
+              required: [ adminNotes ]
               properties:
                 adminNotes: { type: string, minLength: 5, maxLength: 5000 }
       responses:
@@ -2074,7 +2074,7 @@ paths:
                 type: object
                 properties:
                   success: { type: boolean }
-                  data:    { $ref: '#/components/schemas/Dispute' }
+                  data: { $ref: '#/components/schemas/Dispute' }
         '400':
           description: Invalid request or dispute state
           content:
@@ -2110,7 +2110,7 @@ paths:
     patch:
       summary: Resolve a dispute (admin only)
       operationId: resolveDisputeApi
-      tags: [Disputes]
+      tags: [ Disputes ]
       security:
         - bearerAuth: []
       parameters:
@@ -2124,14 +2124,14 @@ paths:
           application/json:
             schema:
               type: object
-              required: [action, resolution]
+              required: [ action, resolution ]
               properties:
                 action:
                   type: string
-                  enum: [DISMISS, RESOLVE_NEW_OUTCOME]
-                resolution:     { type: string, minLength: 10, maxLength: 5000 }
-                adminNotes:     { type: string, minLength: 5, maxLength: 5000 }
-                newWinningOutcome: { type: integer, enum: [0, 1] }
+                  enum: [ DISMISS, RESOLVE_NEW_OUTCOME ]
+                resolution: { type: string, minLength: 10, maxLength: 5000 }
+                adminNotes: { type: string, minLength: 5, maxLength: 5000 }
+                newWinningOutcome: { type: integer, enum: [ 0, 1 ] }
       responses:
         '200':
           description: Dispute resolved
@@ -2141,7 +2141,7 @@ paths:
                 type: object
                 properties:
                   success: { type: boolean }
-                  data:    { $ref: '#/components/schemas/Dispute' }
+                  data: { $ref: '#/components/schemas/Dispute' }
         '400':
           description: Invalid action or missing fields
           content:
@@ -2180,7 +2180,7 @@ paths:
     get:
       summary: List all disputes (admin only)
       operationId: adminListDisputes
-      tags: [Admin]
+      tags: [ Admin ]
       x-rateLimit-windowMs: 60000
       x-rateLimit-max: 20
       x-rateLimit-keyBy: ip
@@ -2215,11 +2215,62 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse500' }
 
+  /api/admin/webhooks/{id}/retry:
+    post:
+      summary: Requeue a failed webhook delivery
+      operationId: retryWebhookDelivery
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        '202':
+          description: Webhook delivery requeued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      id: { type: string }
+                      webhook_id: { type: string }
+                      event_type: { type: string }
+                      status: { type: string, enum: [pending] }
+                      attempt_count: { type: integer }
+                      next_attempt_at: { type: string, format: date-time }
+        '400':
+          description: Invalid delivery ID
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse400' }
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse401' }
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse403' }
+        '404':
+          description: Failed webhook delivery not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
   /api/admin/dispute/{market_id}:
     post:
       summary: Flag a market as disputed
       operationId: flagDispute
-      tags: [Admin]
+      tags: [ Admin ]
       security:
         - bearerAuth: []
       parameters:
@@ -2233,7 +2284,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [reason]
+              required: [ reason ]
               properties:
                 reason: { type: string }
       responses:
@@ -2280,7 +2331,7 @@ paths:
     post:
       summary: Mark a dispute as under investigation
       operationId: investigateDispute
-      tags: [Admin]
+      tags: [ Admin ]
       security:
         - bearerAuth: []
       parameters:
@@ -2326,7 +2377,7 @@ paths:
     post:
       summary: Resolve a disputed market with admin-verified outcome
       operationId: adminResolveDispute
-      tags: [Admin]
+      tags: [ Admin ]
       security:
         - bearerAuth: []
       parameters:
@@ -2340,12 +2391,12 @@ paths:
           application/json:
             schema:
               type: object
-              required: [action]
+              required: [ action ]
               properties:
                 action:
                   type: string
-                  enum: [DISMISS, RESOLVE_NEW_OUTCOME]
-                newWinningOutcome: { type: integer, enum: [0, 1] }
+                  enum: [ DISMISS, RESOLVE_NEW_OUTCOME ]
+                newWinningOutcome: { type: integer, enum: [ 0, 1 ] }
       responses:
         '200':
           description: Dispute resolved
@@ -2390,7 +2441,7 @@ paths:
     post:
       summary: Cancel a market
       operationId: cancelMarket
-      tags: [Admin]
+      tags: [ Admin ]
       security:
         - bearerAuth: []
       parameters:
@@ -2404,7 +2455,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [reason]
+              required: [ reason ]
               properties:
                 reason: { type: string }
       responses:
@@ -2451,7 +2502,7 @@ paths:
     post:
       summary: Process refunds for a cancelled market
       operationId: processRefunds
-      tags: [Admin]
+      tags: [ Admin ]
       security:
         - bearerAuth: []
       parameters:
@@ -2497,7 +2548,7 @@ paths:
     post:
       summary: Pause multiple markets
       operationId: bulkPauseMarkets
-      tags: [Admin]
+      tags: [ Admin ]
       security:
         - bearerAuth: []
       requestBody:
@@ -2506,7 +2557,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [marketIds]
+              required: [ marketIds ]
               properties:
                 marketIds:
                   type: array
@@ -2550,7 +2601,7 @@ paths:
     post:
       summary: Cancel multiple markets
       operationId: bulkCancelMarkets
-      tags: [Admin]
+      tags: [ Admin ]
       security:
         - bearerAuth: []
       requestBody:
@@ -2559,7 +2610,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [marketIds]
+              required: [ marketIds ]
               properties:
                 marketIds:
                   type: array
@@ -2603,7 +2654,7 @@ paths:
     get:
       summary: Stream users CSV export
       operationId: exportUsers
-      tags: [Admin]
+      tags: [ Admin ]
       security:
         - bearerAuth: []
       responses:
@@ -2637,7 +2688,7 @@ paths:
     get:
       summary: Stream trades CSV export
       operationId: exportTrades
-      tags: [Admin]
+      tags: [ Admin ]
       security:
         - bearerAuth: []
       parameters:
@@ -2683,7 +2734,7 @@ paths:
     get:
       summary: Stream treasury CSV export
       operationId: exportTreasury
-      tags: [Admin]
+      tags: [ Admin ]
       security:
         - bearerAuth: []
       responses:
@@ -2717,7 +2768,7 @@ paths:
     post:
       summary: Queue an async export and email it when ready
       operationId: requestExport
-      tags: [Admin]
+      tags: [ Admin ]
       security:
         - bearerAuth: []
       requestBody:
@@ -2726,12 +2777,12 @@ paths:
           application/json:
             schema:
               type: object
-              required: [type, email]
+              required: [ type, email ]
               properties:
-                type:  { type: string, enum: [trades] }
+                type: { type: string, enum: [ trades ] }
                 email: { type: string, format: email }
-                from:  { type: string, format: date }
-                to:    { type: string, format: date }
+                from: { type: string, format: date }
+                to: { type: string, format: date }
       responses:
         '202':
           description: Export queued; email will be sent when ready
@@ -2771,7 +2822,7 @@ paths:
     post:
       summary: Refresh the whitelist of trusted oracle addresses
       operationId: refreshOracleWhitelist
-      tags: [Admin]
+      tags: [ Admin ]
       security:
         - bearerAuth: []
       responses:
@@ -2783,7 +2834,7 @@ paths:
                 type: object
                 properties:
                   success: { type: boolean }
-                  count:    { type: integer, description: Number of whitelisted oracle addresses loaded }
+                  count: { type: integer, description: Number of whitelisted oracle addresses loaded }
         '401':
           description: Unauthorized
           content:
@@ -2804,6 +2855,2927 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse500' }
+  /api/v2/webhooks/subscriptions:
+    post:
+      summary: Register a new webhook subscription endpoint with HMAC secret and event topics
+      tags:
+        - Webhooks Group 9
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+    get:
+      summary: List all active webhook endpoints configured by authenticated user
+      tags:
+        - Webhooks Group 9
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/webhooks/subscriptions/{id}:
+    delete:
+      summary: Remove/deactivate an active webhook subscription endpoint
+      tags:
+        - Webhooks Group 9
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+  /api/v2/webhooks/subscriptions/{id}/test:
+    post:
+      summary: Dispatch test ping payload to verify webhook destination endpoint response
+      tags:
+        - Webhooks Group 9
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+  /api/v2/webhooks/delivery-callback:
+    post:
+      summary: Inbound webhook delivery callback verification with HMAC signature
+      tags:
+        - Webhooks Group 9
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/webhooks/inbound/{id}:
+    post:
+      summary: Inbound webhook verification for a specific subscription
+      tags:
+        - Webhooks Group 9
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+  /api/v2/webhooks/deliveries:
+    get:
+      summary: Retrieve delivery logs, retry counts, and HTTP status codes for webhook dispatches
+      tags:
+        - Webhooks Group 9
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/webhooks/admin/replay:
+    post:
+      summary: Admin-gated batch replay for failed webhook deliveries
+      tags:
+        - Webhooks Group 9
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v1/wallets:
+    get:
+      summary: List the authenticated user's wallets
+      tags:
+        - Wallets
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: currency
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: Paginated wallet list
+        "422":
+          description: Validation error
+  /api/v1/wallets/{walletId}:
+    get:
+      summary: Get a single wallet with its balances
+      tags:
+        - Wallets
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Wallet detail
+        "403":
+          description: Wallet does not belong to the authenticated user
+        "422":
+          description: Validation error
+  /api/v1/wallets/{walletId}/transactions:
+    get:
+      summary: Get a wallet's transaction history
+      tags:
+        - Wallets
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum:
+              - deposit
+              - withdrawal
+              - bet
+              - claim
+              - refund
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - pending
+              - completed
+              - failed
+              - cancelled
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+      responses:
+        "200":
+          description: Paginated transaction list
+        "422":
+          description: Validation error
+  /api/v1/wallets/deposit:
+    post:
+      summary: Initiate a wallet deposit
+      tags:
+        - Wallets
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - walletId
+                - currency
+                - amount
+                - paymentMethod
+              properties:
+                walletId:
+                  type: string
+                  format: uuid
+                currency:
+                  type: string
+                amount:
+                  type: number
+                  format: double
+                  exclusiveMinimum: true
+                  minimum: 0
+                paymentMethod:
+                  type: string
+                  enum:
+                    - card
+                    - bank_transfer
+                    - crypto
+                    - stellar
+                referenceId:
+                  type: string
+      responses:
+        "202":
+          description: Deposit initiated
+        "422":
+          description: Validation error
+  /api/v1/wallets/withdraw:
+    post:
+      summary: Initiate a wallet withdrawal
+      tags:
+        - Wallets
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - walletId
+                - currency
+                - amount
+                - destination
+              properties:
+                walletId:
+                  type: string
+                  format: uuid
+                currency:
+                  type: string
+                amount:
+                  type: number
+                  format: double
+                  exclusiveMinimum: true
+                  minimum: 0
+                destination:
+                  type: string
+                note:
+                  type: string
+      responses:
+        "202":
+          description: Withdrawal initiated
+        "422":
+          description: Validation error
+        "429":
+          description: Withdrawal rate limit exceeded
+  /api/v2/users/me:
+    get:
+      summary: Retrieve current authenticated user profile
+      tags:
+        - Users Group 6
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User profile data
+        "401":
+          description: Unauthorized
+    patch:
+      summary: Update profile for current authenticated user
+      tags:
+        - Users Group 6
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                avatar_url:
+                  type: string
+                notifications_enabled:
+                  type: boolean
+      responses:
+        "200":
+          description: Profile updated successfully
+        "401":
+          description: Unauthorized
+        "422":
+          description: Validation error
+  /api/v2/users/kyc/submit:
+    post:
+      summary: Submit KYC document verification request
+      tags:
+        - Users Group 6
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - full_name
+                - country_code
+                - document_type
+                - document_hash
+                - requested_tier
+      responses:
+        "201":
+          description: KYC submission accepted
+        "401":
+          description: Unauthorized
+  /api/v2/users/{id}/role:
+    patch:
+      summary: Update user role (Admin only)
+      tags:
+        - Users Group 6
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+      responses:
+        "200":
+          description: Role updated successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: User not found
+  /api/v2/users:
+    get:
+      summary: List users with role/KYC filtering (Admin only)
+      tags:
+        - Users Group 6
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: role
+          schema:
+            type: string
+            enum:
+              - user
+              - moderator
+              - admin
+              - oracle
+        - in: query
+          name: kyc_tier
+          schema:
+            type: string
+            enum:
+              - tier_0
+              - tier_1
+              - tier_2
+              - tier_3
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated users list
+        "401":
+          description: Unauthorized
+  /api/v1/user-activity:
+    get:
+      summary: Get user activity log with privacy filtering (Issue
+      tags:
+        - UserActivity
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: userId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: action
+          schema:
+            type: string
+            enum:
+              - login
+              - logout
+              - bet_placed
+              - bet_claimed
+              - profile_updated
+              - 2fa_enabled
+              - 2fa_disabled
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: Paginated user activity log
+        "422":
+          description: Validation error
+  /api/v1/user-activity/{userId}/preferences:
+    put:
+      summary: Update user preferences
+      tags:
+        - UserActivity
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emailNotifications:
+                  type: boolean
+                pushNotifications:
+                  type: boolean
+                marketingEmails:
+                  type: boolean
+                defaultCurrency:
+                  type: string
+                  enum:
+                    - USD
+                    - EUR
+                    - GBP
+                    - XLM
+                oddsFormat:
+                  type: string
+                  enum:
+                    - decimal
+                    - fractional
+                    - american
+                language:
+                  type: string
+                  enum:
+                    - en
+                    - es
+                    - fr
+                    - de
+                    - pt
+                timezone:
+                  type: string
+      responses:
+        "200":
+          description: Preferences updated
+        "403":
+          description: Cannot modify another user's preferences
+        "422":
+          description: Validation error
+    get:
+      summary: Get user preferences
+      tags:
+        - UserActivity
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: User preferences
+        "403":
+          description: Cannot view another user's preferences
+  /api/v2/treasury/overview:
+    get:
+      summary: Retrieve treasury vault balance overview and reserve breakdown
+      tags:
+        - Treasury Group 7
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/treasury/withdraw:
+    post:
+      summary: Admin-gated emergency withdrawal or treasury fund transfer to multisig
+      tags:
+        - Treasury Group 7
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/treasury/distribute-fees:
+    post:
+      summary: Execute protocol revenue distribution across LP rewards, safety reserve, and staking pool
+      tags:
+        - Treasury Group 7
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/treasury/fee-splits:
+    get:
+      summary: Retrieve market tier protocol fee configurations
+      tags:
+        - Treasury Group 7
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+    patch:
+      summary: Admin-gated update of protocol fee split basis points for a market tier
+      tags:
+        - Treasury Group 7
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/treasury/transactions:
+    get:
+      summary: Audit trail of treasury transactions with pagination and type filtering
+      tags:
+        - Treasury Group 7
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v1/transactions:
+    get:
+      summary: Get paginated transaction history with advanced filtering
+      tags:
+        - TransactionHistory
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: userId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum:
+              - bet
+              - claim
+              - refund
+              - deposit
+              - withdrawal
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - pending
+              - completed
+              - failed
+              - cancelled
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: minAmount
+          schema:
+            type: number
+        - in: query
+          name: maxAmount
+          schema:
+            type: number
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum:
+              - created_at
+              - amount
+              - status
+            default: created_at
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+      responses:
+        "200":
+          description: Paginated transaction history
+        "422":
+          description: Validation error
+  /api/v1/transactions/export:
+    post:
+      summary: Export transactions as CSV or JSON
+      tags:
+        - TransactionHistory
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                format:
+                  type: string
+                  enum:
+                    - csv
+                    - json
+                  default: csv
+                filters:
+                  type: object
+                  properties:
+                    userId:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                    status:
+                      type: string
+                    from:
+                      type: string
+                      format: date-time
+                    to:
+                      type: string
+                      format: date-time
+                columns:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 30
+      responses:
+        "200":
+          description: Exported data
+        "422":
+          description: Validation error
+  /api/v1/health/{component}:
+    get:
+      summary: Get status of a specific component
+      tags:
+        - SystemHealth
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: component
+          required: true
+          schema:
+            type: string
+            enum:
+              - database
+              - redis
+              - indexer
+              - oracle
+      responses:
+        "200":
+          description: Component status
+        "404":
+          description: Unknown component
+  /api/v1/diagnostics:
+    get:
+      summary: System diagnostics (admin only)
+      tags:
+        - SystemHealth
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: includeMetrics
+          schema:
+            type: boolean
+            default: true
+        - in: query
+          name: includeConnections
+          schema:
+            type: boolean
+            default: true
+        - in: query
+          name: includeCronJobs
+          schema:
+            type: boolean
+            default: false
+        - in: query
+          name: includeRecentErrors
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: System diagnostics
+        "403":
+          description: Admin access required
+  /api/v2/social/syndicates:
+    get:
+      summary: List betting syndicates with performance and capacity filters
+      tags:
+        - Social Group 16
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+    post:
+      summary: Create a new betting syndicate
+      tags:
+        - Social Group 16
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/social/syndicates/{syndicateId}:
+    get:
+      summary: Retrieve syndicate details, member roster, and ROI stats
+      tags:
+        - Social Group 16
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: syndicateId
+          required: true
+          schema:
+            type: string
+  /api/v2/social/syndicates/{syndicateId}/deposit:
+    post:
+      summary: Fund or join a syndicate pool
+      tags:
+        - Social Group 16
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: syndicateId
+          required: true
+          schema:
+            type: string
+  /api/v2/social/copy-trade/follow:
+    post:
+      summary: Follow a top trader and configure automated copy-betting rules
+      tags:
+        - Social Group 16
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/social/copy-trade/unfollow/{traderAddress}:
+    delete:
+      summary: Stop copy-trading a specified trader
+      tags:
+        - Social Group 16
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: traderAddress
+          required: true
+          schema:
+            type: string
+  /api/v2/social/copy-trade/active:
+    get:
+      summary: List active copy-trading subscriptions for current user
+      tags:
+        - Social Group 16
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/social/comments:
+    post:
+      summary: Post a comment or reaction on social features (with profanity filter)
+      tags:
+        - Social Group 16
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/social/admin/blocked-words:
+    post:
+      summary: Admin API to add custom blocked words for profanity filtering
+      tags:
+        - Social Group 16
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/oracle/report:
+    post:
+      summary: Submit signed oracle match outcome
+      tags:
+        - Oracle & Disputes Group 5
+      parameters:
+        - in: header
+          name: X-Oracle-Key
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - match_id
+                - market_id
+                - outcome
+                - reported_at
+                - oracle_address
+                - signature
+      responses:
+        "200":
+          description: Report accepted and market resolved
+        "401":
+          description: Invalid oracle key
+        "403":
+          description: Oracle is unregistered or its report signature is invalid
+        "404":
+          description: Market not found
+        "422":
+          description: Validation error
+  /api/v2/oracle/dispute:
+    post:
+      summary: Flag a market dispute
+      tags:
+        - Oracle & Disputes Group 5
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - market_id
+                - initiator_address
+                - reason
+      responses:
+        "201":
+          description: Dispute flagged successfully
+        "400":
+          description: Market not in resolvable or disputed status
+        "404":
+          description: Market not found
+  /api/v2/oracle/dispute/resolve:
+    post:
+      summary: Admin dispute resolution with TOTP confirmation
+      tags:
+        - Oracle & Disputes Group 5
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - market_id
+                - final_outcome
+                - resolution_notes
+                - totp_code
+      responses:
+        "200":
+          description: Dispute resolved
+        "401":
+          description: Unauthorized or invalid TOTP
+  /api/v2/oracle/disputes:
+    get:
+      summary: List recorded disputes with pagination
+      tags:
+        - Oracle & Disputes Group 5
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - pending
+              - investigating
+              - resolved
+              - dismissed
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated list of disputes
+  /oracle/submit:
+    post:
+      summary: Submit an oracle result for a match
+      tags:
+        - Oracle
+      description: Requires a valid ORACLE_API_KEY in the X-Oracle-Key header
+      parameters:
+        - in: header
+          name: X-Oracle-Key
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - matchId
+                - winningOutcome
+              properties:
+                matchId:
+                  type: string
+                winningOutcome:
+                  type: integer
+                  enum:
+                    - 0
+                    - 1
+                reportedAt:
+                  type: string
+                  format: date-time
+      responses:
+        "200":
+          description: Oracle result submitted
+        "400":
+          description: Validation error
+        "401":
+          description: Invalid or missing API key
+  /oracle/reports/{match_id}:
+    get:
+      summary: Get oracle reports for a match (public transparency endpoint)
+      tags:
+        - Oracle
+      parameters:
+        - in: path
+          name: match_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of oracle reports for the match
+        "404":
+          description: No reports found
+  /trading/bet:
+    post:
+      summary: Place a bet with pool locking and slippage validation
+      tags:
+        - Bets
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - market_id
+                - bettor_address
+                - side
+                - amount
+              properties:
+                market_id:
+                  type: string
+                  minLength: 1
+                bettor_address:
+                  type: string
+                  description: Valid Stellar public key
+                side:
+                  type: string
+                  enum:
+                    - fighter_a
+                    - fighter_b
+                    - draw
+                amount:
+                  type: string
+                  pattern: ^[1-9]\d*$
+                  description: Positive integer stroops
+                max_slippage_bps:
+                  type: integer
+                  minimum: 0
+                  maximum: 5000
+                  default: 500
+                idempotency_key:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+      responses:
+        "201":
+          description: Bet committed
+        "400":
+          description: Closed market or slippage exceeded
+        "401":
+          description: Authentication required
+        "404":
+          description: Market not found
+        "422":
+          description: Invalid body
+  /api/v1/notifications/{userId}/settings:
+    get:
+      summary: Get notification settings for a user
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Notification settings
+        "403":
+          description: Cannot view another user's settings
+    put:
+      summary: Update notification settings
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                betPlaced:
+                  type: boolean
+                betResolved:
+                  type: boolean
+                channel:
+                  type: string
+                  enum:
+                    - email
+                    - push
+                    - both
+                    - none
+                quietHoursStart:
+                  type: string
+                  pattern: ^\\d{2}:\\d{2}$
+                quietHoursEnd:
+                  type: string
+                  pattern: ^\\d{2}:\\d{2}$
+      responses:
+        "200":
+          description: Settings updated
+        "403":
+          description: Cannot modify another user's settings
+        "422":
+          description: Validation error
+  /api/v1/notifications/test:
+    post:
+      summary: Send a test notification
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+                - userId
+                - template
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - email
+                    - push
+                userId:
+                  type: string
+                  format: uuid
+                template:
+                  type: string
+                  enum:
+                    - bet_placed
+                    - bet_resolved
+                    - security_alert
+                    - system_maintenance
+      responses:
+        "200":
+          description: Test notification sent
+        "422":
+          description: Validation error
+  /api/v1/market-management/markets:
+    get:
+      summary: List markets with filtering
+      tags:
+        - MarketManagement
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: sport
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - open
+              - locked
+              - resolved
+              - cancelled
+        - in: query
+          name: marketType
+          schema:
+            type: string
+            enum:
+              - moneyline
+              - spread
+              - total
+              - parlay
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: Paginated market list
+        "422":
+          description: Validation error
+  /api/v1/market-management/markets/{marketId}:
+    get:
+      summary: Get a single market with escrow details
+      tags:
+        - MarketManagement
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: marketId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Market detail
+        "422":
+          description: Validation error
+  /api/v1/market-management/escrow/hold:
+    post:
+      summary: Hold funds in escrow for a market (admin)
+      tags:
+        - MarketManagement
+      security:
+        - adminJwt: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - marketId
+                - amountUsd
+                - holdRef
+              properties:
+                marketId:
+                  type: string
+                  format: uuid
+                amountUsd:
+                  type: number
+                  format: double
+                  exclusiveMinimum: true
+                  minimum: 0
+                holdRef:
+                  type: string
+                description:
+                  type: string
+      responses:
+        "202":
+          description: Escrow hold initiated
+        "422":
+          description: Validation error
+        "429":
+          description: Rate limit exceeded
+  /api/v1/market-management/markets/{marketId}/close:
+    post:
+      summary: Close a market early (admin)
+      tags:
+        - MarketManagement
+      security:
+        - adminJwt: []
+      parameters:
+        - in: path
+          name: marketId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  enum:
+                    - no_contest
+                    - rule_change
+                    - regulatory
+                    - insufficient_liquidity
+                    - technical_error
+                    - fraud
+                cancelBets:
+                  type: boolean
+                  default: true
+      responses:
+        "202":
+          description: Market close scheduled
+        "422":
+          description: Validation error
+        "429":
+          description: Rate limit exceeded
+  /api/v1/market-management/markets/{marketId}/settle:
+    post:
+      summary: Settle escrow funds for a resolved market (admin)
+      tags:
+        - MarketManagement
+      security:
+        - adminJwt: []
+      parameters:
+        - in: path
+          name: marketId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - settleAmountUsd
+                - recipient
+              properties:
+                settleAmountUsd:
+                  type: number
+                  format: double
+                  minimum: 0
+                recipient:
+                  type: string
+                note:
+                  type: string
+      responses:
+        "202":
+          description: Escrow settlement scheduled
+        "422":
+          description: Validation error
+        "429":
+          description: Rate limit exceeded
+  /api/v2/markets:
+    get:
+      summary: List markets with advanced filtering and pagination
+      tags:
+        - Market Group 3
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - open
+              - locked
+              - resolved
+              - cancelled
+              - disputed
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: minPool
+          schema:
+            type: number
+        - in: query
+          name: maxPool
+          schema:
+            type: number
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum:
+              - created_desc
+              - created_asc
+              - pool_desc
+              - date_asc
+              - date_desc
+            default: created_desc
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated list of markets
+        "422":
+          description: Query validation error
+    post:
+      summary: Create a new market (Admin only)
+      tags:
+        - Market Group 3
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fighter_a
+                - fighter_b
+                - weight_class
+                - scheduled_at
+      responses:
+        "201":
+          description: Market created successfully
+        "401":
+          description: Unauthorized
+        "422":
+          description: Request validation error
+  /api/v2/markets/{id}:
+    get:
+      summary: Retrieve market details by ID
+      tags:
+        - Market Group 3
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Market details
+        "404":
+          description: Market not found
+        "422":
+          description: Invalid path parameter
+  /api/v2/markets/{id}/lock:
+    patch:
+      summary: Manually lock market betting (Admin only)
+      tags:
+        - Market Group 3
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Market locked successfully
+        "400":
+          description: Market not in open state
+        "401":
+          description: Unauthorized
+        "404":
+          description: Market not found
+  /api/v1/analytics/markets:
+    get:
+      summary: Get market analytics with configurable metrics (O(1) aggregated SQL query)
+      tags:
+        - MarketAnalytics
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v1/analytics/reports:
+    post:
+      summary: Generate a new analytics report (async)
+      tags:
+        - MarketAnalytics
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reportType
+                - from
+                - to
+              properties:
+                reportType:
+                  type: string
+                  enum:
+                    - market_summary
+                    - user_activity
+                    - financial
+                    - dispute_summary
+                    - provider_performance
+                from:
+                  type: string
+                  format: date-time
+                to:
+                  type: string
+                  format: date-time
+                format:
+                  type: string
+                  enum:
+                    - json
+                    - csv
+                  default: json
+      responses:
+        "202":
+          description: Report generation started
+        "422":
+          description: Validation error
+  /api/v1/analytics/reports/{reportId}:
+    get:
+      summary: Get report generation status or result
+      tags:
+        - MarketAnalytics
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: reportId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Report status or result
+        "404":
+          description: Report not found
+  /markets:
+    get:
+      summary: List all markets (paginated)
+      tags:
+        - Markets
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+            maximum: 200
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - OPEN
+              - LOCKED
+              - RESOLVED
+              - CANCELLED
+      responses:
+        "200":
+          description: Paginated list of markets
+        "400":
+          description: Invalid parameters (limit exceeds maximum of 200)
+  /markets/{market_id}:
+    get:
+      summary: Get a single market by ID
+      tags:
+        - Markets
+      parameters:
+        - in: path
+          name: market_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Market details
+        "404":
+          description: Market not found
+  /markets/{market_id}/bets:
+    get:
+      summary: List bets for a market
+      tags:
+        - Markets
+      parameters:
+        - in: path
+          name: market_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated list of bets
+  /markets/{market_id}/odds/stream:
+    get:
+      summary: Server-Sent Events stream of live odds for a market
+      tags:
+        - Markets
+      parameters:
+        - in: path
+          name: market_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: SSE stream — pushes odds on connect then every 5 s; closes when market is terminal
+  /markets/{market_id}/odds:
+    get:
+      summary: Get current odds for a market
+      tags:
+        - Markets
+      parameters:
+        - in: path
+          name: market_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Current odds
+  /markets/{market_id}/stats:
+    get:
+      summary: Get statistics for a market
+      tags:
+        - Markets
+      parameters:
+        - in: path
+          name: market_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Market statistics
+  /markets/{market_id}/simulate:
+    get:
+      summary: Simulate payout for a given bet amount and outcome
+      tags:
+        - Markets
+      parameters:
+        - in: path
+          name: market_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: amount
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: outcome
+          required: true
+          schema:
+            type: integer
+            enum:
+              - 0
+              - 1
+      responses:
+        "200":
+          description: Simulated payout details
+  /markets/{market_id}/resolve:
+    post:
+      summary: Resolve a market (admin only)
+      tags:
+        - Markets
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: market_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - winningOutcome
+              properties:
+                winningOutcome:
+                  type: integer
+                  enum:
+                    - 0
+                    - 1
+      responses:
+        "200":
+          description: Market resolved
+        "401":
+          description: Unauthorized
+        "404":
+          description: Market not found
+  /api/v2/liquidity/pools:
+    get:
+      summary: List AMM liquidity pools with TVL, APR, and volume stats
+      tags:
+        - Liquidity Group 17
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/liquidity/pools/{marketId}:
+    get:
+      summary: Retrieve AMM pool reserves, invariant k, and fee parameters
+      tags:
+        - Liquidity Group 17
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: marketId
+          required: true
+          schema:
+            type: string
+  /api/v2/liquidity/pools/{marketId}/add:
+    post:
+      summary: Add liquidity into constant-product AMM pool
+      tags:
+        - Liquidity Group 17
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: marketId
+          required: true
+          schema:
+            type: string
+  /api/v2/liquidity/pools/{marketId}/lock-period:
+    put:
+      summary: Configure withdrawal lock period for a market
+      tags:
+        - Liquidity Group 17
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: marketId
+          required: true
+          schema:
+            type: string
+  /api/v2/liquidity/pools/{marketId}/remove:
+    post:
+      summary: Remove liquidity by burning LP tokens
+      tags:
+        - Liquidity Group 17
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: marketId
+          required: true
+          schema:
+            type: string
+  /api/v2/liquidity/staking/stake:
+    post:
+      summary: Stake LP tokens into yield farming reward vault
+      tags:
+        - Liquidity Group 17
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/liquidity/staking/claim-rewards:
+    post:
+      summary: Claim accumulated LP staking rewards and fees
+      tags:
+        - Liquidity Group 17
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/liquidity/users/{address}/positions:
+    get:
+      summary: Retrieve active LP positions and staked vaults for a user
+      tags:
+        - Liquidity Group 17
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: address
+          required: true
+          schema:
+            type: string
+  /api/v2/leaderboard/global:
+    get:
+      summary: Retrieve paginated global bettor rankings filtered by metric, timeframe, and category
+      tags:
+        - Leaderboard Group 8
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/leaderboard/seasons:
+    get:
+      summary: Retrieve active, upcoming, and past competitive leaderboard tournament seasons
+      tags:
+        - Leaderboard Group 8
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/leaderboard/users/{address}/rank:
+    get:
+      summary: Retrieve ranking stats, percentile, tier, and streak for a specific Stellar address
+      tags:
+        - Leaderboard Group 8
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: address
+          required: true
+          schema:
+            type: string
+  /api/v2/leaderboard/seasons/join:
+    post:
+      summary: Opt-in authenticated user into an active tournament season
+      tags:
+        - Leaderboard Group 8
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/leaderboard/admin/seasons:
+    post:
+      summary: Admin-gated creation of a new competitive betting season
+      tags:
+        - Leaderboard Group 8
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/leaderboards/global:
+    get:
+      summary: List global competitive rankings with filters and pagination
+      tags:
+        - Leaderboards Group 15
+      parameters:
+        - in: query
+          name: period
+          schema:
+            type: string
+            enum:
+              - daily
+              - weekly
+              - monthly
+              - all_time
+        - in: query
+          name: category
+          schema:
+            type: string
+            enum:
+              - BOXING
+              - MMA
+              - KICKBOXING
+              - ALL
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Paginated global leaderboard rankings
+  /api/v2/leaderboards/tournaments:
+    get:
+      summary: List active and upcoming betting tournaments
+      tags:
+        - Leaderboards Group 15
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/leaderboards/tournaments/{tournamentId}:
+    get:
+      summary: Get tournament details and participant leaderboard
+      tags:
+        - Leaderboards Group 15
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: tournamentId
+          required: true
+          schema:
+            type: string
+  /api/v2/leaderboards/tournaments/{tournamentId}/join:
+    post:
+      summary: Join a tournament with entry fee verification
+      tags:
+        - Leaderboards Group 15
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: tournamentId
+          required: true
+          schema:
+            type: string
+  /api/v2/leaderboards/users/{userId}/rank:
+    get:
+      summary: Retrieve user competitive rank tier, percentile, and stats
+      tags:
+        - Leaderboards Group 15
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+  /api/v2/leaderboards/admin/tournaments:
+    post:
+      summary: Create a new competitive tournament (Admin only)
+      tags:
+        - Leaderboards Group 15
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/leaderboards/admin/tournaments/{tournamentId}/finalize:
+    post:
+      summary: Finalize tournament and record winners (Admin only)
+      tags:
+        - Leaderboards Group 15
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: tournamentId
+          required: true
+          schema:
+            type: string
+  /api/v2/governance/proposals:
+    get:
+      summary: List governance proposals with optional filtering and pagination
+      tags:
+        - Governance Group 2
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - active
+              - passed
+              - rejected
+              - executed
+              - cancelled
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum:
+              - parameter_change
+              - market_resolution
+              - treasury_allocation
+              - oracle_whitelist
+              - emergency_action
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated list of proposals
+    post:
+      summary: Create a new governance proposal
+      tags:
+        - Governance Group 2
+      security:
+        - BearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/governance/proposals/{id}:
+    get:
+      summary: Retrieve single governance proposal by ID with vote tallies
+      tags:
+        - Governance Group 2
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+  /api/v2/governance/proposals/{id}/vote:
+    post:
+      summary: Cast a vote on an active governance proposal
+      tags:
+        - Governance Group 2
+      security:
+        - BearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+  /api/v2/governance/proposals/{id}/execute:
+    post:
+      summary: Execute a passed proposal (Admin / Governance caller)
+      tags:
+        - Governance Group 2
+      security:
+        - BearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+  /api/v2/governance/disputes:
+    post:
+      summary: File a dispute against a contested market resolution
+      tags:
+        - Governance Group 2
+      security:
+        - BearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/governance/disputes/{marketId}:
+    get:
+      summary: Get dispute details and status for a given market
+      tags:
+        - Governance Group 2
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: marketId
+          required: true
+          schema:
+            type: string
+  /governance/proposals:
+    get:
+      summary: List all governance proposals (paginated)
+      tags:
+        - Governance
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - active
+              - passed
+              - failed
+              - executed
+      responses:
+        "200":
+          description: Paginated list of proposals
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                        value:
+                          type: string
+                        description:
+                          type: string
+                        status:
+                          type: string
+                        proposer:
+                          type: string
+                        votesFor:
+                          type: number
+                        votesAgainst:
+                          type: number
+                        votesAbstain:
+                          type: number
+                        createdAt:
+                          type: string
+                          format: date-time
+                        expiresAt:
+                          type: string
+                          format: date-time
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      totalPages:
+                        type: integer
+                      hasNextPage:
+                        type: boolean
+                      hasPrevPage:
+                        type: boolean
+        "400":
+          description: Invalid parameters
+  /governance/proposals/{proposal_id}:
+    get:
+      summary: Get a single proposal by ID
+      tags:
+        - Governance
+      parameters:
+        - in: path
+          name: proposal_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Proposal details
+        "404":
+          description: Proposal not found
+  /api/v2/categories:
+    get:
+      summary: Retrieve list of combat sport categories with active market counts
+      tags:
+        - Categories Group 14
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+    post:
+      summary: Admin-gated creation of a new sport category or division
+      tags:
+        - Categories Group 14
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/categories/{slug}/markets:
+    get:
+      summary: Retrieve markets belonging to a specific category slug with odds bounds
+      tags:
+        - Categories Group 14
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+  /api/v2/odds/live-stream:
+    get:
+      summary: Real-time aggregated odds stream for active fight cards and live bouts
+      tags:
+        - Categories Group 14
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/tags/batch:
+    post:
+      summary: Admin-gated batch tagging and metadata assignment for markets
+      tags:
+        - Categories Group 14
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/search/suggest:
+    get:
+      summary: High-speed typeahead autocomplete search across fighters, events, and categories
+      tags:
+        - Categories Group 14
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/bets/place:
+    post:
+      summary: Place a bet with slippage tolerance and validation
+      tags:
+        - Betting Group 4
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - market_id
+                - bettor_address
+                - side
+                - amount
+      responses:
+        "201":
+          description: Bet placed successfully
+        "400":
+          description: Market not open or slippage exceeded
+        "404":
+          description: Market not found
+        "422":
+          description: Payload validation error
+  /api/v2/bets/user/{address}:
+    get:
+      summary: Retrieve bets placed by a specific Stellar address
+      tags:
+        - Betting Group 4
+      parameters:
+        - in: path
+          name: address
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - open
+              - locked
+              - resolved
+              - cancelled
+        - in: query
+          name: claimed
+          schema:
+            type: boolean
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated bets
+        "422":
+          description: Invalid address or query
+  /api/v2/bets/calculate-payout:
+    post:
+      summary: Simulate projected payout for a potential bet
+      tags:
+        - Betting Group 4
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - market_id
+                - amount
+                - side
+      responses:
+        "200":
+          description: Projected payout details
+        "404":
+          description: Market not found
+  /api/v2/bets/batch-payout:
+    post:
+      summary: Batch projected payout calculations
+      tags:
+        - Betting Group 4
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - simulations
+      responses:
+        "200":
+          description: Array of payout calculations
+  /api/v2/auth/register:
+    post:
+      summary: Register a new user account with strong password requirements
+      tags:
+        - Auth Group 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - username
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 30
+                password:
+                  type: string
+                  format: password
+                stellar_wallet_address:
+                  type: string
+      responses:
+        "201":
+          description: User registered successfully
+        "409":
+          description: Email or username already registered
+        "422":
+          description: Validation error
+  /api/v2/auth/login:
+    post:
+      summary: Authenticate user credentials and return JWT tokens or 2FA challenge
+      tags:
+        - Auth Group 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Successful login or 2FA required
+        "401":
+          description: Invalid credentials
+        "422":
+          description: Validation error
+  /api/v2/auth/refresh:
+    post:
+      summary: Exchange a valid refresh token for a new access token
+      tags:
+        - Auth Group 1
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/auth/mfa/setup:
+    post:
+      summary: Initialize MFA setup and generate a TOTP secret
+      tags:
+        - Auth Group 1
+      security:
+        - BearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/auth/mfa/verify:
+    post:
+      summary: Verify 6-digit TOTP code and finalize MFA login
+      tags:
+        - Auth Group 1
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/auth/password/reset-request:
+    post:
+      summary: Request password reset instructions via email
+      tags:
+        - Auth Group 1
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/auth/password/reset-confirm:
+    post:
+      summary: Complete password reset with verification token
+      tags:
+        - Auth Group 1
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/auth/sessions:
+    get:
+      summary: List all active sessions for the authenticated user
+      tags:
+        - Auth Group 1
+      security:
+        - BearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/auth/sessions/{sessionId}:
+    delete:
+      summary: Revoke a specific active session
+      tags:
+        - Auth Group 1
+      security:
+        - BearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema:
+            type: string
+  /api/v2/affiliates/codes/create:
+    post:
+      summary: Generate a custom referral vanity code and rebate split
+      tags:
+        - Affiliates Group 18
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/affiliates/referrals/apply:
+    post:
+      summary: Apply a referral code to associate referee with an affiliate
+      tags:
+        - Affiliates Group 18
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/affiliates/dashboard:
+    get:
+      summary: Retrieve authenticated affiliate dashboard performance metrics
+      tags:
+        - Affiliates Group 18
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/affiliates/payouts/claim:
+    post:
+      summary: Claim accrued affiliate commissions to Stellar wallet
+      tags:
+        - Affiliates Group 18
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/affiliates/campaigns:
+    get:
+      summary: List marketing campaigns and referral performance
+      tags:
+        - Affiliates Group 18
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/affiliates/admin/tier-override:
+    patch:
+      summary: Override affiliate tier and commission basis points (Admin only)
+      tags:
+        - Affiliates Group 18
+      security:
+        - bearerAuth: []
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /api/v2/affiliates/leaderboard:
+    get:
+      summary: Public affiliate leaderboards by total volume generated
+      tags:
+        - Affiliates Group 18
+      responses:
+        default:
+          description: Endpoint response; see the route implementation for status-specific behavior.
+  /admin/disputes:
+    get:
+      summary: List all disputes (admin only)
+      tags:
+        - Admin
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of disputes
+        "401":
+          description: Unauthorized
+  /admin/dispute/{market_id}:
+    post:
+      summary: Flag a market dispute (admin only)
+      tags:
+        - Admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: market_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Dispute flagged
+        "401":
+          description: Unauthorized
+  /admin/dispute/{market_id}/investigate:
+    post:
+      summary: Mark a dispute as under investigation (admin only)
+      tags:
+        - Admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: market_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Dispute under investigation
+        "401":
+          description: Unauthorized
+  /admin/cancel/{market_id}/refunds:
+    post:
+      summary: Process refunds for a cancelled market (admin only)
+      tags:
+        - Admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: market_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Refunds processed
+        "401":
+          description: Unauthorized
+  /admin/resolve-dispute/{market_id}:
+    post:
+      summary: Resolve a dispute for a market (admin only)
+      tags:
+        - Admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: market_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum:
+                    - DISMISS
+                    - RESOLVE_NEW_OUTCOME
+                newWinningOutcome:
+                  type: integer
+                  enum:
+                    - 0
+                    - 1
+      responses:
+        "200":
+          description: Dispute resolved
+        "401":
+          description: Unauthorized
+  /admin/cancel/{market_id}:
+    post:
+      summary: Cancel a market (admin only)
+      tags:
+        - Admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: market_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Market cancelled
+        "401":
+          description: Unauthorized
+  /admin/markets/bulk-pause:
+    post:
+      summary: Pause multiple markets (admin only)
+      tags:
+        - Admin
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - marketIds
+              properties:
+                marketIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: Markets paused
+        "401":
+          description: Unauthorized
+  /admin/markets/bulk-cancel:
+    post:
+      summary: Cancel multiple markets (admin only)
+      tags:
+        - Admin
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - marketIds
+              properties:
+                marketIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: Markets cancelled
+        "401":
+          description: Unauthorized
+  /admin/export/users:
+    get:
+      summary: Stream users CSV export (admin only)
+      tags:
+        - Admin
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: CSV file stream
+          content:
+            text/csv:
+              schema:
+                type: string
+        "401":
+          description: Unauthorized
+  /admin/export/trades:
+    get:
+      summary: Stream trades CSV export (admin only)
+      tags:
+        - Admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: CSV file stream
+          content:
+            text/csv:
+              schema:
+                type: string
+        "401":
+          description: Unauthorized
+  /admin/export/treasury:
+    get:
+      summary: Stream treasury CSV export (admin only)
+      tags:
+        - Admin
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: CSV file stream
+          content:
+            text/csv:
+              schema:
+                type: string
+        "401":
+          description: Unauthorized
+  /admin/export/request:
+    post:
+      summary: Queue an async export and email it when ready (admin only)
+      tags:
+        - Admin
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+                - email
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - trades
+                email:
+                  type: string
+                  format: email
+                from:
+                  type: string
+                  format: date
+                to:
+                  type: string
+                  format: date
+      responses:
+        "202":
+          description: Export queued
+        "400":
+          description: Invalid request
+        "401":
+          description: Unauthorized
+  /admin/oracle/refresh-whitelist:
+    post:
+      summary: Force-flush the oracle whitelist Redis cache (admin only)
+      description: |
+        Deletes the cached oracle whitelist from Redis so the next verification call re-reads ORACLE_WHITELIST env var and repopulates the cache. Use this immediately after removing a compromised oracle from the env config so all instances propagate the change within one TTL cycle.
+      tags:
+        - Admin
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Cache flushed successfully
+        "401":
+          description: Unauthorized
+        "500":
+          description: Redis error
+  /wallet/withdraw:
+    post:
+      summary: Initiate a wallet withdrawal
+      tags:
+        - Wallets
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - walletId
+                - currency
+                - amount
+                - destination
+              properties:
+                walletId:
+                  type: string
+                  format: uuid
+                currency:
+                  type: string
+                amount:
+                  type: number
+                  format: double
+                  exclusiveMinimum: true
+                  minimum: 0
+                destination:
+                  type: string
+                note:
+                  type: string
+      responses:
+        "202":
+          description: Withdrawal initiated
+        "422":
+          description: Validation error
+        "429":
+          description: Withdrawal rate limit exceeded
+tags:
+  - name: Wallets
+    description: Wallet management, deposits and withdrawals
+  - name: Users Group 6
+    description: User Profiles, KYC Status & Role-Based Access Control (API Group 6)
+  - name: UserActivity
+    description: User activity logging and preference management
+  - name: TransactionHistory
+    description: Transaction history and export endpoints
+  - name: SystemHealth
+    description: System health checks and diagnostics
+  - name: Social Group 16
+    description: Betting Syndicates, Social Pools & Copy-Trading Pipeline (API Group 16)
+  - name: Oracle & Disputes Group 5
+    description: Oracle Result Submissions and Dispute Workflows (API Group 5)
+  - name: Oracle
+    description: Oracle result submission and transparency reports
+  - name: Notifications
+    description: Notification and alert preference management
+  - name: MarketManagement
+    description: Market listing and escrow settlement controls
+  - name: Market Group 3
+    description: Enhanced Market Discovery & Lifecycle Management (API Group 3)
+  - name: Markets
+    description: Prediction market endpoints
+  - name: Liquidity Group 17
+    description: AMM Liquidity Pools, LP Token Mint/Burn & Yield Staking (API Group 17)
+  - name: Leaderboards Group 15
+    description: Competitive Rankings, Tournament Brackets & Seasonal Leaderboards (API Group 15)
+  - name: Governance Group 2
+    description: Governance Proposals, Voting Engine, and Market Dispute Resolution (API Group 2)
+  - name: Governance
+    description: Governance proposal endpoints
+  - name: Disputes
+    description: Market dispute management
+  - name: Betting Group 4
+    description: Betting Operations, Slippage Guard, and Projected Payouts (API Group 4)
+  - name: Bets
+    description: Bet claims and bettor history
+  - name: Auth Group 1
+    description: Robust Authentication, MFA, Session Management & Password Recovery (API Group 1)
+  - name: Auth
+    description: Authentication and 2FA
+  - name: Affiliates Group 18
+    description: Affiliate Referrals, Commission Rebates & Partner Revenue Share (API Group 18)
+  - name: Admin
+    description: Admin-only operations
 
 # =============================================================================
 # WebSocket API Documentation (issue #659)

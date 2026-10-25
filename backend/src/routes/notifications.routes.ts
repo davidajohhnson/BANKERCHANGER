@@ -1,7 +1,9 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { validate } from '../api/middleware/validate';
+import { validate } from '../middleware/validation.middleware';
 import { requireAuth } from '../middleware/auth.middleware';
 import { AppError } from '../utils/AppError';
+import { pool } from '../config/db';
+import { redis } from '../config/redis';
 import {
   getNotificationSettingsParam,
   updateNotificationSettingsBody,
@@ -17,8 +19,33 @@ const router = Router();
  *   description: Notification and alert preference management
  */
 
-// In-memory store (production: use database)
-const notificationSettings = new Map<string, Record<string, unknown>>();
+const SETTINGS_CACHE_TTL_SECONDS = 60 * 60;
+const settingsCacheKey = (userId: string) => `notifications:settings:${userId}`;
+
+async function getSettings(userId: string): Promise<Record<string, unknown>> {
+  try {
+    const cached = await redis.get(settingsCacheKey(userId));
+    if (cached) return JSON.parse(cached);
+  } catch { /* PostgreSQL remains the source of truth when Redis is unavailable. */ }
+
+  const { rows } = await pool.query(
+    `SELECT email_enabled, push_enabled, settings FROM user_notification_settings WHERE user_id = $1`,
+    [userId],
+  );
+  const row = rows[0] ?? { email_enabled: true, push_enabled: true };
+  const settings = {
+    betPlaced: true, betResolved: true, betWon: true, claimProcessed: true,
+    marketCreated: false, marketLocked: true, disputeFiled: true,
+    disputeResolved: true, securityAlert: true, systemMaintenance: true,
+    quietHoursStart: null, quietHoursEnd: null,
+    ...(row.settings ?? {}),
+    emailEnabled: row.email_enabled,
+    pushEnabled: row.push_enabled,
+    channel: row.email_enabled && row.push_enabled ? 'both' : row.email_enabled ? 'email' : row.push_enabled ? 'push' : 'none',
+  };
+  try { await redis.set(settingsCacheKey(userId), JSON.stringify(settings), 'EX', SETTINGS_CACHE_TTL_SECONDS); } catch { /* Cache is optional. */ }
+  return settings;
+}
 
 /**
  * @swagger
@@ -54,21 +81,7 @@ router.get(
         throw new AppError(403, 'Cannot view another user\'s notification settings');
       }
 
-      const settings = notificationSettings.get(userId) || {
-        betPlaced: true,
-        betResolved: true,
-        betWon: true,
-        claimProcessed: true,
-        marketCreated: false,
-        marketLocked: true,
-        disputeFiled: true,
-        disputeResolved: true,
-        securityAlert: true,
-        systemMaintenance: true,
-        channel: 'both',
-        quietHoursStart: null,
-        quietHoursEnd: null,
-      };
+      const settings = await getSettings(userId);
 
       res.json({ userId, settings });
     } catch (err) {
@@ -134,9 +147,22 @@ router.put(
         throw new AppError(403, 'Cannot modify another user\'s notification settings');
       }
 
-      const existing = notificationSettings.get(userId) || {};
-      const updated = { ...existing, ...req.body };
-      notificationSettings.set(userId, updated);
+      const existing = await getSettings(userId);
+      const update = req.body as Record<string, unknown>;
+      const channel = update.channel as string | undefined;
+      const emailEnabled = channel === undefined ? existing.emailEnabled !== false : ['email', 'both'].includes(channel);
+      const pushEnabled = channel === undefined ? existing.pushEnabled !== false : ['push', 'both'].includes(channel);
+      const updatedSettings = { ...existing, ...update, emailEnabled, pushEnabled, channel: channel ?? existing.channel };
+      const { rows } = await pool.query(
+        `INSERT INTO user_notification_settings (user_id, email_enabled, push_enabled, settings)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (user_id) DO UPDATE SET email_enabled = EXCLUDED.email_enabled,
+           push_enabled = EXCLUDED.push_enabled, settings = EXCLUDED.settings, updated_at = NOW()
+         RETURNING email_enabled, push_enabled, updated_at`,
+        [userId, emailEnabled, pushEnabled, JSON.stringify(updatedSettings)],
+      );
+      const updated = { ...updatedSettings, emailEnabled: rows[0].email_enabled, pushEnabled: rows[0].push_enabled };
+      try { await redis.del(settingsCacheKey(userId)); } catch { /* Cache is optional. */ }
 
       res.json({
         message: 'Notification settings updated',

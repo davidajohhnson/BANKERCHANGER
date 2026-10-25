@@ -12,9 +12,9 @@ import {
   listProposalsGroup2QuerySchema,
   getDisputeGroup2ParamsSchema,
 } from '../schemas/governanceGroup2.schemas';
-import { validateBody, validateParams, validateQuery } from '../api/middleware/validate';
+import { validateBody, validateParams, validateQuery } from '../middleware/validation.middleware';
 import { requireAuth } from '../middleware/auth.middleware';
-import { requireAdminJwt } from '../middleware/requireAdminJwt.middleware';
+import { requireAdmin } from '../middleware/admin.middleware';
 import { rateLimit } from '../middleware/rate-limit.middleware';
 import { AppError } from '../utils/AppError';
 import { pool } from '../config/db';
@@ -426,7 +426,7 @@ router.post(
  */
 router.post(
   '/proposals/:id/execute',
-  requireAdminJwt,
+  requireAdmin,
   validateParams(getProposalGroup2ParamsSchema),
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

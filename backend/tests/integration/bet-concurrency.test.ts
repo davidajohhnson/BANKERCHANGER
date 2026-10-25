@@ -32,7 +32,7 @@ const mockedPool = pool as jest.Mocked<typeof pool>;
 const mockedAcquireLock = acquireLock as jest.MockedFunction<typeof acquireLock>;
 
 // Stable Stellar address for testing
-const BETTOR = 'GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN';
+const BETTOR = 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF';
 const MARKET_ID = 'market-test-001';
 
 function makeFakeLock() {
@@ -60,7 +60,7 @@ function makeClientMock(txHash: string, ledger: number) {
 
   const clientMock = {
     query: jest.fn().mockImplementation((sql: string) => {
-      if (sql === 'BEGIN' || sql === 'COMMIT' || sql === 'ROLLBACK') {
+      if (sql === 'BEGIN ISOLATION LEVEL SERIALIZABLE' || sql === 'COMMIT' || sql === 'ROLLBACK') {
         return Promise.resolve();
       }
       if (sql.includes('FOR UPDATE')) {
@@ -111,14 +111,30 @@ describe('BetService — concurrent bet placement (issue #26)', () => {
     expect(forUpdateCall).toMatch(/SELECT market_id FROM markets WHERE market_id = \$1 FOR UPDATE/);
   });
 
+  it('rolls back serialization failures and retries event recording on a fresh client', async () => {
+    const lock = makeFakeLock();
+    mockedAcquireLock.mockResolvedValue(lock);
+    const failed = makeClientMock('tx-retry', 105);
+    failed.query.mockRejectedValueOnce(Object.assign(new Error('serialization failure'), { code: '40001' }));
+    const successful = makeClientMock('tx-retry', 105);
+    (mockedPool.connect as jest.Mock).mockResolvedValueOnce(failed).mockResolvedValueOnce(successful);
+    const bet = await recordBet(MARKET_ID, BETTOR, 'fighter_a', '10000000', 'tx-retry', 105);
+    expect(bet.tx_hash).toBe('tx-retry');
+    expect(failed.query).toHaveBeenCalledWith('ROLLBACK');
+    expect(failed.release).toHaveBeenCalledTimes(1);
+    expect(successful.query).toHaveBeenCalledWith('COMMIT');
+    expect(successful.release).toHaveBeenCalledTimes(1);
+    expect(lock.release).toHaveBeenCalledTimes(1);
+  });
+
   it('releases the lock even when an error is thrown', async () => {
     const lock = makeFakeLock();
     mockedAcquireLock.mockResolvedValue(lock);
     const clientMock = makeClientMock('tx-err', 102);
     // Simulate DB error on INSERT
     (clientMock.query as jest.Mock).mockImplementation((sql: string) => {
-      if (sql === 'BEGIN' || sql === 'ROLLBACK') return Promise.resolve();
-      if (sql.includes('FOR UPDATE')) return Promise.resolve({ rows: [] });
+      if (sql === 'BEGIN ISOLATION LEVEL SERIALIZABLE' || sql === 'ROLLBACK') return Promise.resolve();
+      if (sql.includes('FOR UPDATE')) return Promise.resolve({ rows: [{ market_id: MARKET_ID }] });
       if (sql.includes('INSERT INTO bets')) return Promise.reject(new Error('DB error'));
       return Promise.resolve({ rows: [] });
     });

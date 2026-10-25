@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test": "npm --prefix backend test -- --forceExit; result=$?; npm --prefix indexer test -- --forceExit || result=1; npm --prefix frontend test -- --forceExit || result=1; exit $result",
+    "lint": "npm --prefix backend run lint; result=$?; npm --prefix backend exec -- eslint --config backend/.eslintrc.json 'indexer/src/**/*.ts' || result=1; npm --prefix frontend run lint || result=1; exit $result",
+    "build": "npm --prefix backend run build; result=$?; npm --prefix indexer run build || result=1; npm --prefix frontend run build || result=1; exit $result",
+    "type-check": "npm --prefix backend run type-check; result=$?; npm --prefix indexer run type-check || result=1; npm --prefix frontend run type-check || result=1; exit $result",
     "test:e2e": "npm --prefix backend run test:e2e",
     "test:integration": "npm --prefix backend run test:integration"
   }

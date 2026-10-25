@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { validateBody, validateQuery, validateParams } from '../api/middleware/validate';
+import { validateBody, validateQuery, validateParams } from '../middleware/validation.middleware';
 import { requireAuth } from '../middleware/auth.middleware';
-import { requireAdminJwt } from '../middleware/requireAdminJwt.middleware';
+import { requireAdmin } from '../middleware/admin.middleware';
 import { rateLimit } from '../middleware/rate-limit.middleware';
 import { pool } from '../config/db';
 import {
@@ -183,7 +183,7 @@ router.post(
 router.post(
   '/admin/seasons',
   rateLimit({ windowMs: 60_000, max: 10, keyBy: 'ip' }),
-  requireAdminJwt,
+  requireAdmin,
   validateBody(createSeasonGroup8BodySchema),
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

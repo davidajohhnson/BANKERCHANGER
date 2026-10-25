@@ -1,7 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { validate } from '../api/middleware/validate';
+import { validate } from '../middleware/validation.middleware';
 import { requireAuth } from '../middleware/auth.middleware';
-import { requireAdminJwt } from '../middleware/requireAdminJwt.middleware';
 import { AppError } from '../utils/AppError';
 import { pool } from '../config/db';
 import {

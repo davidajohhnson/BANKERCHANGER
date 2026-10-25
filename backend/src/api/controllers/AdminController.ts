@@ -12,6 +12,7 @@ import * as OracleService from '../../oracle/OracleService';
 import { db, bulkPauseMarkets, bulkCancelMarkets, updateMarketStatus } from '../../services/MarketService';
 import { pool } from '../../config/db';
 import { auditLog } from '../../services/auditLog.service';
+import { enqueueWebhookEvent } from '../../services/webhookDelivery.service';
 
 const MAX_BULK = 50;
 
@@ -265,26 +266,46 @@ export async function resolveDispute(
     admin_signature,
   );
 
-  // Update dispute record to resolved
-  const disputeResult = await pool.query(
-    `UPDATE disputes
-     SET status = 'resolved', final_outcome = $1, resolved_at = NOW()
-     WHERE market_id = $2 AND status = 'reviewing'
-     RETURNING *`,
-    [final_outcome, market_id],
-  );
+  const client = await pool.connect();
+  let disputeRecord: Record<string, unknown>;
+  try {
+    await client.query('BEGIN');
+    const disputeResult = await client.query(
+      `UPDATE disputes
+       SET status = 'resolved', final_outcome = $1, resolved_at = NOW()
+       WHERE market_id = $2 AND status = 'reviewing'
+       RETURNING *`,
+      [final_outcome, market_id],
+    );
+    if (disputeResult.rowCount === 0) {
+      throw new AppError(500, 'Failed to update dispute record');
+    }
+    disputeRecord = disputeResult.rows[0];
 
-  if (disputeResult.rowCount === 0) {
-    throw new AppError(500, 'Failed to update dispute record');
+    const marketResult = await client.query(
+      `UPDATE markets
+       SET outcome = $1, status = 'resolved', resolved_at = NOW(), updated_at = NOW()
+       WHERE market_id = $2
+       RETURNING resolved_at`,
+      [final_outcome, market_id],
+    );
+    if (marketResult.rows.length === 0) {
+      throw new AppError(404, `Market not found: ${market_id}`);
+    }
+    const resolvedAt = marketResult.rows[0].resolved_at as Date;
+    await enqueueWebhookEvent(client, 'market.resolved', tx_hash, {
+      id: tx_hash,
+      type: 'market.resolved',
+      created_at: resolvedAt.toISOString(),
+      data: { market_id, outcome: final_outcome },
+    });
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
   }
-
-  // Update market outcome and set status back to resolved
-  await pool.query(
-    `UPDATE markets
-     SET outcome = $1, status = 'resolved', resolved_at = NOW(), updated_at = NOW()
-     WHERE market_id = $2`,
-    [final_outcome, market_id],
-  );
 
   const updatedMarket = await db().findMarketById(market_id);
   const adminId = ((req as unknown as Record<string, unknown>).userId as string | undefined) ?? null;
@@ -298,7 +319,7 @@ export async function resolveDispute(
 
   res.status(200).json({
     tx_hash,
-    dispute: disputeResult.rows[0],
+    dispute: disputeRecord,
     market: updatedMarket,
   });
 }

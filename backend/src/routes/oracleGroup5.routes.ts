@@ -11,11 +11,12 @@ import {
   listDisputesGroup5QuerySchema,
 } from '../schemas/oracleGroup5.schemas';
 import { validateBody, validateQuery } from '../api/middleware/validate';
-import { requireAdminJwt } from '../middleware/requireAdminJwt.middleware';
+import { requireAdmin } from '../middleware/admin.middleware';
 import { rateLimit } from '../middleware/rate-limit.middleware';
 import { AppError } from '../utils/AppError';
 import { pool } from '../config/db';
 import { verifyOracleSignature } from '../oracle/OracleService';
+import { enqueueWebhookEvent } from '../services/webhookDelivery.service';
 
 const router = Router();
 
@@ -140,6 +141,14 @@ router.post(
         [outcome, reported_at, oracle_address, market_id]
       );
 
+      const txHash = reportRes.rows[0].tx_hash as string;
+      await enqueueWebhookEvent(client, 'market.resolved', txHash, {
+        id: txHash,
+        type: 'market.resolved',
+        created_at: reported_at,
+        data: { market_id, match_id, outcome, oracle_address },
+      });
+
       await client.query('COMMIT');
 
       res.status(200).json({
@@ -245,9 +254,10 @@ router.post(
  */
 router.post(
   '/dispute/resolve',
-  requireAdminJwt,
+  requireAdmin,
   validateBody(resolveDisputeGroup5BodySchema),
   async (req: Request, res: Response, next: NextFunction) => {
+    let client: Awaited<ReturnType<typeof pool.connect>> | undefined;
     try {
       const { market_id, final_outcome, resolution_notes, totp_code } = req.body;
 
@@ -256,22 +266,28 @@ router.post(
         throw AppError.unauthorized('Invalid TOTP verification code');
       }
 
-      const marketRes = await pool.query('SELECT status FROM markets WHERE market_id = $1', [market_id]);
+      client = await pool.connect();
+      await client.query('BEGIN');
+      const marketRes = await client.query('SELECT status FROM markets WHERE market_id = $1 FOR UPDATE', [market_id]);
       if (marketRes.rows.length === 0) {
         throw AppError.notFound(`Market with id '${market_id}' not found`);
       }
 
-      await pool.query(
+      const { rows: updatedMarkets } = await client.query(
         `UPDATE markets
          SET status = 'resolved',
              outcome = $1,
              resolved_at = NOW(),
              updated_at = NOW()
-         WHERE market_id = $2`,
+         WHERE market_id = $2
+         RETURNING resolved_at`,
         [final_outcome, market_id]
       );
+      if (updatedMarkets.length === 0) {
+        throw AppError.notFound(`Market with id '${market_id}' not found`);
+      }
 
-      await pool.query(
+      await client.query(
         `UPDATE disputes
          SET status = 'resolved',
              resolution_notes = $1,
@@ -279,6 +295,15 @@ router.post(
          WHERE market_id = $2`,
         [resolution_notes, market_id]
       );
+
+      const resolvedAt = (updatedMarkets[0].resolved_at as Date).toISOString();
+      await enqueueWebhookEvent(client, 'market.resolved', `${market_id}:${resolvedAt}`, {
+        id: `${market_id}:${resolvedAt}`,
+        type: 'market.resolved',
+        created_at: resolvedAt,
+        data: { market_id, outcome: final_outcome },
+      });
+      await client.query('COMMIT');
 
       res.status(200).json({
         success: true,
@@ -290,7 +315,10 @@ router.post(
         },
       });
     } catch (err) {
+      if (client) await client.query('ROLLBACK');
       next(err);
+    } finally {
+      client?.release();
     }
   }
 );

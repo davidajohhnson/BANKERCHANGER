@@ -11,7 +11,8 @@ verify_wasm_upload() {
     fi
 
     fetched_wasm="$(mktemp)"
-    if ! SOROBAN_RPC_URL="$rpc_url" stellar contract fetch \
+    local cli="${STELLAR_CLI:-stellar}"
+    if ! SOROBAN_RPC_URL="$rpc_url" "$cli" contract fetch \
         --wasm-hash "$expected_hash" \
         --out-file "$fetched_wasm" \
         --network "$network"; then

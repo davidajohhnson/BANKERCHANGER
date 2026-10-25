@@ -11,9 +11,9 @@ import {
   updateRoleGroup6BodySchema,
   listUsersGroup6QuerySchema,
 } from '../schemas/userGroup6.schemas';
-import { validateBody, validateParams, validateQuery } from '../api/middleware/validate';
+import { validateBody, validateParams, validateQuery } from '../middleware/validation.middleware';
 import { requireAuth } from '../middleware/auth.middleware';
-import { requireAdminJwt } from '../middleware/requireAdminJwt.middleware';
+import { requireAdmin } from '../middleware/admin.middleware';
 import { rateLimit } from '../middleware/rate-limit.middleware';
 import { AppError } from '../utils/AppError';
 import { pool } from '../config/db';
@@ -234,7 +234,7 @@ router.post(
  */
 router.patch(
   '/:id/role',
-  requireAdminJwt,
+  requireAdmin,
   validateParams(updateRoleGroup6ParamsSchema),
   validateBody(updateRoleGroup6BodySchema),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -299,7 +299,7 @@ router.patch(
  */
 router.get(
   '/',
-  requireAdminJwt,
+  requireAdmin,
   validateQuery(listUsersGroup6QuerySchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {

@@ -60,7 +60,7 @@ app.get('/test/protected', requireAuth, (req, res) => {
 app.use(errorMiddleware);
 
 describe('the-Devdrago Issues Suite (#679, #685, #686, #687)', () => {
-  const adminSecret = 'test-admin-secret-key-32-chars-long!';
+  const adminSecret = 'test-user-secret-key-32-chars-long!';
   const userSecret = 'test-user-secret-key-32-chars-long!';
 
   const validAdminToken = jwt.sign(

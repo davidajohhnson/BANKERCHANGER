@@ -98,7 +98,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { StrKey } from '@stellar/stellar-sdk';
 import { AppError } from '../../utils/AppError';
-import { validateQuery, validateBody, validateParams } from '../middleware/validate';
+import { validateQuery, validateBody, validateParams } from '../../middleware/validation.middleware';
 import * as EngagementService from '../../services/engagement.service';
 
 // ---------------------------------------------------------------------------

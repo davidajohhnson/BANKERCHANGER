@@ -23,6 +23,21 @@ exports.up = (pgm) => {
   pgm.createIndex('password_reset_tokens', 'user_id');
   pgm.createIndex('password_reset_tokens', 'expires_at');
 
+  // This table is part of the application schema but was missing from the
+  // initial migration. Keep existing installations intact while allowing a
+  // fresh database to apply the migration chain.
+  pgm.sql(`CREATE TABLE IF NOT EXISTS notification_jobs (
+    id serial PRIMARY KEY,
+    bettor_address text NOT NULL,
+    market_id text NOT NULL REFERENCES markets(market_id),
+    job_type text NOT NULL,
+    status text DEFAULT 'pending',
+    created_at timestamptz DEFAULT NOW(),
+    processed_at timestamptz
+  )`);
+  pgm.createIndex('notification_jobs', 'market_id', { name: 'notification_jobs_market_id_idx', ifNotExists: true });
+  pgm.createIndex('notification_jobs', 'status', { name: 'notification_jobs_status_idx', ifNotExists: true });
+
   pgm.addColumn('notification_jobs', {
     deleted_at: { type: 'timestamptz' },
   });
@@ -46,6 +61,5 @@ exports.up = (pgm) => {
 exports.down = (pgm) => {
   pgm.dropTable('distributions');
   pgm.dropColumn('notification_jobs', 'deleted_at');
-  pgm.dropTable('password_reset_tokens');
   pgm.dropTable('user_sessions');
 };

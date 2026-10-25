@@ -7,7 +7,7 @@
 #
 # Usage:
 #   export ADMIN_SECRET_KEY=S...
-#   ./scripts/deploy.sh [testnet|mainnet]
+#   ./scripts/deploy.sh [--network testnet|mainnet] [--rpc-url URL] [--secret-key S...]
 #
 # Network Defaults:
 #   testnet:  RPC https://soroban-testnet.stellar.org
@@ -36,24 +36,47 @@
 
 set -euo pipefail
 
-NETWORK="${1:-testnet}"
+NETWORK="testnet"
+RPC_URL_ARG=""
+SECRET_KEY_ARG=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --network) NETWORK="${2:?--network requires a value}"; shift 2 ;;
+        --rpc-url) RPC_URL_ARG="${2:?--rpc-url requires a value}"; shift 2 ;;
+        --secret-key) SECRET_KEY_ARG="${2:?--secret-key requires a value}"; shift 2 ;;
+        testnet|mainnet) NETWORK="$1"; shift ;;
+        -h|--help) sed -n '1,36p' "$0"; exit 0 ;;
+        *) echo "ERROR: Unknown argument '$1'" >&2; exit 2 ;;
+    esac
+done
 CONTRACTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${CONTRACTS_DIR}/target/wasm32-unknown-unknown/release"
 DEPLOYMENTS_FILE="${CONTRACTS_DIR}/deployments.json"
 
-ADMIN_SECRET_KEY="${ADMIN_SECRET_KEY:-}"
+ADMIN_SECRET_KEY="${SECRET_KEY_ARG:-${ADMIN_SECRET_KEY:-}}"
 ORACLE_ADDRESSES="${ORACLE_ADDRESSES:-}"
 DEFAULT_FEE_BPS="${DEFAULT_FEE_BPS:-200}"
 WITHDRAWAL_LIMIT="${WITHDRAWAL_LIMIT:-1000000000}"
 
 source "${CONTRACTS_DIR}/scripts/verify-wasm-upload.sh"
 
+# Prefer the current CLI, while keeping compatibility with installations that
+# expose the legacy Soroban command (or a local soroban alias) only.
+if command -v stellar >/dev/null 2>&1; then
+    STELLAR_CLI="stellar"
+elif command -v soroban >/dev/null 2>&1; then
+    STELLAR_CLI="soroban"
+else
+    echo "ERROR: Neither 'stellar' nor the 'soroban' alias is installed" >&2
+    exit 1
+fi
+
 # Set RPC and Horizon URLs based on network, allow overrides via env vars
 if [[ "$NETWORK" == "testnet" ]]; then
-    STELLAR_RPC_URL="${STELLAR_RPC_URL:-https://soroban-testnet.stellar.org}"
+    STELLAR_RPC_URL="${RPC_URL_ARG:-${STELLAR_RPC_URL:-https://soroban-testnet.stellar.org}}"
     HORIZON_URL="${HORIZON_URL:-https://horizon-testnet.stellar.org}"
 elif [[ "$NETWORK" == "mainnet" ]]; then
-    STELLAR_RPC_URL="${STELLAR_RPC_URL:-https://soroban-mainnet.stellar.org}"
+    STELLAR_RPC_URL="${RPC_URL_ARG:-${STELLAR_RPC_URL:-https://soroban-mainnet.stellar.org}}"
     HORIZON_URL="${HORIZON_URL:-https://horizon.stellar.org}"
 else
     echo "ERROR: Invalid network '$NETWORK'. Must be 'testnet' or 'mainnet'" >&2
@@ -97,7 +120,7 @@ echo ""
 
 stellar_deploy() {
     SOROBAN_RPC_URL="$STELLAR_RPC_URL" \
-    stellar contract deploy \
+    "$STELLAR_CLI" contract deploy \
         --wasm "$1" \
         --source "$ADMIN_SECRET_KEY" \
         --network "$NETWORK" 2>&1
@@ -106,7 +129,7 @@ stellar_deploy() {
 stellar_invoke() {
     local contract_id="$1"; shift
     SOROBAN_RPC_URL="$STELLAR_RPC_URL" \
-    stellar contract invoke \
+    "$STELLAR_CLI" contract invoke \
         --id "$contract_id" \
         --source "$ADMIN_SECRET_KEY" \
         --network "$NETWORK" \
@@ -116,7 +139,7 @@ stellar_invoke() {
 # ── 1. Build all contracts (shared is a library; no deploy needed) ────────────
 echo "[1/5] Building workspace..."
 cd "$CONTRACTS_DIR"
-stellar contract build 2>&1 || cargo build --release --target wasm32-unknown-unknown
+"$STELLAR_CLI" contract build 2>&1 || cargo build --release --target wasm32-unknown-unknown
 
 # ── 2. Deploy Treasury ────────────────────────────────────────────────────────
 echo "[2/5] Deploying Treasury..."
@@ -125,8 +148,8 @@ TREASURY_ADDRESS=$(stellar_deploy "${BUILD_DIR}/boxmeout_treasury.wasm" \
 [[ -z "$TREASURY_ADDRESS" ]] && { echo "ERROR: Treasury deploy failed" >&2; exit 1; }
 echo "  Treasury: $TREASURY_ADDRESS"
 
-ADMIN_ADDRESS=$(SOROBAN_RPC_URL="$STELLAR_RPC_URL" stellar keys address "$ADMIN_SECRET_KEY" --network "$NETWORK" 2>/dev/null \
-    || SOROBAN_RPC_URL="$STELLAR_RPC_URL" stellar account info --source "$ADMIN_SECRET_KEY" --network "$NETWORK" \
+ADMIN_ADDRESS=$(SOROBAN_RPC_URL="$STELLAR_RPC_URL" "$STELLAR_CLI" keys address "$ADMIN_SECRET_KEY" --network "$NETWORK" 2>/dev/null \
+    || SOROBAN_RPC_URL="$STELLAR_RPC_URL" "$STELLAR_CLI" account info --source "$ADMIN_SECRET_KEY" --network "$NETWORK" \
        | grep -oE '[A-Z0-9]{56}' | head -1)
 
 stellar_invoke "$TREASURY_ADDRESS" initialize \
@@ -154,7 +177,7 @@ echo "  MarketFactory initialized"
 
 # ── 4. Upload Market template wasm (factory deploys instances) ────────────────
 echo "[4/5] Uploading Market wasm..."
-MARKET_WASM_HASH=$(SOROBAN_RPC_URL="$STELLAR_RPC_URL" stellar contract install \
+MARKET_WASM_HASH=$(SOROBAN_RPC_URL="$STELLAR_RPC_URL" "$STELLAR_CLI" contract install \
     --wasm "${BUILD_DIR}/boxmeout_market.wasm" \
     --source "$ADMIN_SECRET_KEY" \
     --network "$NETWORK" 2>&1 | grep -oE '[a-f0-9]{64}' | head -1)
@@ -173,7 +196,7 @@ echo "[4b/5] Verifying WASM hash integrity..."
 LOCAL_WASM_SHA256=$(sha256sum "${BUILD_DIR}/boxmeout_market.wasm" | awk '{print $1}')
 
 # stellar contract inspect returns the on-chain hash for the uploaded wasm
-INSPECT_HASH=$(SOROBAN_RPC_URL="$STELLAR_RPC_URL" stellar contract inspect \
+INSPECT_HASH=$(SOROBAN_RPC_URL="$STELLAR_RPC_URL" "$STELLAR_CLI" contract inspect \
     --wasm-hash "$MARKET_WASM_HASH" \
     --network "$NETWORK" 2>&1 | grep -oE '[a-f0-9]{64}' | head -1 || true)
 

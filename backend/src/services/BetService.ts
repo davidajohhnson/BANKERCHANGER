@@ -5,9 +5,9 @@
 
 import type { Bet } from '../models/Bet';
 import { pool } from '../config/db';
-import { cacheDelete, cacheDeletePattern } from './cache.service';
+import { cacheDeletePattern } from './cache.service';
 import { AppError } from '../utils/AppError';
-import { Address, xdr } from '@stellar/stellar-sdk';
+import { Address } from '@stellar/stellar-sdk';
 import { invokeContract } from './StellarService';
 import { acquireLock } from '../utils/distributedLock';
 import type { QueryResultRow } from 'pg';
@@ -44,6 +44,9 @@ export interface ProjectedPayout {
  *   1. Validate inputs
  *   2. Acquire Redis distributed lock (retry ×3, 100 ms apart)
  *   3. Begin DB transaction; SELECT market row FOR UPDATE
+ *   Pool balances are projected by the chain indexer; this event recorder must
+ *   not increment them again. Placement/slippage calculations in placeBet run
+ *   under the same market row lock. Serialization failures retry from BEGIN.
  *   4. Insert Bet record with tx_hash as unique key (idempotent)
  *   5. Invalidate Redis cache for the market
  *   6. Commit; release lock
@@ -88,57 +91,69 @@ export async function recordBet(
     throw AppError.conflict('Service temporarily busy, please retry');
   }
 
-  let bet: any;
+  let bet!: QueryResultRow;
 
   try {
     // ── Layer 2: PostgreSQL row-level lock ─────────────────────────────────
     // SELECT … FOR UPDATE ensures that within the DB transaction each bet
     // reads and writes the market row atomically, preventing two concurrent
     // DB transactions from both reading the same stale pool totals.
-    const client = await pool.connect();
+    for (let attempt = 0; attempt < 50; attempt++) {
+      const client = await pool.connect();
 
-    try {
-      await client.query('BEGIN');
+      try {
+        await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
 
-      // Lock the market row for the duration of this transaction so no other
-      // concurrent transaction can read or write stale pool state.
-      const marketLockResult = await client.query(
-        'SELECT market_id FROM markets WHERE market_id = $1 FOR UPDATE',
-        [market_id],
-      );
-      if (marketLockResult.rows.length === 0) {
-        await client.query('ROLLBACK');
-        throw AppError.notFound(`Market not found: ${market_id}`);
-      }
+        // Lock the market row for the duration of this transaction so no other
+        // concurrent transaction can read or write stale pool state.
+        const marketLockResult = await client.query(
+          'SELECT market_id FROM markets WHERE market_id = $1 FOR UPDATE',
+          [market_id],
+        );
+        if (marketLockResult.rows.length === 0) {
+          throw AppError.notFound(`Market not found: ${market_id}`);
+        }
 
-      const result = await client.query(
-        `INSERT INTO bets (market_id, bettor_address, side, amount, amount_xlm, tx_hash, ledger_sequence)
+        const result = await client.query(
+          `INSERT INTO bets (market_id, bettor_address, side, amount, amount_xlm, tx_hash, ledger_sequence)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          ON CONFLICT (tx_hash) DO NOTHING
          RETURNING *`,
-        [market_id, bettor_address, side, amount, amount_xlm, tx_hash, ledger_sequence],
-      );
-
-      if (result.rows.length > 0) {
-        bet = result.rows[0];
-        // Invalidate cache only on new insert
-        await cacheDeletePattern(`market:${market_id}*`);
-        await cacheDeletePattern('platform:stats');
-      } else {
-        // Conflict occurred - fetch existing row
-        const existing = await client.query(
-          'SELECT * FROM bets WHERE tx_hash = $1',
-          [tx_hash],
+          [
+            market_id,
+            bettor_address,
+            side,
+            amount,
+            amount_xlm,
+            tx_hash,
+            ledger_sequence,
+          ],
         );
-        bet = existing.rows[0];
-      }
 
-      await client.query('COMMIT');
-    } catch (err) {
-      await client.query('ROLLBACK');
-      throw err;
-    } finally {
-      client.release();
+        if (result.rows.length > 0) {
+          bet = result.rows[0];
+          // Invalidate cache only on new insert
+          await cacheDeletePattern(`market:${market_id}*`);
+          await cacheDeletePattern('platform:stats');
+        } else {
+          // Conflict occurred - fetch existing row
+          const existing = await client.query(
+            'SELECT * FROM bets WHERE tx_hash = $1',
+            [tx_hash],
+          );
+          bet = existing.rows[0];
+        }
+
+        await client.query('COMMIT');
+      } catch (err) {
+        await client.query('ROLLBACK');
+        if ((err as { code?: string }).code === '40001' && attempt < 49)
+          continue;
+        throw err;
+      } finally {
+        client.release();
+      }
+      break;
     }
   } finally {
     // Always release the Redis lock — even on error — so the next request

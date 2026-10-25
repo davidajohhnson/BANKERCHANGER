@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { validateBody, validateQuery, validateParams } from '../api/middleware/validate';
-import { requireAdminJwt } from '../middleware/requireAdminJwt.middleware';
+import { requireAdmin } from '../middleware/admin.middleware';
 import { rateLimit } from '../middleware/rate-limit.middleware';
 import { pool } from '../config/db';
 import {
@@ -100,7 +100,7 @@ router.get(
 router.post(
   '/',
   rateLimit({ windowMs: 60_000, max: 10, keyBy: 'ip' }),
-  requireAdminJwt,
+  requireAdmin,
   validateBody(createCategoryGroup14BodySchema),
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -280,7 +280,7 @@ router.get(
 router.post(
   '/tags/batch',
   rateLimit({ windowMs: 60_000, max: 10, keyBy: 'ip' }),
-  requireAdminJwt,
+  requireAdmin,
   validateBody(batchTagMarketsGroup14BodySchema),
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

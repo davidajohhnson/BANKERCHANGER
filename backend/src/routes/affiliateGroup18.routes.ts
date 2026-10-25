@@ -12,9 +12,9 @@ import {
   overrideAffiliateTierGroup18BodySchema,
   getAffiliateStatsGroup18QuerySchema,
 } from '../schemas/affiliateGroup18.schemas';
-import { validateBody, validateQuery } from '../api/middleware/validate';
+import { validateBody, validateQuery } from '../middleware/validation.middleware';
 import { requireAuth } from '../middleware/auth.middleware';
-import { requireAdminJwt } from '../middleware/requireAdminJwt.middleware';
+import { requireAdmin } from '../middleware/admin.middleware';
 import { rateLimit } from '../middleware/rate-limit.middleware';
 import { AppError } from '../utils/AppError';
 import { pool } from '../config/db';
@@ -338,7 +338,7 @@ router.get(
  */
 router.patch(
   '/admin/tier-override',
-  requireAdminJwt,
+  requireAdmin,
   adminLimiter,
   validateBody(overrideAffiliateTierGroup18BodySchema),
   async (req: Request, res: Response, next: NextFunction) => {

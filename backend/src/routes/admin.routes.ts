@@ -10,10 +10,41 @@ import {
 } from '../services/export.service';
 import { sendExportReadyEmail } from '../services/email.service';
 import { flushOracleWhitelistCache } from '../oracle/OracleService';
-import { requireAdmin } from '../middleware/requireAdminJwt.middleware';
+import { requireAdmin } from '../middleware/admin.middleware';
 import { auditLog } from '../services/auditLog.service';
+import { pool } from '../config/db';
 
 const router = Router();
+
+/**
+ * POST /api/admin/webhooks/:id/retry
+ * Requeue a permanently failed webhook delivery.
+ */
+router.post('/webhooks/:id/retry', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (
+      !/^[1-9]\d*$/.test(req.params.id) ||
+      req.params.id.length > 19 ||
+      (req.params.id.length === 19 && req.params.id > '9223372036854775807')
+    ) {
+      throw AppError.badRequest('Webhook delivery id must be a positive integer');
+    }
+    const { rows } = await pool.query(
+      `UPDATE webhook_deliveries
+          SET status = 'pending', retry_count = 0, next_attempt_at = NOW(),
+              locked_at = NULL, updated_at = NOW()
+        WHERE id = $1 AND status = 'failed'
+        RETURNING id, webhook_id, event_type, status, attempt_count, next_attempt_at`,
+      [req.params.id],
+    );
+    if (rows.length === 0) {
+      throw AppError.notFound('Failed webhook delivery not found');
+    }
+    res.status(202).json({ success: true, data: rows[0] });
+  } catch (err) {
+    next(err);
+  }
+});
 
 /**
  * @swagger

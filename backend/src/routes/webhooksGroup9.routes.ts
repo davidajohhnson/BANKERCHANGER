@@ -1,10 +1,11 @@
 import crypto from 'crypto';
 import { Router, Request, Response, NextFunction } from 'express';
-import { validateBody, validateQuery, validateParams } from '../api/middleware/validate';
+import { validateBody, validateQuery, validateParams } from '../middleware/validation.middleware';
 import { requireAuth } from '../middleware/auth.middleware';
-import { requireAdminJwt } from '../middleware/requireAdminJwt.middleware';
+import { requireAdmin } from '../middleware/admin.middleware';
 import { rateLimit } from '../middleware/rate-limit.middleware';
 import { pool } from '../config/db';
+import { computeWebhookSignature as createWebhookSignature } from '../services/webhookDelivery.service';
 import {
   createWebhookGroup9BodySchema,
   webhookIdParamGroup9Schema,
@@ -33,12 +34,7 @@ export interface WebhookSubscription {
 
 export const webhookSubscriptionsStore: Map<string, WebhookSubscription> = new Map();
 
-export function computeWebhookSignature(payload: string | Buffer | object, secret: string): string {
-  const data = typeof payload === 'string' || Buffer.isBuffer(payload)
-    ? payload
-    : JSON.stringify(payload);
-  return crypto.createHmac('sha256', secret).update(data).digest('hex');
-}
+export const computeWebhookSignature = createWebhookSignature;
 
 export function verifyWebhookSignature(
   payload: string | Buffer | object,
@@ -96,7 +92,7 @@ router.post(
       const body = req.body as CreateWebhookGroup9Body;
       const userId = (req as unknown as { userId?: string }).userId;
 
-      const id = `whk-${Date.now()}`;
+      const id = `whk-${crypto.randomUUID()}`;
       const secret = body.secret || crypto.randomBytes(32).toString('hex');
 
       const newWebhook: WebhookSubscription = {
@@ -110,6 +106,12 @@ router.post(
         created_at: new Date().toISOString(),
       };
 
+      await pool.query(
+        `INSERT INTO webhook_subscriptions
+           (id, user_id, url, secret, topics, description, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, 'active', NOW())`,
+        [id, userId ?? null, newWebhook.url, secret, newWebhook.topics, newWebhook.description],
+      );
       webhookSubscriptionsStore.set(id, newWebhook);
 
       res.status(201).json({
@@ -138,22 +140,17 @@ router.get(
     try {
       const userId = (req as unknown as { userId?: string }).userId;
 
-      const mockSubscriptions = [
-        {
-          id: 'whk-sample-01',
-          user_id: userId,
-          url: 'https://example-bot.com/webhooks/bankerchanger',
-          topics: ['market.resolved', 'payout.distributed'],
-          description: 'Production alert bot',
-          status: 'active',
-          last_delivery_at: new Date(Date.now() - 3600000).toISOString(),
-          created_at: new Date(Date.now() - 86400000).toISOString(),
-        },
-      ];
+      const { rows: subscriptions } = await pool.query(
+        `SELECT id, user_id, url, topics, description, status, created_at
+           FROM webhook_subscriptions
+          WHERE user_id = $1 AND status = 'active'
+          ORDER BY created_at DESC`,
+        [userId ?? null],
+      );
 
       res.status(200).json({
         success: true,
-        data: mockSubscriptions,
+        data: subscriptions,
       });
     } catch (err) {
       next(err);
@@ -177,6 +174,12 @@ router.delete(
     try {
       const { id } = req.params as unknown as WebhookIdParamGroup9;
 
+      await pool.query(
+        `UPDATE webhook_subscriptions
+            SET status = 'inactive'
+          WHERE id = $1 AND user_id = $2`,
+        [id, (req as unknown as { userId?: string }).userId ?? null],
+      );
       webhookSubscriptionsStore.delete(id);
 
       res.status(200).json({
@@ -245,8 +248,17 @@ router.post(
 
       const webhookId = (req.headers['x-webhook-id'] as string) || (req.query.webhook_id as string) || req.body?.webhook_id;
       let secret = process.env.WEBHOOK_SIGNING_SECRET || 'default-webhook-secret-key-32-chars';
-      if (webhookId && webhookSubscriptionsStore.has(webhookId)) {
-        secret = webhookSubscriptionsStore.get(webhookId)!.secret;
+      if (webhookId) {
+        const subscription = webhookSubscriptionsStore.get(webhookId);
+        if (subscription) {
+          secret = subscription.secret;
+        } else {
+          const { rows } = await pool.query(
+            'SELECT secret FROM webhook_subscriptions WHERE id = $1 AND status = $2',
+            [webhookId, 'active'],
+          );
+          if (rows[0]) secret = rows[0].secret;
+        }
       }
 
       const isValid = verifyWebhookSignature(req.body, signature, secret);
@@ -345,27 +357,47 @@ router.get(
     try {
       const query = req.query as unknown as ListDeliveriesGroup9Query;
       const { page = 1, limit = 20, status } = query;
+      const userId = (req as unknown as { userId?: string }).userId;
 
-      const mockDeliveries = [
-        {
-          delivery_id: 'del-901',
-          webhook_id: query.webhook_id || 'whk-sample-01',
-          event_type: 'market.resolved',
-          status: status || 'success',
-          http_status: 200,
-          attempts: 1,
-          created_at: new Date(Date.now() - 1200000).toISOString(),
-        },
-      ];
+      const values: unknown[] = [userId ?? null];
+      const conditions: string[] = ['s.user_id = $1'];
+      if (query.webhook_id) {
+        values.push(query.webhook_id);
+        conditions.push(`d.webhook_id = $${values.length}`);
+      }
+      if (status) {
+        values.push(status);
+        conditions.push(`d.status = $${values.length}`);
+      }
+      const where = `WHERE ${conditions.join(' AND ')}`;
+      const { rows: countRows } = await pool.query(
+        `SELECT COUNT(*)::int AS total
+           FROM webhook_deliveries d
+           JOIN webhook_subscriptions s ON s.id = d.webhook_id
+           ${where}`,
+        values,
+      );
+      const offset = (page - 1) * limit;
+      const { rows: deliveries } = await pool.query(
+        `SELECT d.id AS delivery_id, d.webhook_id, d.event_type, d.status,
+                d.last_error_response_code, d.last_error,
+                d.attempt_count AS attempts, d.created_at, d.delivered_at
+           FROM webhook_deliveries d
+           JOIN webhook_subscriptions s ON s.id = d.webhook_id
+           ${where}
+          ORDER BY d.created_at DESC
+          LIMIT $${values.length + 1} OFFSET $${values.length + 2}`,
+        [...values, limit, offset],
+      );
 
       res.status(200).json({
         success: true,
         pagination: {
           page,
           limit,
-          total: mockDeliveries.length,
+          total: countRows[0].total,
         },
-        data: mockDeliveries,
+        data: deliveries,
       });
     } catch (err) {
       next(err);
@@ -383,7 +415,7 @@ router.get(
 router.post(
   '/admin/replay',
   rateLimit({ windowMs: 60_000, max: 10, keyBy: 'ip' }),
-  requireAdminJwt,
+  requireAdmin,
   validateBody(replayWebhookDeliveriesGroup9BodySchema),
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

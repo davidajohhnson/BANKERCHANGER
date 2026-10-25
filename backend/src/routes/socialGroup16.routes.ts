@@ -13,7 +13,7 @@ import {
   unfollowCopyTradeGroup16ParamsSchema,
   listCopyTradesGroup16QuerySchema,
 } from '../schemas/socialGroup16.schemas';
-import { validateBody, validateParams, validateQuery } from '../api/middleware/validate';
+import { validateBody, validateParams, validateQuery } from '../middleware/validation.middleware';
 import { requireAuth } from '../middleware/auth.middleware';
 import { rateLimit } from '../middleware/rate-limit.middleware';
 import { AppError } from '../utils/AppError';
@@ -426,7 +426,7 @@ router.get(
 );
 
 import { isProfaneContent, addBlockedWords, getBlockedWords } from '../services/profanity.service';
-import { requireAdminJwt } from '../middleware/requireAdminJwt.middleware';
+import { requireAdmin } from '../middleware/admin.middleware';
 
 /**
  * @swagger
@@ -490,7 +490,7 @@ router.post(
  */
 router.post(
   '/admin/blocked-words',
-  requireAdminJwt,
+  requireAdmin,
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { words, word } = req.body;

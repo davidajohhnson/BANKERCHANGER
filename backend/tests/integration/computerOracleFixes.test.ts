@@ -1,9 +1,28 @@
 import request from 'supertest';
 import express from 'express';
+
+jest.mock('../../src/config/env', () => ({
+  getEnv: jest.fn().mockReturnValue({
+    ADMIN_JWT_SECRET: 'test-admin-secret-key-32-chars-long!',
+    JWT_SECRET: 'test-user-secret-key-32-chars-long!',
+    JWT_ACCESS_SECRET: 'test-user-secret-key-32-chars-long!',
+    JWT_REFRESH_SECRET: 'test-user-secret-key-32-chars-long!',
+    JWT_TEMP_SECRET: 'test-user-secret-key-32-chars-long!',
+    JWT_RESET_SECRET: 'test-user-secret-key-32-chars-long!',
+    NODE_ENV: 'test',
+  }),
+}));
+
+jest.mock('../../src/config/db', () => ({
+  pool: {
+    connect: jest.fn(),
+    query: jest.fn(),
+  },
+}));
+
 import {
   generateBackupCodes,
   validateBackupCode,
-  registerTestBackupCode,
   resetBackupCodes,
 } from '../../src/services/totp.service';
 import socialRouter from '../../src/routes/socialGroup16.routes';
@@ -25,6 +44,7 @@ import userActivityRouter, {
 
 describe('ComputerOracle fixes: Issues #676, #677, #678, #684', () => {
   let app: express.Express;
+  const backupCodeRecords = new Map<string, { id: string; userId: string; codeHash: string; usedAt: Date | null }>();
 
   beforeEach(() => {
     app = express();
@@ -32,6 +52,72 @@ describe('ComputerOracle fixes: Issues #676, #677, #678, #684', () => {
     app.use('/api/v2/social', socialRouter);
     app.use('/api/v2/governance', governanceRouter);
     app.use('/api/v1/user-activity', userActivityRouter);
+
+    backupCodeRecords.clear();
+    const { pool } = require('../../src/config/db');
+
+    (pool.query as jest.Mock).mockImplementation(async (sql: string, params: unknown[] = []) => {
+      const query = sql.trim();
+
+      if (query.startsWith('INSERT INTO totp_backup_codes')) {
+        const [id, userId, codeHash] = params as [string, string, string];
+        backupCodeRecords.set(`${userId}:${codeHash}`, { id, userId, codeHash, usedAt: null });
+        return { rows: [] };
+      }
+
+      if (query.startsWith('UPDATE totp_backup_codes')) {
+        const [userId, codeHash] = params as [string, string];
+        const key = `${userId}:${codeHash}`;
+        const record = backupCodeRecords.get(key);
+
+        if (!record || record.usedAt !== null) {
+          return { rows: [] };
+        }
+
+        record.usedAt = new Date();
+        return { rows: [{ id: record.id }] };
+      }
+
+      if (query.startsWith('SELECT id, used_at')) {
+        const [userId, codeHash] = params as [string, string];
+        const key = `${userId}:${codeHash}`;
+        const record = backupCodeRecords.get(key);
+
+        return { rows: record ? [{ id: record.id, used_at: record.usedAt }] : [] };
+      }
+
+      return { rows: [] };
+    });
+
+    (pool.connect as jest.Mock).mockImplementation(async () => ({
+      query: jest.fn(async (sql: string, params: unknown[] = []) => {
+        const query = sql.trim();
+
+        if (query.startsWith('UPDATE totp_backup_codes')) {
+          const [userId, codeHash] = params as [string, string];
+          const key = `${userId}:${codeHash}`;
+          const record = backupCodeRecords.get(key);
+
+          if (!record || record.usedAt !== null) {
+            return { rows: [] };
+          }
+
+          record.usedAt = new Date();
+          return { rows: [{ id: record.id }] };
+        }
+
+        if (query.startsWith('SELECT id, used_at')) {
+          const [userId, codeHash] = params as [string, string];
+          const key = `${userId}:${codeHash}`;
+          const record = backupCodeRecords.get(key);
+
+          return { rows: record ? [{ id: record.id, used_at: record.usedAt }] : [] };
+        }
+
+        return { rows: [] };
+      }),
+      release: jest.fn(),
+    }));
 
     resetBackupCodes();
     resetBlockedWords();
@@ -41,9 +127,7 @@ describe('ComputerOracle fixes: Issues #676, #677, #678, #684', () => {
   describe('Issue #676: TOTP Single-Use Backup Code Enforcement', () => {
     it('allows a backup code to be used once, and rejects second use with 401', async () => {
       const userId = 'user-test-123';
-      const testCode = 'ABCD-1234';
-
-      registerTestBackupCode(userId, testCode);
+      const [testCode] = await generateBackupCodes(userId, 1);
 
       // First use: must succeed
       await expect(validateBackupCode(userId, testCode)).resolves.toBe(true);
@@ -53,6 +137,31 @@ describe('ComputerOracle fixes: Issues #676, #677, #678, #684', () => {
         statusCode: 401,
         message: 'Backup code already used',
       });
+    });
+
+    it('rejects simultaneous backup-code submissions so only one session can use a single code', async () => {
+      const userId = 'user-test-concurrent';
+      const [testCode] = await generateBackupCodes(userId, 1);
+
+      const results = await Promise.allSettled([
+        validateBackupCode(userId, testCode),
+        validateBackupCode(userId, testCode),
+        validateBackupCode(userId, testCode),
+      ]);
+
+      const fulfilled = results.filter((result) => result.status === 'fulfilled');
+      const rejected = results.filter((result) => result.status === 'rejected');
+
+      expect(fulfilled).toHaveLength(1);
+      expect(fulfilled[0]).toMatchObject({ status: 'fulfilled', value: true });
+      expect(rejected).toHaveLength(2);
+      expect(rejected.every((result) => result.status === 'rejected')).toBe(true);
+      expect(rejected.map((result) => result.status === 'rejected' && (result as PromiseRejectedResult).reason)).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ statusCode: 401, message: 'Backup code already used' }),
+          expect.objectContaining({ statusCode: 401, message: 'Backup code already used' }),
+        ])
+      );
     });
   });
 

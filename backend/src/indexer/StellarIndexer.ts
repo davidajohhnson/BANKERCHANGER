@@ -1,9 +1,9 @@
 // ============================================================
 // BANKERCHANGER — Stellar Blockchain Indexer
 //
-// Listens to the Stellar network for contract events emitted
-// by MarketFactory, Market, and Treasury contracts.
-// Persists all relevant state changes to the PostgreSQL DB.
+// @deprecated Deprecated in favor of the standalone indexer microservice (/indexer).
+// The standalone microservice in /indexer is now the single authoritative indexer.
+// Backend reads events directly from the shared PostgreSQL DB (blockchain_events).
 // ============================================================
 
 import { pool } from '../config/db';
@@ -11,6 +11,7 @@ import { rpc, Address, xdr } from '@stellar/stellar-sdk';
 import { subscribeToContractEvents, fetchHistoricalEvents } from '../services/StellarService';
 import { cacheDeletePattern } from '../services/cache.service';
 import { broadcastMarketResolved } from '../websocket/realtime';
+import { enqueueWebhookEvent } from '../services/webhookDelivery.service';
 
 // Raw event shape returned by Stellar RPC / Horizon
 export interface RawStellarEvent {
@@ -61,6 +62,17 @@ const indexerHealth: IndexerHealth = {
 
 export function getIndexerHealth(): IndexerHealth {
   return { ...indexerHealth };
+}
+
+export async function getLatestLedgerCloseTime(): Promise<Date> {
+  const latestLedger = await server.getLatestLedger();
+  const closeTime = new Date(latestLedger.closeTime);
+
+  if (Number.isNaN(closeTime.getTime())) {
+    throw new Error('Stellar RPC returned an invalid latest ledger close time');
+  }
+
+  return closeTime;
 }
 
 // ── Exponential backoff for RPC failures ────────────────────────────────────
@@ -676,6 +688,18 @@ export async function handleMarketResolved(event: RawStellarEvent): Promise<void
           SET status = 'resolved', outcome = $1, resolved_at = $2, oracle_used = $3, updated_at = NOW()
         WHERE market_id = $4`,
       [outcome, resolvedAt, oracleAddress ?? null, marketId],
+    );
+
+    await enqueueWebhookEvent(
+      client,
+      'market.resolved',
+      event.tx_hash || `${marketId}:${resolvedAt}`,
+      {
+        id: event.tx_hash,
+        type: 'market.resolved',
+        created_at: resolvedAt,
+        data: p,
+      },
     );
 
     const { rows: [market] } = await client.query(

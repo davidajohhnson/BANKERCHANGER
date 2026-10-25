@@ -219,7 +219,7 @@ fn test_withdraw_below_reserve_fails() {
     );
     assert_eq!(
         result.unwrap_err(),
-        Ok(ContractError::InsufficientReserve)
+        Ok(ContractError::ReserveFloorBreached)
     );
 }
 
@@ -240,6 +240,22 @@ fn test_withdraw_leaving_exactly_reserve_succeeds() {
         1_000_000_000_i128,
         "balance after withdrawal should equal the reserve"
     );
+}
+
+#[test]
+fn competing_withdrawals_cannot_both_consume_reserved_fees() {
+    let (env, client, admin, _market, token) = funded_treasury(5_000_000_000);
+    client.set_minimum_reserve(&admin, &1_000_000_000);
+    let first_destination = Address::generate(&env);
+    let second_destination = Address::generate(&env);
+
+    // Model two withdrawals submitted against the same starting balance. Once
+    // the first reserves and transfers its amount, the second must re-check the
+    // updated accounting before it can pass the reserve floor.
+    client.withdraw_fees(&admin, &token, &3_000_000_000, &first_destination);
+    let second = client.try_withdraw_fees(&admin, &token, &1_100_000_000, &second_destination);
+    assert_eq!(second.unwrap_err(), Ok(ContractError::ReserveFloorBreached));
+    assert_eq!(client.get_accumulated_fees(&token), 2_000_000_000);
 }
 
 #[test]
@@ -274,4 +290,153 @@ fn test_set_minimum_reserve_to_zero_disables_check() {
     // Withdraw almost everything (leave 1 XLM for MIN_WITHDRAWAL check to pass)
     client.withdraw_fees(&admin, &token, &4_990_000_000_i128, &dest);
     assert_eq!(client.get_accumulated_fees(&token), 10_000_000_i128);
+}
+
+// ── Issue #856 — Fee Distribution Split BPS Validation Tests ──────────────────
+
+use boxmeout_shared::types::FeeDistributionSplit;
+
+#[test]
+fn test_valid_fee_distribution_sums_to_10000_accepted() {
+    let env = Env::default();
+    let (client, admin, _token) = setup_treasury(&env);
+
+    let mut splits = Vec::<FeeDistributionSplit>::new(&env);
+    let a = Address::generate(&env);
+    let b = Address::generate(&env);
+    splits.push_back(FeeDistributionSplit { recipient: a.clone(), share_bps: 7_000 });
+    splits.push_back(FeeDistributionSplit { recipient: b.clone(), share_bps: 3_000 });
+
+    let result = client.try_set_fee_distribution(&admin, &splits);
+    assert!(result.is_ok(), "valid 10000 BPS split should succeed");
+
+    let stored = client.get_fee_distribution();
+    assert_eq!(stored.len(), 2);
+    assert_eq!(stored.get(0).unwrap().share_bps, 7_000);
+    assert_eq!(stored.get(1).unwrap().share_bps, 3_000);
+}
+
+#[test]
+fn test_fee_distribution_sum_less_than_10000_rejected() {
+    let env = Env::default();
+    let (client, admin, _token) = setup_treasury(&env);
+
+    let mut splits = Vec::<FeeDistributionSplit>::new(&env);
+    let a = Address::generate(&env);
+    let b = Address::generate(&env);
+    splits.push_back(FeeDistributionSplit { recipient: a, share_bps: 5_000 });
+    splits.push_back(FeeDistributionSplit { recipient: b, share_bps: 4_999 }); // sum = 9999
+
+    let result = client.try_set_fee_distribution(&admin, &splits);
+    assert!(result.is_err(), "split summing to 9999 BPS must be rejected");
+    assert_eq!(result.unwrap_err(), Ok(ContractError::InvalidFeeSplit));
+}
+
+#[test]
+fn test_fee_distribution_sum_greater_than_10000_rejected() {
+    let env = Env::default();
+    let (client, admin, _token) = setup_treasury(&env);
+
+    let mut splits = Vec::<FeeDistributionSplit>::new(&env);
+    let a = Address::generate(&env);
+    let b = Address::generate(&env);
+    splits.push_back(FeeDistributionSplit { recipient: a, share_bps: 5_000 });
+    splits.push_back(FeeDistributionSplit { recipient: b, share_bps: 5_001 }); // sum = 10001
+
+    let result = client.try_set_fee_distribution(&admin, &splits);
+    assert!(result.is_err(), "split summing to 10001 BPS must be rejected");
+    assert_eq!(result.unwrap_err(), Ok(ContractError::InvalidFeeSplit));
+}
+
+#[test]
+fn test_fee_distribution_empty_splits_rejected() {
+    let env = Env::default();
+    let (client, admin, _token) = setup_treasury(&env);
+
+    let empty_splits = Vec::<FeeDistributionSplit>::new(&env);
+    let result = client.try_set_fee_distribution(&admin, &empty_splits);
+    assert!(result.is_err(), "empty split list must be rejected");
+    assert_eq!(result.unwrap_err(), Ok(ContractError::InvalidFeeSplit));
+}
+
+#[test]
+fn test_fee_distribution_zero_share_entry_rejected() {
+    let env = Env::default();
+    let (client, admin, _token) = setup_treasury(&env);
+
+    let mut splits = Vec::<FeeDistributionSplit>::new(&env);
+    let a = Address::generate(&env);
+    let b = Address::generate(&env);
+    splits.push_back(FeeDistributionSplit { recipient: a, share_bps: 10_000 });
+    splits.push_back(FeeDistributionSplit { recipient: b, share_bps: 0 }); // zero share
+
+    let result = client.try_set_fee_distribution(&admin, &splits);
+    assert!(result.is_err(), "zero-share entry must be rejected");
+    assert_eq!(result.unwrap_err(), Ok(ContractError::InvalidFeeSplit));
+}
+
+#[test]
+fn test_fee_distribution_non_admin_rejected() {
+    let env = Env::default();
+    let (client, _admin, _token) = setup_treasury(&env);
+    let non_admin = Address::generate(&env);
+
+    let mut splits = Vec::<FeeDistributionSplit>::new(&env);
+    let a = Address::generate(&env);
+    splits.push_back(FeeDistributionSplit { recipient: a, share_bps: 10_000 });
+
+    let result = client.try_set_fee_distribution(&non_admin, &splits);
+    assert!(result.is_err(), "non-admin must not be able to set fee distribution");
+    assert_eq!(result.unwrap_err(), Ok(ContractError::Unauthorized));
+}
+
+#[test]
+fn test_fee_distribution_single_recipient_10000_accepted() {
+    let env = Env::default();
+    let (client, admin, _token) = setup_treasury(&env);
+
+    let mut splits = Vec::<FeeDistributionSplit>::new(&env);
+    let a = Address::generate(&env);
+    splits.push_back(FeeDistributionSplit { recipient: a.clone(), share_bps: 10_000 });
+
+    let result = client.try_set_fee_distribution(&admin, &splits);
+    assert!(result.is_ok(), "single recipient with 10000 BPS should succeed");
+
+    let stored = client.get_fee_distribution();
+    assert_eq!(stored.len(), 1);
+    assert_eq!(stored.get(0).unwrap().share_bps, 10_000);
+}
+
+#[test]
+fn test_get_fee_distribution_returns_empty_when_unset() {
+    let env = Env::default();
+    let (client, _admin, _token) = setup_treasury(&env);
+
+    let splits = client.get_fee_distribution();
+    assert_eq!(splits.len(), 0, "unset distribution should return empty vec");
+}
+
+#[test]
+fn test_fee_distribution_can_be_overwritten() {
+    let env = Env::default();
+    let (client, admin, _token) = setup_treasury(&env);
+
+    let mut splits_v1 = Vec::<FeeDistributionSplit>::new(&env);
+    let a = Address::generate(&env);
+    let b = Address::generate(&env);
+    splits_v1.push_back(FeeDistributionSplit { recipient: a.clone(), share_bps: 6_000 });
+    splits_v1.push_back(FeeDistributionSplit { recipient: b.clone(), share_bps: 4_000 });
+    client.set_fee_distribution(&admin, &splits_v1);
+
+    // Overwrite with three-way split
+    let mut splits_v2 = Vec::<FeeDistributionSplit>::new(&env);
+    let c = Address::generate(&env);
+    splits_v2.push_back(FeeDistributionSplit { recipient: a.clone(), share_bps: 5_000 });
+    splits_v2.push_back(FeeDistributionSplit { recipient: b.clone(), share_bps: 3_000 });
+    splits_v2.push_back(FeeDistributionSplit { recipient: c.clone(), share_bps: 2_000 });
+    client.set_fee_distribution(&admin, &splits_v2);
+
+    let stored = client.get_fee_distribution();
+    assert_eq!(stored.len(), 3);
+    assert_eq!(stored.get(2).unwrap().share_bps, 2_000);
 }
