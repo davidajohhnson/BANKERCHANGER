@@ -7,9 +7,10 @@ This document describes the automated PostgreSQL backup infrastructure for BANKE
 **Key Features:**
 - ✅ Daily automated backups (2:00 AM UTC via cron)
 - ✅ AES-256 (OpenSSL) or GPG encryption before remote transfer
+- ✅ SHA-256 checksum generated with every backup and verified before every restore
 - ✅ Local storage persistence (`/var/backups/bankerchanger/`)
 - ✅ Optional Off-Site Remote Storage:
-  - **AWS S3** (via AWS CLI or rclone)
+  - **AWS S3** (via AWS CLI or rclone, with versioning support)
   - **Google Cloud Storage (GCS)** (via gsutil, gcloud, or rclone)
   - **rclone remotes** (compatible with any S3-compatible or cloud object storage)
 - ✅ 30-day retention lifecycle pruning (automatically deletes remote & local backups older than 30 days)
@@ -59,6 +60,14 @@ This document describes the automated PostgreSQL backup infrastructure for BANKE
 │   (Preserved locally; pruned after 30-day retention limit)  │
 └────────────────────────┬────────────────────────────────────┘
                          │
+                         │
+                   sha256sum
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 SHA-256 Checksum Sidecar                    │
+│        (backup.sql.gz.enc.sha256 - integrity proof)         │
+└────────────────────────┬────────────────────────────────────┘
                          │ (Optional Off-Site Upload Step)
                          │
          ┌───────────────┴───────────────┬───────────────────────────────┐
@@ -79,6 +88,11 @@ This document describes the automated PostgreSQL backup infrastructure for BANKE
 ```
 
 ---
+
+Every backup is uploaded and stored together with a `.sha256` sidecar. `restore-db.sh`
+downloads or verifies the sidecar and runs `sha256sum -c` against the encrypted file
+**before** decrypting or touching the database. A missing, malformed, or
+mismatched checksum aborts the restore with exit code `7`.
 
 ## Files & Scripts
 

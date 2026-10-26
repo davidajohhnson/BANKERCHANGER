@@ -9,6 +9,8 @@
  * - Post-maintenance backfill is automatically queued
  */
 
+import { indexerReorgDetectedTotal } from './metrics';
+
 /** How many ledgers to rewind and re-fetch once a re-org is detected. */
 export const REORG_REWIND_LEDGERS = 5;
 
@@ -200,6 +202,7 @@ export function detectLedgerAnomaly(
   }
 
   if (eventLedger < lastProcessedLedger) {
+    indexerReorgDetectedTotal.inc();
     return { type: 'reorg', fromLedger: lastProcessedLedger, toLedger: eventLedger };
   }
 
@@ -239,3 +242,36 @@ export function detectLedgerAnomaly(
 export function computeResyncStartLedger(lastProcessedLedger: number): number {
   return Math.max(1, lastProcessedLedger - REORG_REWIND_LEDGERS);
 }
+
+/**
+ * Computes gap boundary so resync spans [lastProcessedLedger + 1, currentLedger] inclusive
+ * without omitting intermediate ledgers across batch sizes > 100.
+ */
+export function computeResyncRange(
+  lastProcessedLedger: number,
+  currentLedger: number,
+  batchSize = 100,
+): { startLedger: number; endLedger: number; totalGaps: number; batches: Array<{ from: number; to: number }> } {
+  const fromLedger = lastProcessedLedger + 1;
+  const toLedger = currentLedger;
+  const gapSize = Math.max(0, toLedger - fromLedger + 1);
+
+  try {
+    const { indexerResyncGapSize } = require('./metrics');
+    indexerResyncGapSize.set(gapSize);
+  } catch {}
+
+  const batches: Array<{ from: number; to: number }> = [];
+  for (let start = fromLedger; start <= toLedger; start += batchSize) {
+    const end = Math.min(start + batchSize - 1, toLedger);
+    batches.push({ from: start, to: end });
+  }
+
+  return {
+    startLedger: fromLedger,
+    endLedger: toLedger,
+    totalGaps: gapSize,
+    batches,
+  };
+}
+

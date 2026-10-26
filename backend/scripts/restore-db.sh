@@ -8,11 +8,12 @@
 #
 # Description:
 #   Restores PostgreSQL database from encrypted or compressed backups.
-#   Supports downloading backups from:
+#   Supports downloading backups and SHA-256 checksums from:
 #     - AWS S3 (via AWS CLI or rclone)
 #     - Google Cloud Storage (via gcloud, gsutil, or rclone)
 #     - rclone remotes
 #     - Local filesystem (/var/backups/bankerchanger or custom path)
+#   Verifies the SHA-256 checksum before decrypting or restoring anything.
 #   Decrypts backups with OpenSSL AES-256 or GPG.
 #   Decompresses and restores data into specified database.
 #   Validates schema and tables after restore.
@@ -37,6 +38,7 @@
 #   4 - Decompression failed
 #   5 - Database restore failed
 #   6 - Validation failed
+#   7 - Checksum verification failed (missing, malformed, or mismatched)
 #
 # ============================================================================
 
@@ -212,6 +214,11 @@ validate_config() {
     ((errors++))
   fi
 
+  if ! command -v sha256sum &>/dev/null; then
+    log_error "sha256sum tool not found in PATH"
+    ((errors++))
+  fi
+
   # Validate remote storage requirements if not using local file
   if [[ -z "$LOCAL_FILE" && "$REMOTE_STORAGE" != "local" ]]; then
     case "$REMOTE_STORAGE" in
@@ -277,32 +284,32 @@ list_backups() {
     s3)
       if [[ "$REMOTE_TOOL" == "rclone" ]]; then
         local rclone_dest="${RCLONE_DEST:-s3:${S3_BUCKET}/${S3_PREFIX%/}}"
-        rclone lsl "$rclone_dest" | tee -a "$LOG_FILE"
+        rclone lsl "$rclone_dest" | awk '$NF !~ /\.sha256$/' | tee -a "$LOG_FILE"
       else
         aws s3 ls "s3://${S3_BUCKET}/${S3_PREFIX%/}/" \
           --region "$AWS_REGION" \
           --human-readable \
           --recursive | \
-          awk '{print $1 " " $2 " " $3 " " $4}' | \
+          awk '$4 !~ /\.sha256$/ {print $1 " " $2 " " $3 " " $4}' | \
           tee -a "$LOG_FILE"
       fi
       ;;
     gcs)
       if [[ "$REMOTE_TOOL" == "rclone" ]]; then
         local rclone_dest="${RCLONE_DEST:-gcs:${GCS_BUCKET}/${GCS_PREFIX%/}}"
-        rclone lsl "$rclone_dest" | tee -a "$LOG_FILE"
+        rclone lsl "$rclone_dest" | awk '$NF !~ /\.sha256$/' | tee -a "$LOG_FILE"
       elif [[ "$REMOTE_TOOL" == "gcloud" ]]; then
-        gcloud storage ls --long "gs://${GCS_BUCKET}/${GCS_PREFIX%/}/" | tee -a "$LOG_FILE"
+        gcloud storage ls --long "gs://${GCS_BUCKET}/${GCS_PREFIX%/}/" | awk '$NF !~ /\.sha256$/' | tee -a "$LOG_FILE"
       else
-        gsutil ls -l "gs://${GCS_BUCKET}/${GCS_PREFIX%/}/" | tee -a "$LOG_FILE"
+        gsutil ls -l "gs://${GCS_BUCKET}/${GCS_PREFIX%/}/" | awk '$NF !~ /\.sha256$/' | tee -a "$LOG_FILE"
       fi
       ;;
     rclone)
-      rclone lsl "$RCLONE_DEST" | tee -a "$LOG_FILE"
+      rclone lsl "$RCLONE_DEST" | awk '$NF !~ /\.sha256$/' | tee -a "$LOG_FILE"
       ;;
     local)
       if [[ -d "$BACKUP_DIR" ]]; then
-        ls -lh "$BACKUP_DIR" | tee -a "$LOG_FILE"
+        find "$BACKUP_DIR" -maxdepth 1 -type f ! -name "*.sha256" -exec ls -lh {} + 2>/dev/null | tee -a "$LOG_FILE"
       else
         log_warn "Local backup directory $BACKUP_DIR does not exist"
       fi
@@ -315,33 +322,37 @@ get_latest_backup_remote() {
     s3)
       if [[ "$REMOTE_TOOL" == "rclone" ]]; then
         local rclone_dest="${RCLONE_DEST:-s3:${S3_BUCKET}/${S3_PREFIX%/}}"
-        rclone lsf "$rclone_dest" | sort | tail -1
+        rclone lsf "$rclone_dest" | awk '!/\.sha256$/' | sort | tail -1
       else
         aws s3 ls "s3://${S3_BUCKET}/${S3_PREFIX%/}/" \
           --region "$AWS_REGION" \
           --recursive | \
+          awk '$4 !~ /\.sha256$/ {print $4}' | \
           sort | \
-          tail -1 | \
-          awk '{print $4}'
+          tail -1
       fi
       ;;
     gcs)
       if [[ "$REMOTE_TOOL" == "rclone" ]]; then
         local rclone_dest="${RCLONE_DEST:-gcs:${GCS_BUCKET}/${GCS_PREFIX%/}}"
-        rclone lsf "$rclone_dest" | sort | tail -1
+        rclone lsf "$rclone_dest" | awk '!/\.sha256$/' | sort | tail -1
       elif [[ "$REMOTE_TOOL" == "gcloud" ]]; then
-        gcloud storage ls "gs://${GCS_BUCKET}/${GCS_PREFIX%/}/" 2>/dev/null | sort | tail -1
+        gcloud storage ls "gs://${GCS_BUCKET}/${GCS_PREFIX%/}/" 2>/dev/null | awk '!/\.sha256$/' | sort | tail -1
       else
-        gsutil ls "gs://${GCS_BUCKET}/${GCS_PREFIX%/}/" 2>/dev/null | sort | tail -1
+        gsutil ls "gs://${GCS_BUCKET}/${GCS_PREFIX%/}/" 2>/dev/null | awk '!/\.sha256$/' | sort | tail -1
       fi
       ;;
     rclone)
-      rclone lsf "$RCLONE_DEST" | sort | tail -1
+      rclone lsf "$RCLONE_DEST" | awk '!/\.sha256$/' | sort | tail -1
       ;;
     local)
-      find "$BACKUP_DIR" -type f \( -name "*.sql*" -o -name "*.enc" -o -name "*.gpg" \) 2>/dev/null | sort | tail -1
+      find "$BACKUP_DIR" -type f \( -name "*.sql*" -o -name "*.enc" -o -name "*.gpg" \) ! -name "*.sha256" 2>/dev/null | sort | tail -1
       ;;
   esac
+}
+
+get_latest_backup() {
+  get_latest_backup_remote "$@"
 }
 
 download_backup() {
@@ -403,6 +414,119 @@ download_backup() {
   else
     log_error "Download failed or downloaded file is empty"
     return 2
+  fi
+}
+
+download_checksum() {
+  local remote_path="$1"
+  local local_dest="$2"
+
+  log_info "Downloading checksum: $remote_path -> $local_dest"
+
+  case "$REMOTE_STORAGE" in
+    s3)
+      if [[ "$REMOTE_TOOL" == "rclone" ]]; then
+        local rclone_src="${RCLONE_DEST:-s3:${S3_BUCKET}/${S3_PREFIX%/}}"
+        rclone copyto "${rclone_src%/}/$(basename "$remote_path")" "$local_dest" 2>> "$LOG_FILE" || true
+      else
+        local s3_uri
+        if [[ "$remote_path" == s3://* ]]; then
+          s3_uri="$remote_path"
+        elif [[ "$remote_path" == */* ]]; then
+          s3_uri="s3://${S3_BUCKET}/${remote_path}"
+        else
+          s3_uri="s3://${S3_BUCKET}/${S3_PREFIX%/}/${remote_path}"
+        fi
+        aws s3 cp "$s3_uri" "$local_dest" --region "$AWS_REGION" 2>> "$LOG_FILE" || true
+      fi
+      ;;
+    gcs)
+      if [[ "$REMOTE_TOOL" == "rclone" ]]; then
+        local rclone_src="${RCLONE_DEST:-gcs:${GCS_BUCKET}/${GCS_PREFIX%/}}"
+        rclone copyto "${rclone_src%/}/$(basename "$remote_path")" "$local_dest" 2>> "$LOG_FILE" || true
+      elif [[ "$REMOTE_TOOL" == "gcloud" ]]; then
+        local gcs_uri
+        if [[ "$remote_path" == gs://* ]]; then
+          gcs_uri="$remote_path"
+        else
+          gcs_uri="gs://${GCS_BUCKET}/${GCS_PREFIX%/}/${remote_path}"
+        fi
+        gcloud storage cp "$gcs_uri" "$local_dest" 2>> "$LOG_FILE" || true
+      else
+        local gcs_uri
+        if [[ "$remote_path" == gs://* ]]; then
+          gcs_uri="$remote_path"
+        else
+          gcs_uri="gs://${GCS_BUCKET}/${GCS_PREFIX%/}/${remote_path}"
+        fi
+        gsutil cp "$gcs_uri" "$local_dest" 2>> "$LOG_FILE" || true
+      fi
+      ;;
+    rclone)
+      rclone copyto "${RCLONE_DEST%/}/$(basename "$remote_path")" "$local_dest" 2>> "$LOG_FILE" || true
+      ;;
+    local)
+      if [[ -f "$remote_path" ]]; then
+        cp "$remote_path" "$local_dest" 2>/dev/null || true
+      fi
+      ;;
+  esac
+
+  if [[ -f "$local_dest" && -s "$local_dest" ]]; then
+    log_info "Checksum download completed"
+    return 0
+  else
+    log_error "Checksum download failed; refusing to restore an unverified backup"
+    return 7
+  fi
+}
+
+verify_checksum() {
+  local encrypted_file="$1"
+  local checksum_file="$2"
+
+  log_info "Verifying SHA-256 checksum of downloaded backup..."
+
+  if [[ ! -s "$checksum_file" ]]; then
+    log_error "Checksum file is missing or empty; refusing to restore an unverified backup"
+    return 7
+  fi
+
+  local expected_name
+  expected_name=$(basename "$encrypted_file")
+
+  local entry_count digest recorded_name
+  entry_count=$(awk 'NF' "$checksum_file" | wc -l)
+
+  if [[ "$entry_count" -ne 1 ]]; then
+    log_error "Malformed checksum file: expected exactly one entry, found $entry_count"
+    return 7
+  fi
+
+  read -r digest recorded_name _ < "$checksum_file"
+
+  # Reject malformed digests and path traversal / mismatched file references
+  if [[ ! "$digest" =~ ^[0-9a-fA-F]{64}$ ]]; then
+    log_error "Malformed checksum file: invalid SHA-256 digest"
+    return 7
+  fi
+
+  if [[ "$recorded_name" != "$expected_name" ]]; then
+    log_error "Checksum file references unexpected file: ${recorded_name:-<empty>} (expected $expected_name)"
+    return 7
+  fi
+
+  local check_dir
+  check_dir="$(cd "$(dirname "$encrypted_file")" && pwd)"
+  local check_name
+  check_name="$(basename "$checksum_file")"
+
+  if ( cd "$check_dir" && sha256sum -c --strict "$check_name" ) >> "$LOG_FILE" 2>&1; then
+    log_info "Checksum verification passed"
+    return 0
+  else
+    log_error "Checksum verification FAILED; backup is corrupted or tampered with"
+    return 7
   fi
 }
 
@@ -485,10 +609,10 @@ create_target_database() {
 
   if psql "$DATABASE_URL" -tc "SELECT 1 FROM pg_database WHERE datname = '$target_db'" | grep -q 1; then
     log_warn "Target database already exists: $target_db; recreating..."
-    psql "$DATABASE_URL" -c "DROP DATABASE IF EXISTS \"$target_db\";" 2>> "$LOG_FILE"
+    psql "$DATABASE_URL" -c "DROP DATABASE IF EXISTS $target_db;" 2>> "$LOG_FILE"
   fi
 
-  if psql "$DATABASE_URL" -c "CREATE DATABASE \"$target_db\";" 2>> "$LOG_FILE"; then
+  if psql "$DATABASE_URL" -c "CREATE DATABASE $target_db;" 2>> "$LOG_FILE"; then
     log_info "Database created: $target_db"
     return 0
   else
@@ -633,27 +757,64 @@ main() {
     source_file="$latest"
     log_info "Latest backup detected: $source_file"
   elif [[ -n "$backup_timestamp" ]]; then
-    # Search for matching file
-    source_file="${DB_NAME}_backup_${backup_timestamp}.sql.gz.enc"
+    # Support both bankerchanger_TIMESTAMP and bankerchanger_backup_TIMESTAMP naming
+    source_file="${DB_NAME}_${backup_timestamp}.sql.gz.enc"
   else
     log_error "Must specify --file, --latest, or --backup-timestamp"
     print_usage
     exit 1
   fi
 
+  local backup_path="$source_file"
+  local checksum_path="${source_file}.sha256"
   local downloaded_file="$TEMP_DIR/$(basename "$source_file")"
+  local checksum_file="$TEMP_DIR/$(basename "$checksum_path")"
   local sql_file="$TEMP_DIR/restored_dump.sql"
 
   # Acquire file
   if [[ -n "$LOCAL_FILE" ]]; then
     downloaded_file="$LOCAL_FILE"
+    checksum_file="${LOCAL_FILE}.sha256"
   else
-    if ! download_backup "$source_file" "$downloaded_file"; then
-      exit 2
+    if ! download_backup "$backup_path" "$downloaded_file"; then
+      # If primary timestamp format failed and backup-timestamp was specified, try alternative naming format
+      if [[ -n "$backup_timestamp" && "$source_file" == "${DB_NAME}_${backup_timestamp}.sql.gz.enc" ]]; then
+        source_file="${DB_NAME}_backup_${backup_timestamp}.sql.gz.enc"
+        backup_path="$source_file"
+        checksum_path="${source_file}.sha256"
+        downloaded_file="$TEMP_DIR/$(basename "$source_file")"
+        checksum_file="$TEMP_DIR/$(basename "$checksum_path")"
+        if ! download_backup "$backup_path" "$downloaded_file"; then
+          exit 2
+        fi
+      else
+        exit 2
+      fi
     fi
   fi
 
-  # Decrypt & Decompress
+  # Download and verify checksum before any decryption or restore operation
+  if [[ -n "$LOCAL_FILE" ]]; then
+    if [[ -f "$checksum_file" ]]; then
+      if ! verify_checksum "$downloaded_file" "$checksum_file"; then
+        log_error "Aborting restore: backup integrity could not be verified"
+        exit 7
+      fi
+    else
+      log_warn "No checksum sidecar found for local backup file: $checksum_file; skipping checksum verification"
+    fi
+  else
+    if ! download_checksum "$checksum_path" "$checksum_file"; then
+      exit 7
+    fi
+
+    if ! verify_checksum "$downloaded_file" "$checksum_file"; then
+      log_error "Aborting restore: backup integrity could not be verified"
+      exit 7
+    fi
+  fi
+
+  # Decrypt backup
   if ! decrypt_backup "$downloaded_file" "$sql_file"; then
     exit 3
   fi

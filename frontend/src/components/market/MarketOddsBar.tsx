@@ -1,15 +1,19 @@
 interface MarketOddsBarProps {
   pool_a: string;
   pool_b: string;
-  pool_draw: string;
+  pool_draw?: string;
   fighter_a: string;
   fighter_b: string;
+  size?: 'sm' | 'md' | 'lg';
 }
 
-const EQUAL = 100n / 3n; // 33n
-
-function pct(pool: bigint, total: bigint): bigint {
-  return total === 0n ? EQUAL : (pool * 100n) / total;
+function safeBigInt(val?: string): bigint {
+  if (!val) return 0n;
+  try {
+    return BigInt(val);
+  } catch {
+    return 0n;
+  }
 }
 
 export function MarketOddsBar({
@@ -18,25 +22,28 @@ export function MarketOddsBar({
   pool_draw,
   fighter_a,
   fighter_b,
+  size = 'md',
 }: MarketOddsBarProps): JSX.Element {
-  const a = BigInt(pool_a);
-  const b = BigInt(pool_b);
-  const d = BigInt(pool_draw);
+  const a = BigInt(pool_a || '0');
+  const b = BigInt(pool_b || '0');
+  const d = BigInt(pool_draw || '0');
   const total = a + b + d;
 
   const pA = pct(a, total);
   const pD = pct(d, total);
   // Assign remainder to B to ensure segments always sum to 100
-  const pB = 100n - pA - pD;
+  const pB = total === 0n ? 34n : (100n - pA - pD);
 
   const segments = [
     { label: fighter_a, pct: pA, color: 'bg-blue-600' },
-    { label: 'Draw',    pct: pD, color: 'bg-yellow-500' },
+    ...(pD > 0n ? [{ label: 'Draw', pct: pD, color: 'bg-yellow-500' }] : []),
     { label: fighter_b, pct: pB, color: 'bg-red-600' },
   ];
 
+  const heightClass = size === 'sm' ? 'h-6' : size === 'lg' ? 'h-10' : 'h-8';
+
   return (
-    <div className="flex w-full h-8 rounded overflow-hidden">
+    <div className={`flex w-full ${heightClass} rounded overflow-hidden`} role="img" aria-label="Market odds bar">
       {segments.map(({ label, pct: p, color }) => (
         <div
           key={label}

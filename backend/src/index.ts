@@ -4,9 +4,6 @@ import { validateEnv } from "./config/env";
 // Validate environment variables first before importing anything else that uses them!
 const env = validateEnv();
 
-import { requireAdminJwt } from './middleware/requireAdminJwt.middleware';
-import operationsRouter from './routes/operations.routes';
-
 import { version } from '../package.json';
 
 import { createCorsMiddleware } from "./config/cors";
@@ -20,13 +17,19 @@ import { AppError } from "./utils/AppError";
 import { logger } from "./utils/logger";
 import { pool } from "./config/db";
 import { redis } from "./config/redis";
-import { requireAdmin } from "./middleware/requireAdminJwt.middleware";
+import { requireAdminJwt } from "./middleware/requireAdminJwt.middleware";
 import authRouter from "./routes/auth.routes";
 import marketRouter from "./routes/market.routes";
 import governanceRouter from "./routes/governance.routes";
-import adminRouter from "./routes/admin.routes";
 import usersRouter from "./routes/users.routes";
+import adminRouter from "./routes/admin.routes";
+import operationsRouter from "./routes/operations.routes";
+import operationsRouter from "./routes/operations.routes";
 
+import disputesRouter from "./routes/disputes.routes";
+import oracleRouter from "./routes/oracle.routes";
+import walletsRouter from "./routes/wallets.routes";
+import notificationsRouter from "./routes/notifications.routes";
 import engagementRouter from "./routes/engagement.routes";
 import { getPortfolio, getPlatformStats } from "./api/controllers/MarketController";
 import claimsRouter from "./routes/bet.routes";
@@ -35,7 +38,6 @@ import { startCleanupCron } from "./cron/cleanup.cron";
 import { startWebhookDeliveryCron } from "./cron/webhookDelivery.cron";
 import { initActivityFeed, getActivityFeed } from "./websocket/realtime";
 import { engagementService } from "./services/engagement.service";
-import { register, httpRequestDuration, httpRequestsTotal } from "./services/metrics.service";
 
 import { setDbAdapter, defaultDbAdapter } from "./services/MarketService";
 
@@ -97,7 +99,7 @@ app.get("/health", async (_req, res) => {
 });
 
 // Detailed health endpoint (Issue #682) — restricted to admin JWT
-app.get("/health/detailed", requireAdmin, async (_req, res) => {
+app.get("/health/detailed", requireAdminJwt, async (_req, res) => {
   try {
     await pool.query("SELECT 1");
     await redis.ping();
@@ -142,6 +144,10 @@ app.use("/api/bets", claimsRouter);
 app.get("/api/stats", getPlatformStats);
 app.get("/api/portfolio/:address", getPortfolio);
 app.use("/api/users", usersRouter);
+app.use("/api/disputes", disputesRouter);
+app.use("/api/oracle", oracleRouter);
+app.use("/api/wallets", walletsRouter);
+app.use("/api/notifications", notificationsRouter);
 app.use("/api/admin", adminRouter);
 app.use(operationsRouter);
 

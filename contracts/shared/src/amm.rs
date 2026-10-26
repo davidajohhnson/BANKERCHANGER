@@ -187,12 +187,14 @@ pub fn compute_odds(
     // For sides A/B: k / (new_pool_draw * pool_a * pool_b)
     // For draw: k / (new_pool_a * pool_b)
     let other_pool = match side {
-        0 | 1 => pool_b.checked_mul(pool_a)?, // B and A remain the same for A/B bets
-        2 => pool_b.checked_mul(1)?, // Only B remains constant for draw bets (multiply by 1 to keep type consistent)
+        0 => pool_b,
+        1 => pool_a,
+        2 => pool_b,
         _ => return None,
     };
 
-    // new_pool_out = k / new_pool_in / other_pool
+    // new_pool_out = k / (new_pool_in * other_pool), where other_pool is the
+    // unchanged reserve paired with the output pool.
     let new_pool_out_numerator = k / other_pool;
     let new_pool_out = new_pool_out_numerator / new_pool_in;
 

@@ -45,6 +45,7 @@ const RETRY_BASE_DELAY_MS = 500; // 500ms, 1s, 2s
 type ApiOptions = {
   method?: 'GET' | 'POST';
   body?: unknown;
+  signal?: AbortSignal;
 };
 
 // Fetch failures and 503 responses; apiFetch retries these. Still a NetworkError to callers.
@@ -56,6 +57,14 @@ async function apiFetchOnce<T>(path: string, options: ApiOptions): Promise<T> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
+  if (options.signal) {
+    if (options.signal.aborted) {
+      controller.abort();
+    } else {
+      options.signal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
+  }
+
   const method = options.method ?? 'GET';
   const init: RequestInit = { method, signal: controller.signal };
   if (options.body !== undefined) {
@@ -63,25 +72,27 @@ async function apiFetchOnce<T>(path: string, options: ApiOptions): Promise<T> {
     init.body = JSON.stringify(options.body);
   }
 
-  let res: Response;
   try {
-    res = await fetch(`${API_BASE}${path}`, init);
+    const res = await fetch(`${API_BASE}${path}`, init);
+    if (res.status === 404) throw new NotFoundError();
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      const message = `Unexpected response: ${res.status} ${detail}`;
+      if (res.status === 503) throw new RetryableNetworkError(message);
+      throw new NetworkError(message);
+    }
+    return (await res.json()) as T;
   } catch (e) {
     if ((e as Error).name === 'AbortError') {
       throw new TimeoutError();
+    }
+    if (e instanceof NetworkError || e instanceof NotFoundError) {
+      throw e;
     }
     throw new RetryableNetworkError((e as Error).message);
   } finally {
     clearTimeout(timeoutId);
   }
-  if (res.status === 404) throw new NotFoundError();
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '');
-    const message = `Unexpected response: ${res.status} ${detail}`;
-    if (res.status === 503) throw new RetryableNetworkError(message);
-    throw new NetworkError(message);
-  }
-  return res.json() as Promise<T>;
 }
 
 /**
@@ -267,3 +278,39 @@ export async function fetchNotifications(address: string, limit = 50): Promise<U
 export async function fetchMyLeaderboardRank(): Promise<MyLeaderboardRank> {
   return apiFetch<MyLeaderboardRank>('/api/engagement/leaderboard/rank');
 }
+
+export class APIError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'APIError';
+  }
+}
+
+export interface OutcomeOdds {
+  outcome: string;
+  multiplier: number;
+  implied_probability: number;
+  pool: string;
+  total_pool: string;
+}
+
+export interface MarketOdds {
+  market_id: string;
+  fighter_a: OutcomeOdds;
+  fighter_b: OutcomeOdds;
+  draw: OutcomeOdds;
+  total_pool: string;
+}
+
+/** GET /api/markets/:market_id/odds — live parimutuel odds for a market */
+export async function fetchOdds(
+  market_id: string,
+  outcome?: 'fighter_a' | 'fighter_b' | 'draw',
+): Promise<MarketOdds | OutcomeOdds> {
+  const qs = outcome ? `?outcome=${outcome}` : '';
+  return apiFetch<MarketOdds | OutcomeOdds>(`/api/markets/${market_id}/odds${qs}`);
+}
+

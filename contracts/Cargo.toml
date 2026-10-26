@@ -4,8 +4,9 @@ members = [
     "treasury",
     "market_factory",
     "market",
-    "shared/fuzz",
 ]
+default-members = ["shared", "treasury", "market_factory", "market"]
+exclude = ["shared/fuzz"]
 resolver = "2"
 
 [workspace.package]

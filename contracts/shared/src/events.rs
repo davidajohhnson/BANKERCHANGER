@@ -110,20 +110,22 @@ pub struct MarketCancelled {
     pub market_id: u64,
     pub cancelled_by: Address,
     pub reason: String,
+    pub cancelled_at: u64,
 }
 
 /// Emits a `market_cancelled` event when a market is cancelled.
 ///
 /// Topics: `(Symbol("market_cancelled"), market_id)`
-/// Data:   `(cancelled_by: Address, reason: String)`
+/// Data:   `(cancelled_by: Address, reason: String, cancelled_at: u64)`
 pub fn emit_market_cancelled(
     env: &Env,
     market_id: u64,
     cancelled_by: Address,
     reason: String,
+    cancelled_at: u64,
 ) {
     let topics = (Symbol::new(env, "market_cancelled"), market_id);
-    env.events().publish(topics, (cancelled_by, reason));
+    env.events().publish(topics, (cancelled_by, reason, cancelled_at));
 }
 
 /// Emits a `market_paused` event when a specific market is paused.
@@ -606,7 +608,7 @@ mod tests {
 
     fn env() -> (Env, Address) {
         let env = Env::default();
-        let id = env.register_contract(None, Dummy);
+        let id = env.register(Dummy, ());
         (env, id)
     }
 
@@ -620,10 +622,14 @@ mod tests {
 
     macro_rules! sole_event {
         ($env:expr, $contract:expr) => {{
-            let filtered = $env.events().all().filter_by_contract($contract);
-            let events = filtered.events().to_vec();
-            assert_eq!(events.len(), 1, "expected exactly 1 event");
-            assert!(events[0].contract_id.is_some());
+            // soroban-sdk 22.x: Events::all() returns Vec<(Address, Vec<Val>, Val)>.
+            // Filter by matching the contract address in the first tuple element.
+            let all = $env.events().all();
+            let count = all
+                .iter()
+                .filter(|(addr, _, _)| addr == $contract)
+                .count();
+            assert_eq!(count, 1, "expected exactly 1 event from contract");
         }};
     }
 
@@ -710,8 +716,15 @@ mod tests {
     #[test]
     fn test_emit_market_cancelled() {
         let (env, id) = env();
+        let cancelled_by = addr(&env);
         env.as_contract(&id, || {
-            emit_market_cancelled(&env, 7, str(&env, "fight_postponed"));
+            emit_market_cancelled(
+                &env,
+                7,
+                cancelled_by,
+                str(&env, "fight_postponed"),
+                1234,
+            );
         });
 
         sole_event!(env, &id);

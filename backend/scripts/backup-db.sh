@@ -8,8 +8,9 @@
 # Description:
 #   Performs PostgreSQL backup using pg_dump with gzip compression.
 #   Encrypts backup with AES-256 (OpenSSL) or GPG before off-site transfer.
-#   Saves backup locally to /var/backups/bankerchanger/.
-#   Optionally uploads encrypted backup to off-site object storage:
+#   Generates a SHA-256 checksum sidecar for integrity verification.
+#   Saves backup and checksum locally to /var/backups/bankerchanger/.
+#   Optionally uploads encrypted backup and checksum to off-site object storage:
 #     - AWS S3 (via AWS CLI or rclone)
 #     - Google Cloud Storage (via gcloud, gsutil, or rclone)
 #     - Any rclone remote storage target
@@ -28,6 +29,7 @@
 #   3 - Encryption failed
 #   4 - Remote upload failed
 #   5 - Retention cleanup failed
+#   6 - Checksum generation failed
 #
 # ============================================================================
 
@@ -94,6 +96,7 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 BACKUP_FILE="$TEMP_DIR/${DB_NAME}_backup_${TIMESTAMP}.sql"
 COMPRESSED_FILE="${BACKUP_FILE}.gz"
 FINAL_BACKUP_FILE=""
+CHECKSUM_FILE=""
 
 # ── Logging Functions ──────────────────────────────────────────────────────
 
@@ -311,6 +314,11 @@ validate_config() {
 
   if ! command -v gzip &>/dev/null; then
     log_error "Required tool 'gzip' not found in PATH"
+    ((errors++))
+  fi
+
+  if ! command -v sha256sum &>/dev/null; then
+    log_error "Required tool 'sha256sum' not found in PATH"
     ((errors++))
   fi
 
@@ -588,11 +596,39 @@ save_local_backup() {
   if cp "$FINAL_BACKUP_FILE" "$target_file"; then
     chmod 600 "$target_file" 2>/dev/null || true
     log_info "Local backup successfully saved: $target_file ($(du -h "$target_file" | cut -f1))"
+    if [[ -n "$CHECKSUM_FILE" && -f "$CHECKSUM_FILE" ]]; then
+      local target_checksum="$BACKUP_DIR/$(basename "$CHECKSUM_FILE")"
+      cp "$CHECKSUM_FILE" "$target_checksum" 2>/dev/null || true
+      chmod 600 "$target_checksum" 2>/dev/null || true
+      log_info "Local checksum sidecar saved: $target_checksum"
+    fi
     return 0
   else
     log_warn "Failed to copy backup to local directory: $BACKUP_DIR"
     return 0
   fi
+}
+
+generate_checksum() {
+  log_info "Generating SHA-256 checksum for backup: $(basename "$FINAL_BACKUP_FILE")..."
+
+  local checksum
+  if ! checksum=$(sha256sum "$FINAL_BACKUP_FILE" | awk '{print $1}'); then
+    log_error "Failed to compute SHA-256 checksum"
+    return 6
+  fi
+
+  local filename
+  filename=$(basename "$FINAL_BACKUP_FILE")
+  CHECKSUM_FILE="${FINAL_BACKUP_FILE}.sha256"
+
+  if ! printf '%s  %s\n' "$checksum" "$filename" > "$CHECKSUM_FILE"; then
+    log_error "Failed to write checksum file: $CHECKSUM_FILE"
+    return 6
+  fi
+
+  log_info "Checksum generated: $checksum ($filename)"
+  return 0
 }
 
 # ── Remote Object Storage Upload ───────────────────────────────────────────
@@ -625,32 +661,46 @@ upload_to_remote() {
 upload_to_s3() {
   local filename
   filename=$(basename "$FINAL_BACKUP_FILE")
+  local checksum_filename="${filename}.sha256"
 
   if [[ "$REMOTE_TOOL" == "rclone" ]]; then
     local rclone_dest="${RCLONE_DEST:-s3:${S3_BUCKET}/${S3_PREFIX%/}}"
     local target_uri="${rclone_dest%/}/$filename"
     log_info "Uploading to S3 via rclone: $target_uri"
-    if rclone copyto "$FINAL_BACKUP_FILE" "$target_uri" 2>> "$LOG_FILE"; then
-      log_info "rclone S3 upload succeeded: $target_uri"
-      return 0
-    else
+    if ! rclone copyto "$FINAL_BACKUP_FILE" "$target_uri" 2>> "$LOG_FILE"; then
       log_error "rclone S3 upload failed"
       return 4
     fi
+    if [[ -n "$CHECKSUM_FILE" && -f "$CHECKSUM_FILE" ]]; then
+      rclone copyto "$CHECKSUM_FILE" "${target_uri}.sha256" 2>> "$LOG_FILE" || true
+    fi
+    log_info "rclone S3 upload succeeded: $target_uri"
+    return 0
   else
     local s3_path="s3://${S3_BUCKET}/${S3_PREFIX%/}/$filename"
     log_info "Uploading to AWS S3 via AWS CLI: $s3_path"
-    if aws s3 cp "$FINAL_BACKUP_FILE" "$s3_path" \
+    if ! aws s3 cp "$FINAL_BACKUP_FILE" "$s3_path" \
       --region "$AWS_REGION" \
       --sse AES256 \
       --metadata "backup-date=$TIMESTAMP,database=$DB_NAME,encryption=$ENCRYPTION_TYPE" \
       2>> "$LOG_FILE"; then
-      log_info "AWS S3 upload succeeded: $s3_path"
-      return 0
-    else
       log_error "AWS S3 upload failed"
       return 4
     fi
+    if [[ -n "$CHECKSUM_FILE" && -f "$CHECKSUM_FILE" ]]; then
+      local checksum_s3_path="s3://${S3_BUCKET}/${S3_PREFIX%/}/${checksum_filename}"
+      log_info "Uploading checksum to AWS S3: $checksum_s3_path"
+      if ! aws s3 cp "$CHECKSUM_FILE" "$checksum_s3_path" \
+        --region "$AWS_REGION" \
+        --sse AES256 \
+        --metadata "backup-date=$TIMESTAMP,database=$DB_NAME" \
+        2>> "$LOG_FILE"; then
+        log_error "Checksum upload failed"
+        return 4
+      fi
+    fi
+    log_info "AWS S3 upload succeeded: $s3_path"
+    return 0
   fi
 }
 
@@ -662,33 +712,39 @@ upload_to_gcs() {
     local rclone_dest="${RCLONE_DEST:-gcs:${GCS_BUCKET}/${GCS_PREFIX%/}}"
     local target_uri="${rclone_dest%/}/$filename"
     log_info "Uploading to Google Cloud Storage via rclone: $target_uri"
-    if rclone copyto "$FINAL_BACKUP_FILE" "$target_uri" 2>> "$LOG_FILE"; then
-      log_info "rclone GCS upload succeeded: $target_uri"
-      return 0
-    else
+    if ! rclone copyto "$FINAL_BACKUP_FILE" "$target_uri" 2>> "$LOG_FILE"; then
       log_error "rclone GCS upload failed"
       return 4
     fi
+    if [[ -n "$CHECKSUM_FILE" && -f "$CHECKSUM_FILE" ]]; then
+      rclone copyto "$CHECKSUM_FILE" "${target_uri}.sha256" 2>> "$LOG_FILE" || true
+    fi
+    log_info "rclone GCS upload succeeded: $target_uri"
+    return 0
   elif [[ "$REMOTE_TOOL" == "gcloud" ]]; then
     local gcs_path="gs://${GCS_BUCKET}/${GCS_PREFIX%/}/$filename"
     log_info "Uploading to Google Cloud Storage via gcloud: $gcs_path"
-    if gcloud storage cp "$FINAL_BACKUP_FILE" "$gcs_path" 2>> "$LOG_FILE"; then
-      log_info "gcloud GCS upload succeeded: $gcs_path"
-      return 0
-    else
+    if ! gcloud storage cp "$FINAL_BACKUP_FILE" "$gcs_path" 2>> "$LOG_FILE"; then
       log_error "gcloud GCS upload failed"
       return 4
     fi
+    if [[ -n "$CHECKSUM_FILE" && -f "$CHECKSUM_FILE" ]]; then
+      gcloud storage cp "$CHECKSUM_FILE" "${gcs_path}.sha256" 2>> "$LOG_FILE" || true
+    fi
+    log_info "gcloud GCS upload succeeded: $gcs_path"
+    return 0
   else
     local gcs_path="gs://${GCS_BUCKET}/${GCS_PREFIX%/}/$filename"
     log_info "Uploading to Google Cloud Storage via gsutil: $gcs_path"
-    if gsutil cp "$FINAL_BACKUP_FILE" "$gcs_path" 2>> "$LOG_FILE"; then
-      log_info "gsutil GCS upload succeeded: $gcs_path"
-      return 0
-    else
+    if ! gsutil cp "$FINAL_BACKUP_FILE" "$gcs_path" 2>> "$LOG_FILE"; then
       log_error "gsutil GCS upload failed"
       return 4
     fi
+    if [[ -n "$CHECKSUM_FILE" && -f "$CHECKSUM_FILE" ]]; then
+      gsutil cp "$CHECKSUM_FILE" "${gcs_path}.sha256" 2>> "$LOG_FILE" || true
+    fi
+    log_info "gsutil GCS upload succeeded: $gcs_path"
+    return 0
   fi
 }
 
@@ -698,13 +754,15 @@ upload_to_rclone() {
   local target_uri="${RCLONE_DEST%/}/$filename"
 
   log_info "Uploading to remote target via rclone: $target_uri"
-  if rclone copyto "$FINAL_BACKUP_FILE" "$target_uri" 2>> "$LOG_FILE"; then
-    log_info "rclone upload succeeded: $target_uri"
-    return 0
-  else
+  if ! rclone copyto "$FINAL_BACKUP_FILE" "$target_uri" 2>> "$LOG_FILE"; then
     log_error "rclone upload failed"
     return 4
   fi
+  if [[ -n "$CHECKSUM_FILE" && -f "$CHECKSUM_FILE" ]]; then
+    rclone copyto "$CHECKSUM_FILE" "${target_uri}.sha256" 2>> "$LOG_FILE" || true
+  fi
+  log_info "rclone upload succeeded: $target_uri"
+  return 0
 }
 
 # ── Retention Lifecycle Pruning ────────────────────────────────────────────
@@ -894,17 +952,25 @@ main() {
     exit 3
   fi
 
-  # 5. Save local backup copy
+  # 5. Generate SHA-256 checksum
+  if ! generate_checksum; then
+    send_status "FAILED" "Checksum generation failed"
+    exit 6
+  fi
+
+  # 6. Save local backup copy (with checksum sidecar)
   save_local_backup
 
-  # 6. Upload to remote object storage (AWS S3 / GCS / rclone)
+  # 7. Upload to remote object storage (AWS S3 / GCS / rclone with checksum sidecar)
   if ! upload_to_remote; then
     send_status "FAILED" "Remote storage upload failed"
     exit 4
   fi
 
-  # 7. Retention lifecycle pruning (off-site & local)
-  cleanup_old_backups
+  # 8. Retention lifecycle pruning (off-site & local)
+  if ! cleanup_old_backups; then
+    log_warn "Cleanup encountered errors but backup succeeded"
+  fi
 
   log_info "════════════════════════════════════════════════════════════"
   log_info "Backup Process Completed Successfully"

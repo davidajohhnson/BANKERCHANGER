@@ -8,10 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- SHA-256 checksum generation in `backup-db.sh` and mandatory checksum verification in `restore-db.sh` before any restore operation (#958, #117)
 - `Market::get_bet()` — view function returning a bettor's position (#716)
 - `MarketFactory::get_open_market_ids()` — efficient open market filtering (#717)
 - `Market::upgrade()` — admin-only WASM upgrade mechanism (#718)
 - `create_market()` fee_bps override per market, capped at 1000 bps (#719)
+
+### Fixed
+- Wallet fallback and connection validation hardened for Freighter/Albedo flows (#850)
+- Create-market scheduling validation now rejects invalid or expired ISO timestamps before building transactions (#851)
+- Governance proposal listing now uses bounded pagination and validated query params (#852)
+- Indexer database lifecycle guarded with a lazy singleton to prevent pool exhaustion during tests (#853)
 
 ## [0.4.0] - 2026-06-01
 

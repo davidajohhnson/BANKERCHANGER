@@ -44,9 +44,12 @@ const PENDING_REPORTS: &str = "PENDING_REPORTS";
 /// Ledger number at which the dispute cooldown window expires for a ResolutionPending market.
 /// Written when consensus is reached and cleared when finalize_resolution completes.
 const COOLDOWN_END_LEDGER: &str = "COOLDOWN_END";
+/// Unix timestamp at which the dispute cooldown expires.
+const COOLDOWN_END_TIMESTAMP: &str = "COOLDOWN_END_TIMESTAMP";
 /// Default dispute cooldown in ledgers when market config does not specify one.
-/// 720 ledgers × ~5 s/ledger ≈ 1 hour.
 const DEFAULT_DISPUTE_COOLDOWN_LEDGERS: u32 = 720;
+/// Default dispute cooldown in seconds when market config does not specify one.
+const DEFAULT_DISPUTE_COOLDOWN_SECS: u64 = 3_600;
 /// Total LP shares outstanding for this market pool
 const LP_TOTAL_SHARES: &str = "LP_TOTAL_SHARES";
 /// Prefix for per-provider LP position: (LP_PREFIX, provider) -> LiquidityPosition
@@ -65,6 +68,8 @@ pub const EXPIRY_GRACE_PERIOD: u64 = 86_400;
 // ─── Storage TTL Constants ────────────────────────────────────────────────────
 /// Maximum TTL for market data (30 days in ledger entries)
 const MAX_TTL: u32 = 2_592_000;
+/// Minimum persistent TTL retained after resolution for bettors to claim.
+pub const CLAIM_WINDOW_LEDGERS: u32 = 2_000_000;
 /// Maximum age for unresolved oracle reports before stale entries are pruned.
 const REPORT_TTL: u64 = 172_800;
 
@@ -76,6 +81,11 @@ pub trait FactoryInterface {
     fn is_paused(env: Env) -> bool;
     /// Returns the registered admin address of the factory.
     fn get_admin(env: Env) -> Address;
+    fn cleanup_terminal_market(
+        env: Env,
+        market_address: Address,
+        market_id: u64,
+    ) -> Result<(), ContractError>;
 }
 
 // ─── Cross-contract client for treasury fee deposits ─────────────────────────
@@ -189,6 +199,18 @@ impl Market {
         env.storage()
             .persistent()
             .extend_ttl(&BETTOR_LIST, MAX_TTL, MAX_TTL);
+    }
+
+    fn extend_claim_ttl(env: &Env, bettor: &Address) {
+        env.storage()
+            .persistent()
+            .extend_ttl(&STATE, CLAIM_WINDOW_LEDGERS, CLAIM_WINDOW_LEDGERS);
+        let key = Self::bet_key(env, bettor);
+        if env.storage().persistent().has(&key) {
+            env.storage()
+                .persistent()
+                .extend_ttl(&key, CLAIM_WINDOW_LEDGERS, CLAIM_WINDOW_LEDGERS);
+        }
     }
 
     /// Extends the TTL of all persistent share and market entries by CLAIM_WINDOW_LEDGERS upon resolution.
@@ -425,32 +447,32 @@ impl Market {
                 BetSide::FighterB => 1,
                 BetSide::Draw => 2,
             };
-            if let Some((shares_out, impact_bps)) = boxmeout_shared::amm::compute_odds(
+            let (shares_out, impact_bps) = boxmeout_shared::amm::compute_odds(
                 state.pool_a,
                 state.pool_b,
                 state.pool_draw,
                 amount,
                 side_byte,
-            ) {
-                // Tier-aware slippage check.
-                if !boxmeout_shared::amm::check_tier_slippage(tier_byte, state.total_pool, impact_bps) {
-                    return Err(ContractError::SlippageExceeded);
-                }
-                if shares_out < min_shares_out {
-                    return Err(ContractError::SlippageExceeded);
-                }
-                // Emit real-time odds update for frontend
-                // Note: state.pool_* values are the CURRENT (pre-bet) pool sizes
-                boxmeout_shared::emit_odds_computed(
-                    &env,
-                    state.market_id,
-                    state.pool_a,
-                    state.pool_b,
-                    state.pool_draw,
-                    shares_out,
-                    impact_bps,
-                );
+            )
+            .ok_or(ContractError::ZeroSharesAllocated)?;
+            // Tier-aware slippage check.
+            if !boxmeout_shared::amm::check_tier_slippage(tier_byte, state.total_pool, impact_bps) {
+                return Err(ContractError::SlippageExceeded);
             }
+            if shares_out < min_shares_out {
+                return Err(ContractError::SlippageExceeded);
+            }
+            // Emit real-time odds update for frontend
+            // Note: state.pool_* values are the CURRENT (pre-bet) pool sizes
+            boxmeout_shared::emit_odds_computed(
+                &env,
+                state.market_id,
+                state.pool_a,
+                state.pool_b,
+                state.pool_draw,
+                shares_out,
+                impact_bps,
+            );
         }
 
         // ── EFFECTS ───────────────────────────────────────────────────────────
@@ -489,6 +511,7 @@ impl Market {
         let is_first_bet = bets.is_empty();
         bets.push_back(bet.clone());
         Self::save_bets(&env, &bettor, &bets);
+        Self::extend_claim_ttl(&env, &bettor);
 
         if is_first_bet {
             let mut bettor_list: Vec<Address> = env
@@ -913,6 +936,21 @@ impl Market {
         }
 
         if report.outcome == Outcome::Draw && !Self::get_allow_draw(&env) {
+            // Draw was disabled, but the oracle reports a draw outcome.
+            // If any draw-pool bets exist those funds must not be locked forever,
+            // so we cancel the market immediately so all bettors can claim refunds.
+            if state.pool_draw > 0 {
+                state.status = MarketStatus::Cancelled;
+                Self::save_state(&env, &state);
+                Self::extend_market_ttl(&env);
+                boxmeout_shared::emit_market_cancelled(
+                    &env,
+                    state.market_id,
+                    oracle,
+                    soroban_sdk::String::from_str(&env, "draw_disabled_outcome_refund"),
+                );
+                return Ok(());
+            }
             return Err(ContractError::DrawNotAllowed);
         }
 
@@ -1038,6 +1076,12 @@ impl Market {
             };
 
             let cooldown_end_ledger = env.ledger().sequence().saturating_add(cooldown);
+            let cooldown_secs = if state.config.dispute_cooldown_secs > 0 {
+                state.config.dispute_cooldown_secs
+            } else {
+                DEFAULT_DISPUTE_COOLDOWN_SECS
+            };
+            let cooldown_end_timestamp = env.ledger().timestamp().saturating_add(cooldown_secs);
 
             state.status = MarketStatus::ResolutionPending;
             state.oracle_used = OptionalOracleRole::Some(OracleRole::Primary);
@@ -1049,6 +1093,9 @@ impl Market {
             env.storage()
                 .persistent()
                 .set(&COOLDOWN_END_LEDGER, &cooldown_end_ledger);
+            env.storage()
+                .persistent()
+                .set(&COOLDOWN_END_TIMESTAMP, &cooldown_end_timestamp);
 
             // Clear pending reports — they are no longer needed.
             env.storage().persistent().set(&PENDING_REPORTS, &Map::<Address, OracleReport>::new(&env));
@@ -1154,6 +1201,7 @@ impl Market {
         if state.status != MarketStatus::Resolved {
             return Err(ContractError::MarketNotResolved);
         }
+        Self::extend_claim_ttl(&env, &bettor);
 
         let winning_outcome = match state.outcome.clone() {
             OptionalOutcome::Some(o) => o,
@@ -1440,7 +1488,68 @@ impl Market {
         Self::save_state(&env, &state);
         Self::extend_market_ttl(&env);
 
-        boxmeout_shared::emit_market_cancelled(&env, state.market_id, caller, reason);
+        FactoryClient::new(&env, &factory).cleanup_terminal_market(
+            &env.current_contract_address(),
+            &state.market_id,
+        )?;
+
+        boxmeout_shared::emit_market_cancelled(
+            &env,
+            state.market_id,
+            caller,
+            reason,
+            env.ledger().timestamp(),
+        );
+        Ok(())
+    }
+
+    // =========================================================================
+    // FINALIZE RESOLUTION
+    // =========================================================================
+    /// Finalizes oracle consensus after both configured cooldown thresholds pass.
+    pub fn finalize_resolution(env: Env, market_id: u64) -> Result<(), ContractError> {
+        Self::require_not_paused(&env)?;
+        let mut state = Self::load_state(&env)?;
+        if market_id != state.market_id {
+            return Err(ContractError::MarketNotFound);
+        }
+        if state.status != MarketStatus::ResolutionPending {
+            return Err(ContractError::ResolutionNotPending);
+        }
+
+        let cooldown_end_ledger: u32 = env
+            .storage()
+            .persistent()
+            .get(&COOLDOWN_END_LEDGER)
+            .unwrap_or(0);
+        let cooldown_end_timestamp: u64 = env
+            .storage()
+            .persistent()
+            .get(&COOLDOWN_END_TIMESTAMP)
+            .unwrap_or(0);
+        let now = env.ledger().timestamp();
+        if env.ledger().sequence() < cooldown_end_ledger || now < cooldown_end_timestamp {
+            return Err(ContractError::DisputeCooldownActive);
+        }
+
+        let outcome = match state.outcome.clone() {
+            OptionalOutcome::Some(outcome) => outcome,
+            OptionalOutcome::None => return Err(ContractError::InvalidOutcome),
+        };
+        let outcome_byte = match outcome {
+            Outcome::FighterA => 0,
+            Outcome::FighterB => 1,
+            Outcome::Draw => 2,
+            Outcome::NoContest => 3,
+        };
+        state.status = MarketStatus::Resolved;
+        state.resolved_at = now;
+        Self::save_state(&env, &state);
+        Self::extend_market_ttl(&env);
+        Self::extend_resolution_ttl(&env);
+        env.storage().persistent().remove(&COOLDOWN_END_LEDGER);
+        env.storage().persistent().remove(&COOLDOWN_END_TIMESTAMP);
+        boxmeout_shared::emit_resolution_finalized(&env, state.market_id, outcome_byte);
         Ok(())
     }
 
@@ -1517,6 +1626,20 @@ impl Market {
         }
 
         if final_outcome == Outcome::Draw && !Self::get_allow_draw(&env) {
+            // Admin is forcing a Draw outcome but draw is disabled.
+            // If draw-pool bets exist we must cancel so funds aren't frozen.
+            if state.pool_draw > 0 {
+                state.status = MarketStatus::Cancelled;
+                Self::save_state(&env, &state);
+                Self::extend_market_ttl(&env);
+                boxmeout_shared::emit_market_cancelled(
+                    &env,
+                    state.market_id,
+                    admin,
+                    soroban_sdk::String::from_str(&env, "draw_disabled_outcome_refund"),
+                );
+                return Ok(());
+            }
             return Err(ContractError::DrawNotAllowed);
         }
 
@@ -1545,12 +1668,27 @@ impl Market {
     }
 
     /// Configures whether Draw outcome is permitted for this market.
+    ///
+    /// # Errors
+    /// - `Unauthorized`: Caller is not the factory admin.
+    /// - `BetsAlreadyPlaced`: `allow_draw` is being set to `false` but bets on
+    ///   Draw have already been placed (`pool_draw > 0`).  Allowing the toggle
+    ///   would silently lock those funds, so it is rejected.
     pub fn set_allow_draw(env: Env, admin: Address, allow_draw: bool) -> Result<(), ContractError> {
         admin.require_auth();
         let factory: Address = env.storage().persistent().get(&FACTORY).unwrap();
         if admin != factory {
             return Err(ContractError::Unauthorized);
         }
+
+        // Guard: disallow disabling draw once bets on Draw have been placed.
+        if !allow_draw {
+            let state = Self::load_state(&env)?;
+            if state.pool_draw > 0 {
+                return Err(ContractError::BetsAlreadyPlaced);
+            }
+        }
+
         env.storage().persistent().set(&ALLOW_DRAW, &allow_draw);
         Ok(())
     }

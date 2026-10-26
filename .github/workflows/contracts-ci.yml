@@ -46,10 +46,9 @@ jobs:
         working-directory: contracts
         run: cargo clippy --all-targets --all-features -- -D warnings
 
-      # Tests disabled - test structure refactoring in progress
-      # - name: Tests
-      #   working-directory: contracts
-      #   run: cargo test --all --all-features
+      - name: Tests
+        working-directory: contracts
+        run: cargo test --all --all-features
 
       - name: Build wasm
         working-directory: contracts
@@ -126,10 +125,10 @@ jobs:
 
       - name: Fuzz AMM price functions
         if: steps.check-fuzz.outputs.should_run == 'true'
-        working-directory: contracts/shared
-        run: cargo fuzz run amm_fuzz -- -max_total_time=${{ steps.check-fuzz.outputs.fuzz_time }}
+        working-directory: contracts
+        run: cargo fuzz run --manifest-path shared/fuzz/Cargo.toml amm_fuzz -- -max_total_time=${{ steps.check-fuzz.outputs.fuzz_time }}
 
       - name: Fuzz payout calculations
         if: steps.check-fuzz.outputs.should_run == 'true'
-        working-directory: contracts/shared
-        run: cargo fuzz run payout_fuzz -- -max_total_time=${{ steps.check-fuzz.outputs.fuzz_time }}
+        working-directory: contracts
+        run: cargo fuzz run --manifest-path shared/fuzz/Cargo.toml payout_fuzz -- -max_total_time=${{ steps.check-fuzz.outputs.fuzz_time }}
